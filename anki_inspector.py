@@ -6,13 +6,25 @@ from pathlib import Path
 from collection_reader import CollectionReader
 from operations import Operations
 
+logger = logging.getLogger('anki_inspector')
+
 class AnkiInspector:
     def __init__(self, apkg_path):
         self.logger = logging.getLogger('anki_inspector')
         self.reader = CollectionReader(Path(apkg_path))
         self.collection = None
         self.operations = None
+
+    def __enter__(self):
+        """Setup when entering 'with' context."""
         self._load_collection()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Cleanup when exiting 'with' context."""
+        self.cleanup()
+        # Return False to propagate exceptions
+        return False
 
     def _load_collection(self):
         """Load the collection using the reader."""

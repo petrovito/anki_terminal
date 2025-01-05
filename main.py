@@ -37,19 +37,14 @@ def parse_args():
 def main():
     args = parse_args()
     setup_logging(args.verbose)
-    inspector = None
 
     try:
-        inspector = AnkiInspector(args.apkg_file)
-        recipe = OperationRecipe(args.command, args.model)
-        inspector.operations.run(recipe)
-
+        with AnkiInspector(args.apkg_file) as inspector:
+            recipe = OperationRecipe(args.command, args.model)
+            inspector.operations.run(recipe)
     except Exception as e:
         logger.error(str(e))
-        sys.exit(1)
-    finally:
-        if inspector:
-            inspector.cleanup()
+        sys.exit(1) 
 
 if __name__ == '__main__':
     main() 
