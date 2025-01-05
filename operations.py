@@ -8,7 +8,11 @@ logger = logging.getLogger('anki_inspector')
 class OperationType(Enum):
     NUM_CARDS = 'num_cards'
     LIST_FIELDS = 'list_fields'
+    LIST_MODELS = 'list_models'
     PRINT_TEMPLATE = 'print_template'
+    PRINT_QUESTION = 'print_question'
+    PRINT_ANSWER = 'print_answer'
+    PRINT_CSS = 'print_css'
     RUN_ALL = 'run_all'
 
 class OperationRecipe:
@@ -20,70 +24,115 @@ class Operations:
     def __init__(self, collection: Collection):
         self.collection = collection
 
-    def num_cards(self) -> int:
-        """Get the total number of cards in the collection."""
-        logger.debug("Counting total number of cards")
-        return len(self.collection.cards)
-
-    def list_fields(self) -> Dict[str, list]:
-        """List all fields from all note types."""
-        logger.debug("Listing fields for all models")
-        fields_by_model = {}
-        for model_id, model in self.collection.models.items():
-            fields_by_model[model.name] = model.fields
-        return fields_by_model
-
-    def print_template(self, model_name: Optional[str] = None) -> Dict[str, dict]:
-        """Print the templates (card types) for the specified model or all models."""
+    def _get_model(self, model_name: Optional[str] = None) -> Model:
+        """Get a model by name or return the only model if there's just one."""
         if model_name:
-            logger.debug(f"Getting templates for model: {model_name}")
-        else:
-            logger.debug("Getting templates for all models")
+            # Find model by name
+            for model in self.collection.models.values():
+                if model.name == model_name:
+                    return model
+            raise ValueError(f"Model not found: {model_name}")
+        
+        # No model specified
+        if len(self.collection.models) == 1:
+            return next(iter(self.collection.models.values()))
+        
+        model_names = [model.name for model in self.collection.models.values()]
+        raise ValueError(
+            f"Multiple models found, please specify one: {', '.join(model_names)}"
+        )
 
-        templates = {}
+    def num_cards(self) -> None:
+        """Print the total number of cards in the collection."""
+        logger.debug("Counting total number of cards")
+        result = len(self.collection.cards)
+        print(result)
+
+    def list_fields(self, model_name: Optional[str] = None) -> None:
+        """Print fields for a specific model or the only model if there's just one."""
+        logger.debug(f"Listing fields for model: {model_name if model_name else 'default'}")
+        
+        model = self._get_model(model_name)
+        fields = [f"{field}:text" for field in model.fields]
+        print(', '.join(fields))
+
+    def _get_template(self, model_name: Optional[str] = None) -> Template:
+        """Get a template from a model, handling multiple template cases."""
+        model = self._get_model(model_name)
+        
+        if len(model.templates) > 1:
+            template_names = [t.name for t in model.templates]
+            raise ValueError(
+                f"Multiple templates found in model {model.name}, please specify one: {', '.join(template_names)}"
+            )
+        
+        return model.templates[0]
+
+    def print_question(self, model_name: Optional[str] = None) -> None:
+        """Print the question format for the specified model."""
+        logger.debug(f"Getting question format for model: {model_name if model_name else 'default'}")
+        template = self._get_template(model_name)
+        print(template.question_format)
+
+    def print_answer(self, model_name: Optional[str] = None) -> None:
+        """Print the answer format for the specified model."""
+        logger.debug(f"Getting answer format for model: {model_name if model_name else 'default'}")
+        template = self._get_template(model_name)
+        print(template.answer_format)
+
+    def print_css(self, model_name: Optional[str] = None) -> None:
+        """Print the CSS for the specified model."""
+        logger.debug(f"Getting CSS for model: {model_name if model_name else 'default'}")
+        model = self._get_model(model_name)
+        print(model.css)
+
+    def print_template(self, model_name: Optional[str] = None) -> None:
+        """Print all template details (for backwards compatibility)."""
+        logger.debug(f"Getting template for model: {model_name if model_name else 'default'}")
+        
+        template = self._get_template(model_name)
+        model = self._get_model(model_name)
+        
+        output = []
+        output.append("Question Format:")
+        output.append(template.question_format)
+        output.append("\nAnswer Format:")
+        output.append(template.answer_format)
+        output.append("\nCSS:")
+        output.append(model.css)
+        print("\n".join(output))
+
+    def list_models(self) -> None:
+        """Print all models/note types with their basic information."""
+        logger.debug("Listing all models/note types")
+        
         for model_id, model in self.collection.models.items():
-            if model_name is None or model.name == model_name:
-                templates[model.name] = {
-                    'templates': [t.name for t in model.templates],
-                    'fields': model.fields
-                }
-        return templates
+            model_type = "Standard" if model.type == 0 else "Cloze"
+            print(f"{model.name} (ID: {model_id}, Type: {model_type})")
 
     def run(self, recipe: OperationRecipe) -> None:
         """Execute operation based on the recipe."""
         logger.info(f"Running operation: {recipe.operation_type.value}")
         
         if recipe.operation_type == OperationType.NUM_CARDS:
-            result = self.num_cards()
-            logger.info(f"Total number of cards: {result}")
-            print(result)
-
+            self.num_cards()
         elif recipe.operation_type == OperationType.LIST_FIELDS:
-            fields = self.list_fields()
-            output = []
-            for model_name, field_list in fields.items():
-                output.append(f"{model_name}:")
-                for field in field_list:
-                    output.append(f"\t{field}")
-            logger.info("Fields by model:\n" + "\n".join(output))
-            print("\n".join(output))
-
+            self.list_fields(recipe.model_name)
+        elif recipe.operation_type == OperationType.LIST_MODELS:
+            self.list_models()
         elif recipe.operation_type == OperationType.PRINT_TEMPLATE:
-            templates = self.print_template(recipe.model_name)
-            output = []
-            for model_name, data in templates.items():
-                output.append(f"{model_name}:")
-                output.append("\tFields:")
-                for field in data['fields']:
-                    output.append(f"\t\t{field}")
-                output.append("\tCard Types:")
-                for template in data['templates']:
-                    output.append(f"\t\t{template}")
-            logger.info("Templates:\n" + "\n".join(output))
-            print("\n".join(output))
-
+            self.print_template(recipe.model_name)
+        elif recipe.operation_type == OperationType.PRINT_QUESTION:
+            self.print_question(recipe.model_name)
+        elif recipe.operation_type == OperationType.PRINT_ANSWER:
+            self.print_answer(recipe.model_name)
+        elif recipe.operation_type == OperationType.PRINT_CSS:
+            self.print_css(recipe.model_name)
         elif recipe.operation_type == OperationType.RUN_ALL:
-            logger.info("Running all operations")
             self.run(OperationRecipe(OperationType.NUM_CARDS))
+            self.run(OperationRecipe(OperationType.LIST_MODELS))
             self.run(OperationRecipe(OperationType.LIST_FIELDS))
-            self.run(OperationRecipe(OperationType.PRINT_TEMPLATE)) 
+            # self.run(OperationRecipe(OperationType.PRINT_TEMPLATE))
+            self.run(OperationRecipe(OperationType.PRINT_QUESTION))
+            self.run(OperationRecipe(OperationType.PRINT_ANSWER))
+            self.run(OperationRecipe(OperationType.PRINT_CSS))
