@@ -3,7 +3,8 @@
 import logging
 from pathlib import Path
 
-from collection_reader import CollectionReader
+from apkg_extractor import ApkgExtractor
+from database_reader import DatabaseReader
 from operations import Operations
 
 logger = logging.getLogger('anki_inspector')
@@ -11,40 +12,33 @@ logger = logging.getLogger('anki_inspector')
 class AnkiInspector:
     def __init__(self, apkg_path):
         self.logger = logging.getLogger('anki_inspector')
-        self.reader = CollectionReader(Path(apkg_path))
+        self.apkg_path = Path(apkg_path)
+        self.extractor = None
+        self.db_reader = None
         self.collection = None
         self.operations = None
 
     def __enter__(self):
-        """Setup when entering 'with' context."""
+        """Setup and maintain context of extractor and db reader."""
         try:
-            self._load_collection()
+            self.extractor = ApkgExtractor(self.apkg_path).__enter__()
+            self.db_reader = DatabaseReader(self.extractor.db_path).__enter__()
+            self.collection = self.db_reader.read_collection()
+            self.operations = Operations(self.collection)
             return self
         except Exception:
-            self.cleanup()  # Clean up if initialization fails
+            self.cleanup()
             raise
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Cleanup when exiting 'with' context."""
+        """Cleanup all resources."""
         self.cleanup()
         return False
 
-    def _load_collection(self):
-        """Load the collection using the reader."""
-        self.reader.extract_and_connect()
-        self.collection = self.reader.read_collection()
-        self.operations = Operations(self.collection)
-
     def cleanup(self):
-        """Cleanup temporary files."""
-        self.reader.cleanup()
+        """Clean up resources in reverse order of creation."""
+        if self.db_reader:
+            self.db_reader.__exit__(None, None, None)
+        if self.extractor:
+            self.extractor.__exit__(None, None, None)
 
-    # Delegate operations to Operations class
-    def num_cards(self):
-        return self.operations.num_cards()
-
-    def list_fields(self):
-        return self.operations.list_fields()
-
-    def print_template(self, model_name=None):
-        return self.operations.print_template(model_name) 

@@ -16,19 +16,21 @@ class DatabaseReader:
         self.db_path = db_path
         self.conn = None
         
-    def connect(self) -> None:
-        """Connect to the SQLite database."""
+    def __enter__(self):
+        """Connect to database and return self."""
         logger.debug(f"Connecting to database at: {self.db_path}")
         self.conn = sqlite3.connect(self.db_path)
         self.conn.row_factory = sqlite3.Row
+        return self
 
-    def close(self) -> None:
-        """Close the database connection."""
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Close database connection."""
         if self.conn:
             try:
                 self.conn.close()
             except Exception as e:
                 logger.warning(f"Error closing database: {str(e)}")
+        return False
 
     def read_collection(self) -> Collection:
         """Read and parse the collection data from the database."""

@@ -13,19 +13,22 @@ class ApkgExtractor:
         self.apkg_path = apkg_path
         self.temp_dir = tempfile.mkdtemp()
         
-    def extract(self) -> Path:
-        """Extract the .apkg file and return path to the database."""
+    def __enter__(self):
+        """Extract files and return self."""
         logger.debug(f"Extracting {self.apkg_path}...")
-        
         with zipfile.ZipFile(self.apkg_path, 'r') as zip_ref:
             zip_ref.extractall(self.temp_dir)
             logger.debug(f"Extracted {self.apkg_path} to {self.temp_dir}")
-        
-        db_path = Path(self.temp_dir) / 'collection.anki2'
-        return db_path
+        return self
 
-    def cleanup(self) -> None:
-        """Remove temporary files."""
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Clean up temporary directory."""
         if os.path.exists(self.temp_dir):
             import shutil
-            shutil.rmtree(self.temp_dir) 
+            shutil.rmtree(self.temp_dir)
+        return False
+
+    @property
+    def db_path(self) -> Path:
+        """Get path to the extracted database."""
+        return Path(self.temp_dir) / 'collection.anki2' 
