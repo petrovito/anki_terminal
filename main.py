@@ -24,7 +24,8 @@ def parse_args():
     parser.add_argument('apkg_file', help='Path to the .apkg file')
     parser.add_argument('command', type=OperationType, choices=list(OperationType),
                         help='Command to execute')
-    parser.add_argument('--model', help='Model name for print_template command', default=None)
+    parser.add_argument('--model', help='Model name for template operations', default=None)
+    parser.add_argument('--template', help='Template name for question/answer operations', default=None)
     parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
 
     if len(sys.argv) < 3:
@@ -40,7 +41,7 @@ def main():
 
     try:
         with AnkiInspector(args.apkg_file) as inspector:
-            recipe = OperationRecipe(args.command, args.model)
+            recipe = OperationRecipe(args.command, args.model, args.template)
             inspector.operations.run(recipe)
     except Exception as e:
         logger.error(str(e))

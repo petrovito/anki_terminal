@@ -9,6 +9,7 @@ class OperationType(Enum):
     NUM_CARDS = 'num_cards'
     LIST_FIELDS = 'list_fields'
     LIST_MODELS = 'list_models'
+    LIST_TEMPLATES = 'list_templates'
     PRINT_TEMPLATE = 'print_template'
     PRINT_QUESTION = 'print_question'
     PRINT_ANSWER = 'print_answer'
@@ -16,9 +17,10 @@ class OperationType(Enum):
     RUN_ALL = 'run_all'
 
 class OperationRecipe:
-    def __init__(self, operation_type: OperationType, model_name: str = None):
+    def __init__(self, operation_type: OperationType, model_name: str = None, template_name: str = None):
         self.operation_type = operation_type
         self.model_name = model_name
+        self.template_name = template_name
 
 class Operations:
     def __init__(self, collection: Collection):
@@ -56,10 +58,18 @@ class Operations:
         fields = [f"{field}:text" for field in model.fields]
         print(', '.join(fields))
 
-    def _get_template(self, model_name: Optional[str] = None) -> Template:
+    def _get_template(self, model_name: Optional[str] = None, template_name: Optional[str] = None) -> Template:
         """Get a template from a model, handling multiple template cases."""
         model = self._get_model(model_name)
         
+        if template_name:
+            # Find template by name
+            for template in model.templates:
+                if template.name == template_name:
+                    return template
+            raise ValueError(f"Template not found: {template_name}")
+        
+        # No template specified
         if len(model.templates) > 1:
             template_names = [t.name for t in model.templates]
             raise ValueError(
@@ -68,16 +78,18 @@ class Operations:
         
         return model.templates[0]
 
-    def print_question(self, model_name: Optional[str] = None) -> None:
-        """Print the question format for the specified model."""
-        logger.debug(f"Getting question format for model: {model_name if model_name else 'default'}")
-        template = self._get_template(model_name)
+    def print_question(self, model_name: Optional[str] = None, template_name: Optional[str] = None) -> None:
+        """Print the question format for the specified model and template."""
+        logger.debug(f"Getting question format for model: {model_name if model_name else 'default'}, "
+                    f"template: {template_name if template_name else 'default'}")
+        template = self._get_template(model_name, template_name)
         print(template.question_format)
 
-    def print_answer(self, model_name: Optional[str] = None) -> None:
-        """Print the answer format for the specified model."""
-        logger.debug(f"Getting answer format for model: {model_name if model_name else 'default'}")
-        template = self._get_template(model_name)
+    def print_answer(self, model_name: Optional[str] = None, template_name: Optional[str] = None) -> None:
+        """Print the answer format for the specified model and template."""
+        logger.debug(f"Getting answer format for model: {model_name if model_name else 'default'}, "
+                    f"template: {template_name if template_name else 'default'}")
+        template = self._get_template(model_name, template_name)
         print(template.answer_format)
 
     def print_css(self, model_name: Optional[str] = None) -> None:
@@ -110,6 +122,14 @@ class Operations:
             model_type = "Standard" if model.type == 0 else "Cloze"
             print(f"{model.name} (ID: {model_id}, Type: {model_type})")
 
+    def list_templates(self, model_name: Optional[str] = None) -> None:
+        """List all templates for a specific model."""
+        logger.debug(f"Listing templates for model: {model_name if model_name else 'default'}")
+        
+        model = self._get_model(model_name)
+        for template in model.templates:
+            print(f"{template.name} (ord: {template.ordinal})")
+
     def run(self, recipe: OperationRecipe) -> None:
         """Execute operation based on the recipe."""
         logger.info(f"Running operation: {recipe.operation_type.value}")
@@ -120,19 +140,21 @@ class Operations:
             self.list_fields(recipe.model_name)
         elif recipe.operation_type == OperationType.LIST_MODELS:
             self.list_models()
+        elif recipe.operation_type == OperationType.LIST_TEMPLATES:
+            self.list_templates(recipe.model_name)
         elif recipe.operation_type == OperationType.PRINT_TEMPLATE:
             self.print_template(recipe.model_name)
         elif recipe.operation_type == OperationType.PRINT_QUESTION:
-            self.print_question(recipe.model_name)
+            self.print_question(recipe.model_name, recipe.template_name)
         elif recipe.operation_type == OperationType.PRINT_ANSWER:
-            self.print_answer(recipe.model_name)
+            self.print_answer(recipe.model_name, recipe.template_name)
         elif recipe.operation_type == OperationType.PRINT_CSS:
             self.print_css(recipe.model_name)
         elif recipe.operation_type == OperationType.RUN_ALL:
             self.run(OperationRecipe(OperationType.NUM_CARDS))
             self.run(OperationRecipe(OperationType.LIST_MODELS))
-            self.run(OperationRecipe(OperationType.LIST_FIELDS))
-            # self.run(OperationRecipe(OperationType.PRINT_TEMPLATE))
-            self.run(OperationRecipe(OperationType.PRINT_QUESTION))
-            self.run(OperationRecipe(OperationType.PRINT_ANSWER))
-            self.run(OperationRecipe(OperationType.PRINT_CSS))
+            self.run(OperationRecipe(OperationType.LIST_TEMPLATES, recipe.model_name))
+            self.run(OperationRecipe(OperationType.LIST_FIELDS, recipe.model_name))
+            self.run(OperationRecipe(OperationType.PRINT_QUESTION, recipe.model_name, recipe.template_name))
+            self.run(OperationRecipe(OperationType.PRINT_ANSWER, recipe.model_name, recipe.template_name))
+            self.run(OperationRecipe(OperationType.PRINT_CSS, recipe.model_name))
