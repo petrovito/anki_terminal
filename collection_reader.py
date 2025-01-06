@@ -26,7 +26,8 @@ class CollectionReader:
         
         with zipfile.ZipFile(self.apkg_path, 'r') as zip_ref:
             zip_ref.extractall(self.temp_dir)
-            logger.debug(f"Contents extracted: {os.listdir(self.temp_dir)}")
+            logger.debug(f"Extracted {self.apkg_path} to {self.temp_dir}")
+            # logger.debug(f"Contents extracted: {os.listdir(self.temp_dir)}")
         
         db_path = os.path.join(self.temp_dir, 'collection.anki2')
         logger.debug(f"Connecting to database at: {db_path}")
@@ -92,6 +93,7 @@ class CollectionReader:
             
         except Exception as e:
             logger.error(f"Error loading collection: {str(e)}")
+            logger.debug("Stack trace:", exc_info=True)
             raise
 
     def _parse_models(self, models_dict: dict) -> Dict[int, Model]:
@@ -99,30 +101,41 @@ class CollectionReader:
         logger.debug("Converting models data to Model objects")
         models: Dict[int, Model] = {}
         for model_id, model_data in models_dict.items():
-            templates = [
-                Template(
-                    name=t['name'],
-                    question_format=t['qfmt'],
-                    answer_format=t['afmt'],
-                    browser_question_format=t.get('bqfmt'),
-                    browser_answer_format=t.get('bafmt'),
-                    deck_override=t.get('did'),
-                    ordinal=t['ord']
-                ) for t in model_data['tmpls']
-            ]
-            
-            models[int(model_id)] = Model(
-                id=int(model_id),
-                name=model_data['name'],
-                fields=[f['name'] for f in model_data['flds']],
-                templates=templates,
-                css=model_data['css'],
-                deck_id=model_data['did'],
-                modification_time=datetime.fromtimestamp(model_data['mod']),
-                type=model_data['type'],
-                usn=model_data['usn'],
-                version=model_data['vers']
-            )
+            try:
+                logger.debug(f"Processing model: {model_data.get('name', 'Unknown')}")
+                templates = [
+                    Template(
+                        name=t['name'],
+                        question_format=t['qfmt'],
+                        answer_format=t['afmt'],
+                        browser_question_format=t.get('bqfmt'),
+                        browser_answer_format=t.get('bafmt'),
+                        deck_override=t.get('did'),
+                        ordinal=t['ord']
+                    ) for t in model_data['tmpls']
+                ]
+                
+                models[int(model_id)] = Model(
+                    id=int(model_id),
+                    name=model_data['name'],
+                    fields=[f['name'] for f in model_data['flds']],
+                    templates=templates,
+                    css=model_data['css'],
+                    deck_id=model_data['did'],
+                    modification_time=datetime.fromtimestamp(model_data['mod']),
+                    type=model_data['type'],
+                    usn=model_data['usn'],
+                    version=model_data.get('vers', 1)  # Default to 1 if 'vers' is missing
+                )
+                logger.debug(f"Successfully processed model: {model_data['name']}")
+            except KeyError as e:
+                logger.error(f"Missing required field in model data: {e}")
+                logger.debug(f"Model data: {model_data}")
+                raise ValueError(f"Invalid model data: missing field {e}")
+            except Exception as e:
+                logger.error(f"Error processing model: {str(e)}")
+                logger.debug(f"Model data: {model_data}")
+                raise
         return models
 
     def _parse_decks(self, decks_dict: dict) -> Dict[int, Deck]:

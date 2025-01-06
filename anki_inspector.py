@@ -17,13 +17,16 @@ class AnkiInspector:
 
     def __enter__(self):
         """Setup when entering 'with' context."""
-        self._load_collection()
-        return self
+        try:
+            self._load_collection()
+            return self
+        except Exception:
+            self.cleanup()  # Clean up if initialization fails
+            raise
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Cleanup when exiting 'with' context."""
         self.cleanup()
-        # Return False to propagate exceptions
         return False
 
     def _load_collection(self):
