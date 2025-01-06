@@ -5,6 +5,7 @@ import sys
 import logging
 from anki_inspector import AnkiInspector
 from operations import OperationType, OperationRecipe
+from pathlib import Path
 
 logger = logging.getLogger('anki_inspector')
 
@@ -27,6 +28,7 @@ def parse_args():
                         help='Command to execute')
     parser.add_argument('--model', help='Model name for template operations', default=None)
     parser.add_argument('--template', help='Template name for question/answer operations', default=None)
+    parser.add_argument('--output', help='Output path for package operation', default=None)
     parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
                        default='error', help='Set logging level')
 
@@ -42,7 +44,8 @@ def main():
     setup_logging(args.log_level)
 
     try:
-        with AnkiInspector(args.apkg_file) as inspector:
+        output_path = Path(args.output) if args.output else None
+        with AnkiInspector(args.apkg_file, output_path) as inspector:
             recipe = OperationRecipe(args.command, args.model, args.template)
             inspector.operations.run(recipe)
     except Exception as e:

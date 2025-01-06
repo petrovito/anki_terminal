@@ -32,3 +32,15 @@ class ApkgExtractor:
     def db_path(self) -> Path:
         """Get path to the extracted database."""
         return Path(self.temp_dir) / 'collection.anki2' 
+
+    def package(self, output_path: Path) -> None:
+        """Create a new .apkg file with all contents of the temp directory."""
+        logger.debug(f"Creating new .apkg file at: {output_path}")
+        with zipfile.ZipFile(output_path, 'w') as zip_ref:
+            # Add all files from temp directory
+            for file_path in Path(self.temp_dir).rglob('*'):
+                if file_path.is_file():
+                    # Get relative path from temp_dir
+                    relative_path = file_path.relative_to(self.temp_dir)
+                    logger.debug(f"Adding file to package: {relative_path}")
+                    zip_ref.write(file_path, relative_path) 
