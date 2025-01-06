@@ -8,7 +8,7 @@ from operations import OperationType, OperationRecipe
 
 logger = logging.getLogger('anki_inspector')
 
-def setup_logging(verbose=False):
+def setup_logging(level: str):
     """Setup logging configuration."""
     if not logger.handlers:
         handler = logging.StreamHandler()
@@ -16,8 +16,9 @@ def setup_logging(verbose=False):
         handler.setFormatter(formatter)
         logger.addHandler(handler)
     
-    level = logging.DEBUG if verbose else logging.INFO
-    logger.setLevel(level)
+    # Convert string level to logging constant
+    log_level = getattr(logging, level.upper())
+    logger.setLevel(log_level)
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Inspect Anki .apkg files')
@@ -26,7 +27,8 @@ def parse_args():
                         help='Command to execute')
     parser.add_argument('--model', help='Model name for template operations', default=None)
     parser.add_argument('--template', help='Template name for question/answer operations', default=None)
-    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
+                       default='error', help='Set logging level')
 
     if len(sys.argv) < 3:
         parser.print_help()
@@ -37,7 +39,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    setup_logging(args.verbose)
+    setup_logging(args.log_level)
 
     try:
         with AnkiInspector(args.apkg_file) as inspector:
