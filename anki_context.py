@@ -19,9 +19,12 @@ class AnkiContext:
         self.db_reader = None
         self.collection = None
         self.operations = None
+        self.is_destroyed = False
 
     def __enter__(self):
         """Setup and maintain context of extractor and db reader."""
+        if self.is_destroyed:
+            raise RuntimeError("This context has been destroyed and cannot be reused")
         try:
             self.extractor = ApkgManager(self.apkg_path).__enter__()
             self.db_reader = DatabaseManager(self.extractor.db_path).__enter__()
@@ -39,13 +42,35 @@ class AnkiContext:
 
     def cleanup(self):
         """Clean up resources in reverse order of creation."""
-        if self.db_reader:
-            self.db_reader.__exit__(None, None, None)
-        if self.extractor:
-            self.extractor.__exit__(None, None, None)
+        try:
+            # If we have writes and an output path, package the changes
+            if self.operations and self.operations.has_writes:
+                if self.output_path:
+                    logger.info("Changes detected, packaging new .apkg file")
+                    self._package()
+                else:
+                    logger.warning("Changes were made but no output path specified, changes will be lost")
+        finally:
+            # Always clean up resources
+            if self.db_reader:
+                self.db_reader.__exit__(None, None, None)
+            if self.extractor:
+                self.extractor.__exit__(None, None, None)
+            self.is_destroyed = True
+            if self.operations:
+                self.operations.mark_destroyed()
 
     def package(self) -> None:
         """Package the current state of the collection into a new .apkg file."""
+        if self.is_destroyed:
+            raise RuntimeError("This context has been destroyed and cannot package files")
+        self._package()
+        self.is_destroyed = True
+        if self.operations:
+            self.operations.mark_destroyed()
+
+    def _package(self) -> None:
+        """Internal method to package the current state of the collection."""
         if not self.output_path:
             raise ValueError("No output path specified")
         if not self.extractor or not self.db_reader:
@@ -53,13 +78,15 @@ class AnkiContext:
         if self.output_path.exists():
             raise ValueError(f"Output file already exists: {self.output_path}")
         
+        # Apply any pending changes to the database
+        if self.operations and self.operations.write_ops.changelog.changes:
+            logger.info("Applying changes to database before packaging")
+            self.db_reader.apply_changes(self.operations.write_ops.changelog)
+        
         # Close the database connection
         self.db_reader.__exit__(None, None, None)
         self.db_reader = None
         
         # Create the new package
         self.extractor.package(self.output_path)
-        
-        # The context is now invalid and should be exited
-        raise RuntimeError("Context is no longer valid after packaging. Please exit the context and create a new one if needed.")
 

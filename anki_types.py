@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 from enum import IntEnum
 
@@ -13,6 +13,22 @@ class Template:
     deck_override: Optional[int] = None  # did
     ordinal: int = 0     # ord
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert template to Anki's JSON format."""
+        result = {
+            'name': self.name,
+            'qfmt': self.question_format,
+            'afmt': self.answer_format,
+            'ord': self.ordinal,
+        }
+        if self.browser_question_format:
+            result['bqfmt'] = self.browser_question_format
+        if self.browser_answer_format:
+            result['bafmt'] = self.browser_answer_format
+        if self.deck_override:
+            result['did'] = self.deck_override
+        return result
+
 @dataclass
 class Model:
     id: int              # mid
@@ -25,7 +41,22 @@ class Model:
     type: int            # 0 for standard, 1 for cloze
     usn: int            # update sequence number
     version: int        # vers
-    
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert model to Anki's JSON format."""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'flds': [{'name': name, 'ord': i} for i, name in enumerate(self.fields)],
+            'tmpls': [t.to_dict() for t in self.templates],
+            'css': self.css,
+            'did': self.deck_id,
+            'mod': int(self.modification_time.timestamp()),
+            'type': self.type,
+            'usn': self.usn,
+            'vers': self.version
+        }
+
 @dataclass
 class Note:
     id: int             # nid

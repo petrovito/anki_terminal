@@ -18,24 +18,43 @@ class OperationType(Enum):
     PRINT_ANSWER = 'print_answer'
     PRINT_CSS = 'print_css'
     NOTE_EXAMPLE = 'note_example'
+    RENAME_FIELD = 'rename_field'
     RUN_ALL = 'run_all'
 
 class OperationRecipe:
-    def __init__(self, operation_type: OperationType, model_name: str = None, template_name: str = None):
+    def __init__(self, operation_type: OperationType, model_name: str = None, template_name: str = None,
+                 old_field_name: str = None, new_field_name: str = None):
         self.operation_type = operation_type
         self.model_name = model_name
         self.template_name = template_name
+        self.old_field_name = old_field_name
+        self.new_field_name = new_field_name
 
 class UserOperations:
     """High-level operations available to users."""
     def __init__(self, collection: Collection):
         self.read_ops = ReadOperations(collection)
         self.write_ops = WriteOperations(collection)
+        self.has_writes = False  # Track if any write operations were performed
+        self.is_destroyed = False
+
+    def mark_destroyed(self):
+        """Mark this operations instance as destroyed."""
+        self.is_destroyed = True
 
     def run(self, recipe: OperationRecipe) -> None:
         """Execute operation based on the recipe and format output."""
+        if self.is_destroyed:
+            raise RuntimeError("This context has been destroyed and cannot run operations")
+            
         logger.info(f"Running operation: {recipe.operation_type.value}")
         
+        # Track write operations here when they are added
+        write_operations = {OperationType.RENAME_FIELD}  # Add write operation types here when implemented
+        
+        if recipe.operation_type in write_operations:
+            self.has_writes = True
+            
         if recipe.operation_type == OperationType.NUM_CARDS:
             result = self.read_ops.num_cards()
             print(result)
@@ -67,6 +86,12 @@ class UserOperations:
         elif recipe.operation_type == OperationType.NOTE_EXAMPLE:
             example = self.read_ops.get_note_example(recipe.model_name)
             print(json.dumps(example, indent=2))
+
+        elif recipe.operation_type == OperationType.RENAME_FIELD:
+            if not recipe.old_field_name or not recipe.new_field_name:
+                raise ValueError("Both old_field_name and new_field_name must be specified for rename_field operation")
+            self.write_ops.rename_field(recipe.model_name, recipe.old_field_name, recipe.new_field_name)
+            print(f"Renamed field '{recipe.old_field_name}' to '{recipe.new_field_name}'")
 
         elif recipe.operation_type == OperationType.RUN_ALL:
             self.run(OperationRecipe(OperationType.NUM_CARDS))

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from anki_types import Collection, Model, Note, Card, Deck, Template
+from changelog import ChangeLog
 
 logger = logging.getLogger('anki_inspector')
 
@@ -31,6 +32,35 @@ class DatabaseManager:
             except Exception as e:
                 logger.warning(f"Error closing database: {str(e)}")
         return False
+
+    def apply_changes(self, changelog: ChangeLog) -> None:
+        """Apply changes from a changelog to the database."""
+        if not changelog.changes:
+            logger.debug("No changes to apply")
+            return
+            
+        logger.info(f"Applying {len(changelog.changes)} changes to database")
+        
+        try:
+            for change in changelog.changes:
+                # Build the SQL UPDATE statement
+                where_clause = " AND ".join(f"{k} = ?" for k in change.where.keys())
+                set_clause = ", ".join(f"{k} = ?" for k in change.updates.keys())
+                sql = f"UPDATE {change.table} SET {set_clause} WHERE {where_clause}"
+                
+                # Combine parameters in the correct order
+                params = list(change.updates.values()) + list(change.where.values())
+                
+                logger.debug(f"Executing SQL: {sql} with params: {params}")
+                self.conn.execute(sql, params)
+            
+            self.conn.commit()
+            logger.info("Successfully applied all changes to database")
+            
+        except Exception as e:
+            logger.error(f"Error applying changes to database: {str(e)}")
+            self.conn.rollback()
+            raise
 
     def read_collection(self) -> Collection:
         """Read and parse the collection data from the database."""
