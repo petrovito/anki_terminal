@@ -1,14 +1,15 @@
 import pytest
 from pathlib import Path
 from anki_inspector import AnkiInspector
-from operations import Operations, OperationType, OperationRecipe
+from operations import OperationType, OperationRecipe
+from read_operations import ReadOperations
 
 @pytest.fixture
 def operations():
     """Fixture that provides an Operations instance with loaded test data."""
     apkg_path = Path("test_data/jap.apkg")
     with AnkiInspector(apkg_path) as inspector:
-        yield inspector.operations
+        yield inspector.operations.read_ops  # Now yielding read_ops directly
 
 def test_num_cards(operations):
     """Test counting total number of cards."""

@@ -6,7 +6,7 @@ from typing import Optional
 
 from apkg_extractor import ApkgExtractor
 from database_reader import DatabaseReader
-from operations import Operations
+from operations import UserOperations
 
 logger = logging.getLogger('anki_inspector')
 
@@ -26,7 +26,7 @@ class AnkiInspector:
             self.extractor = ApkgExtractor(self.apkg_path).__enter__()
             self.db_reader = DatabaseReader(self.extractor.db_path).__enter__()
             self.collection = self.db_reader.read_collection()
-            self.operations = Operations(self.collection)
+            self.operations = UserOperations(self.collection)
             return self
         except Exception:
             self.cleanup()

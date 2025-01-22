@@ -3,9 +3,9 @@
 import argparse
 import sys
 import logging
+from pathlib import Path
 from anki_inspector import AnkiInspector
 from operations import OperationType, OperationRecipe
-from pathlib import Path
 
 logger = logging.getLogger('anki_inspector')
 
