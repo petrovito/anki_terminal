@@ -11,7 +11,7 @@ from anki_types import Collection, Model, Note, Card, Deck, Template
 
 logger = logging.getLogger('anki_inspector')
 
-class DatabaseReader:
+class DatabaseManager:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.conn = None

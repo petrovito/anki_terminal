@@ -4,7 +4,7 @@ import argparse
 import sys
 import logging
 from pathlib import Path
-from anki_inspector import AnkiInspector
+from anki_context import AnkiContext
 from operations import OperationType, OperationRecipe
 
 logger = logging.getLogger('anki_inspector')
@@ -45,7 +45,7 @@ def main():
 
     try:
         output_path = Path(args.output) if args.output else None
-        with AnkiInspector(args.apkg_file, output_path) as inspector:
+        with AnkiContext(args.apkg_file, output_path) as inspector:
             recipe = OperationRecipe(args.command, args.model, args.template)
             inspector.operations.run(recipe)
     except Exception as e:

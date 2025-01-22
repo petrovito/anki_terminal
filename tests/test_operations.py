@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from anki_inspector import AnkiInspector
+from anki_context import AnkiContext
 from operations import OperationType, OperationRecipe
 from read_operations import ReadOperations
 
@@ -8,7 +8,7 @@ from read_operations import ReadOperations
 def operations():
     """Fixture that provides an Operations instance with loaded test data."""
     apkg_path = Path("test_data/jap.apkg")
-    with AnkiInspector(apkg_path) as inspector:
+    with AnkiContext(apkg_path) as inspector:
         yield inspector.operations.read_ops  # Now yielding read_ops directly
 
 def test_num_cards(operations):

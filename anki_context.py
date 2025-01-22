@@ -4,13 +4,13 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from apkg_extractor import ApkgExtractor
-from database_reader import DatabaseReader
+from apkg_manager import ApkgManager
+from database_manager import DatabaseManager
 from operations import UserOperations
 
 logger = logging.getLogger('anki_inspector')
 
-class AnkiInspector:
+class AnkiContext:
     def __init__(self, apkg_path, output_path: Optional[Path] = None):
         self.logger = logging.getLogger('anki_inspector')
         self.apkg_path = Path(apkg_path)
@@ -23,8 +23,8 @@ class AnkiInspector:
     def __enter__(self):
         """Setup and maintain context of extractor and db reader."""
         try:
-            self.extractor = ApkgExtractor(self.apkg_path).__enter__()
-            self.db_reader = DatabaseReader(self.extractor.db_path).__enter__()
+            self.extractor = ApkgManager(self.apkg_path).__enter__()
+            self.db_reader = DatabaseManager(self.extractor.db_path).__enter__()
             self.collection = self.db_reader.read_collection()
             self.operations = UserOperations(self.collection)
             return self

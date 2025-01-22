@@ -8,7 +8,7 @@ from pathlib import Path
 
 logger = logging.getLogger('anki_inspector')
 
-class ApkgExtractor:
+class ApkgManager:
     def __init__(self, apkg_path: Path):
         self.apkg_path = apkg_path
         self.temp_dir = tempfile.mkdtemp()
