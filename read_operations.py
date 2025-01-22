@@ -70,6 +70,19 @@ class ReadOperations:
         model = self._get_model(model_name)
         return model.css
 
+    def get_note_example(self, model_name: Optional[str] = None) -> Dict[str, str]:
+        """Get an example note from the specified model, showing field names and their values."""
+        logger.debug(f"Getting example note for model: {model_name if model_name else 'default'}")
+        model = self._get_model(model_name)
+        
+        # Find the first note that uses this model
+        for note in self.collection.notes:
+            if note.model_id == model.id:
+                return note.fields
+        
+        # If no notes found, return empty fields
+        return {field: "" for field in model.fields}
+
     # Helper methods
     def _get_model(self, model_name: Optional[str] = None) -> Model:
         """Get a model by name or return the only model if there's just one."""

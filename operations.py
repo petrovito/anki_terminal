@@ -17,6 +17,7 @@ class OperationType(Enum):
     PRINT_QUESTION = 'print_question'
     PRINT_ANSWER = 'print_answer'
     PRINT_CSS = 'print_css'
+    NOTE_EXAMPLE = 'note_example'
     RUN_ALL = 'run_all'
 
 class OperationRecipe:
@@ -63,6 +64,10 @@ class UserOperations:
             css = self.read_ops.get_css(recipe.model_name)
             print(css)
 
+        elif recipe.operation_type == OperationType.NOTE_EXAMPLE:
+            example = self.read_ops.get_note_example(recipe.model_name)
+            print(json.dumps(example, indent=2))
+
         elif recipe.operation_type == OperationType.RUN_ALL:
             self.run(OperationRecipe(OperationType.NUM_CARDS))
             self.run(OperationRecipe(OperationType.LIST_MODELS))
@@ -71,3 +76,4 @@ class UserOperations:
             self.run(OperationRecipe(OperationType.PRINT_QUESTION, recipe.model_name, recipe.template_name))
             self.run(OperationRecipe(OperationType.PRINT_ANSWER, recipe.model_name, recipe.template_name))
             self.run(OperationRecipe(OperationType.PRINT_CSS, recipe.model_name))
+            self.run(OperationRecipe(OperationType.NOTE_EXAMPLE, recipe.model_name))
