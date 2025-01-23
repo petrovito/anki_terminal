@@ -21,27 +21,25 @@ def test_rename_field_persists():
                 old_field_name="Front",
                 new_field_name="Question"
             )
-            inspector.operations.run(recipe)
-            # Verify the write flag is set
-            assert inspector.operations.has_writes, "Write flag not set after rename operation"
+            inspector._operations.run(recipe)
         
-        # Second context: Open the saved file and verify changes
+        # Second context: Verify changes persisted
         with AnkiContext(output_path) as inspector:
             # Check model fields
-            fields = inspector.operations.read_ops.list_fields()
+            fields = inspector._operations.read_ops.list_fields()
             field_names = {field["name"] for field in fields}
             logger.debug(f"Field names in saved file: {field_names}")
             assert "Question" in field_names, f"Field 'Question' not found in {field_names}"
             assert "Front" not in field_names, f"Field 'Front' still exists in {field_names}"
             
             # Check note content
-            example = inspector.operations.read_ops.get_note_example()
+            example = inspector._operations.read_ops.get_note_example()
             logger.debug(f"Example note in saved file: {example}")
             assert "Question" in example
             assert "Front" not in example
             
             # Template content should still use the old field name
-            question_format = inspector.operations.read_ops.get_question_format()
+            question_format = inspector._operations.read_ops.get_question_format()
             logger.debug(f"Question format in saved file: {question_format}")
             assert "{{Front}}" in question_format
             assert "{{Question}}" not in question_format 

@@ -28,6 +28,8 @@ def parse_args():
                         help='Command to execute')
     parser.add_argument('--model', help='Model name for template operations', default=None)
     parser.add_argument('--template', help='Template name for question/answer operations', default=None)
+    parser.add_argument('--old-field', help='Old field name for rename operation', default=None)
+    parser.add_argument('--new-field', help='New field name for rename operation', default=None)
     parser.add_argument('--output', help='Output path for package operation', default=None)
     parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
                        default='error', help='Set logging level')
@@ -38,19 +40,25 @@ def parse_args():
 
     return parser.parse_args()
 
-
 def main():
     args = parse_args()
     setup_logging(args.log_level)
 
-    try:
-        output_path = Path(args.output) if args.output else None
-        with AnkiContext(args.apkg_file, output_path) as inspector:
-            recipe = OperationRecipe(args.command, args.model, args.template)
-            inspector.operations.run(recipe)
-    except Exception as e:
-        logger.error(str(e))
-        sys.exit(1) 
+    # Create recipe from arguments
+    recipe = OperationRecipe(
+        operation_type=args.command,
+        model_name=args.model,
+        template_name=args.template,
+        old_field_name=args.old_field,
+        new_field_name=args.new_field
+    )
+
+    # Create output path if specified
+    output_path = Path(args.output) if args.output else None
+
+    # Run operation in context
+    with AnkiContext(args.apkg_file, output_path) as context:
+        context.run(recipe)
 
 if __name__ == '__main__':
     main() 

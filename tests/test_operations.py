@@ -2,14 +2,13 @@ import pytest
 from pathlib import Path
 from anki_context import AnkiContext
 from operations import OperationType, OperationRecipe
-from read_operations import ReadOperations
 
 @pytest.fixture
 def operations():
     """Fixture that provides an Operations instance with loaded test data."""
     apkg_path = Path("test_data/jap.apkg")
     with AnkiContext(apkg_path) as inspector:
-        yield inspector.operations  # Now yielding the full operations object
+        yield inspector._operations  # Now yielding the full operations object
 
 @pytest.fixture
 def read_operations(operations):

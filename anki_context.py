@@ -6,87 +6,89 @@ from typing import Optional
 
 from apkg_manager import ApkgManager
 from database_manager import DatabaseManager
-from operations import UserOperations
+from operations import UserOperations, OperationRecipe
+from changelog import ChangeLog
 
 logger = logging.getLogger('anki_inspector')
 
 class AnkiContext:
     def __init__(self, apkg_path, output_path: Optional[Path] = None):
-        self.logger = logging.getLogger('anki_inspector')
-        self.apkg_path = Path(apkg_path)
-        self.output_path = output_path
-        self.extractor = None
-        self.db_reader = None
-        self.collection = None
-        self.operations = None
-        self.is_destroyed = False
+        self._logger = logging.getLogger('anki_inspector')
+        self._apkg_path = Path(apkg_path)
+        self._output_path = output_path
+        self._extractor = None
+        self._db_reader = None
+        self._collection = None
+        self._changelog = None
+        self._operations = None
+        self._is_destroyed = False
 
     def __enter__(self):
         """Setup and maintain context of extractor and db reader."""
-        if self.is_destroyed:
+        if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot be reused")
         try:
-            self.extractor = ApkgManager(self.apkg_path).__enter__()
-            self.db_reader = DatabaseManager(self.extractor.db_path).__enter__()
-            self.collection = self.db_reader.read_collection()
-            self.operations = UserOperations(self.collection)
+            self._extractor = ApkgManager(self._apkg_path).__enter__()
+            self._db_reader = DatabaseManager(self._extractor.db_path).__enter__()
+            self._collection = self._db_reader.read_collection()
+            self._changelog = ChangeLog(self._collection)
+            self._operations = UserOperations(self._collection, self._changelog)
             return self
         except Exception:
-            self.cleanup()
+            self._cleanup()
             raise
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Cleanup all resources."""
-        self.cleanup()
+        self._cleanup()
         return False
 
-    def cleanup(self):
+    def _cleanup(self):
         """Clean up resources in reverse order of creation."""
         try:
             # If we have writes and an output path, package the changes
-            if self.operations and self.operations.has_writes:
-                if self.output_path:
+            if self._has_writes():
+                if self._output_path:
                     logger.info("Changes detected, packaging new .apkg file")
                     self._package()
                 else:
                     logger.warning("Changes were made but no output path specified, changes will be lost")
         finally:
             # Always clean up resources
-            if self.db_reader:
-                self.db_reader.__exit__(None, None, None)
-            if self.extractor:
-                self.extractor.__exit__(None, None, None)
-            self.is_destroyed = True
-            if self.operations:
-                self.operations.mark_destroyed()
+            if self._db_reader:
+                self._db_reader.__exit__(None, None, None)
+            if self._extractor:
+                self._extractor.__exit__(None, None, None)
+            self._is_destroyed = True
 
-    def package(self) -> None:
-        """Package the current state of the collection into a new .apkg file."""
-        if self.is_destroyed:
-            raise RuntimeError("This context has been destroyed and cannot package files")
-        self._package()
-        self.is_destroyed = True
-        if self.operations:
-            self.operations.mark_destroyed()
+    def _has_writes(self) -> bool:
+        """Check if any write operations were performed."""
+        return self._changelog is not None and len(self._changelog.changes) > 0
+
+    def run(self, recipe: OperationRecipe) -> None:
+        """Run an operation after checking context is valid."""
+        if self._is_destroyed:
+            raise RuntimeError("This context has been destroyed and cannot run operations")
+        self._operations.run(recipe)
 
     def _package(self) -> None:
         """Internal method to package the current state of the collection."""
-        if not self.output_path:
+        if not self._output_path:
             raise ValueError("No output path specified")
-        if not self.extractor or not self.db_reader:
+        if not self._extractor or not self._db_reader:
             raise RuntimeError("Cannot package: no collection is loaded")
-        if self.output_path.exists():
-            raise ValueError(f"Output file already exists: {self.output_path}")
+        if self._output_path.exists():
+            raise ValueError(f"Output file already exists: {self._output_path}")
         
         # Apply any pending changes to the database
-        if self.operations and self.operations.write_ops.changelog.changes:
+        if self._has_writes():
             logger.info("Applying changes to database before packaging")
-            self.db_reader.apply_changes(self.operations.write_ops.changelog)
+            self._db_reader.apply_changes(self._changelog)
         
         # Close the database connection
-        self.db_reader.__exit__(None, None, None)
-        self.db_reader = None
+        self._db_reader.__exit__(None, None, None)
+        self._db_reader = None
         
         # Create the new package
-        self.extractor.package(self.output_path)
+        self._extractor.package(self._output_path)
 
