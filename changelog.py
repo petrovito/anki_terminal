@@ -14,6 +14,7 @@ class ChangeType(Enum):
     UPDATE_NOTE_FIELD = auto()
     UPDATE_MODEL_FIELD = auto()
     ADD_MODEL = auto()
+    MIGRATE_NOTES = auto()
 
 @dataclass
 class Change:

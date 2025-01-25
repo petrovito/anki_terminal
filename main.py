@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from anki_context import AnkiContext
 from operations import OperationType, OperationRecipe
+import json
 
 logger = logging.getLogger('anki_inspector')
 
@@ -38,11 +39,17 @@ def parse_args():
     parser.add_argument('command', type=operation_type,
                        help=command_help,
                        metavar='COMMAND')
-    parser.add_argument('--model', help='Model name for operations (required for add-model, optional for others)', default=None)
+    parser.add_argument('--model', help='Model name for operations (source model for migrate-notes)', default=None)
+    parser.add_argument('--target-model', help='Target model name for migrate-notes', default=None)
+    parser.add_argument('--field-mapping', help='JSON field mapping for migrate-notes ({"source_field": "target_field", ...})', default=None)
     parser.add_argument('--template', help='Template name for question/answer operations', default=None)
     parser.add_argument('--old-field', help='Old field name for rename operation', default=None)
     parser.add_argument('--new-field', help='New field name for rename operation', default=None)
     parser.add_argument('--output', help='Output path for package operation', default=None)
+    parser.add_argument('--fields', help='JSON array of field names for add-model (["field1", "field2", ...])', default=None)
+    parser.add_argument('--question-format', help='Question template format for add-model', default=None)
+    parser.add_argument('--answer-format', help='Answer template format for add-model', default=None)
+    parser.add_argument('--css', help='Card CSS styling for add-model', default=None)
     parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
                        default='error', help='Set logging level')
 
@@ -56,13 +63,30 @@ def main():
     args = parse_args()
     setup_logging(args.log_level)
 
+    # Parse fields JSON if provided
+    fields = None
+    if args.fields:
+        try:
+            fields = json.loads(args.fields)
+            if not isinstance(fields, list):
+                raise ValueError("Fields must be a JSON array")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid fields JSON: {e}")
+            sys.exit(1)
+
     # Create recipe from arguments
     recipe = OperationRecipe(
         operation_type=args.command,
         model_name=args.model,
         template_name=args.template,
         old_field_name=args.old_field,
-        new_field_name=args.new_field
+        new_field_name=args.new_field,
+        target_model_name=args.target_model,
+        field_mapping=args.field_mapping,
+        fields=fields,
+        question_format=args.question_format,
+        answer_format=args.answer_format,
+        css=args.css
     )
 
     # Create output path if specified

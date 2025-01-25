@@ -27,6 +27,7 @@ class OperationType(Enum):
     # Write operations
     RENAME_FIELD = ("rename-field", False)
     ADD_MODEL = ("add-model", False)
+    MIGRATE_NOTES = ("migrate-notes", False)
     
     # Special operations
     RUN_ALL = ("run-all", True)  # This is a read-only operation that runs multiple read operations
@@ -39,10 +40,16 @@ class OperationType(Enum):
 class OperationRecipe:
     """Recipe for an operation to perform."""
     operation_type: OperationType
-    model_name: Optional[str] = None
-    template_name: Optional[str] = None
-    old_field_name: Optional[str] = None
-    new_field_name: Optional[str] = None
+    model_name: Optional[str] = None  # Required for add-model and migrate-notes (source)
+    template_name: Optional[str] = None  # Required for add-model and template operations
+    old_field_name: Optional[str] = None  # Required for rename-field
+    new_field_name: Optional[str] = None  # Required for rename-field
+    target_model_name: Optional[str] = None  # Required for migrate-notes (target)
+    field_mapping: Optional[str] = None  # Required for migrate-notes
+    fields: Optional[list[str]] = None  # Required for add-model
+    question_format: Optional[str] = None  # Required for add-model
+    answer_format: Optional[str] = None  # Required for add-model
+    css: Optional[str] = None  # Required for add-model
 
     @property
     def is_read_only(self) -> bool:
@@ -117,8 +124,36 @@ class UserOperations:
         elif recipe.operation_type == OperationType.ADD_MODEL:
             if not recipe.model_name:
                 raise ValueError("Model name must be provided")
-            self._write_ops.add_model(recipe.model_name)
+            if not recipe.fields:
+                raise ValueError("Field list must be provided")
+            if not recipe.template_name:
+                raise ValueError("Template name must be provided")
+            if not recipe.question_format:
+                raise ValueError("Question format must be provided")
+            if not recipe.answer_format:
+                raise ValueError("Answer format must be provided")
+            if not recipe.css:
+                raise ValueError("CSS must be provided")
+            
+            self._write_ops.add_model(
+                model_name=recipe.model_name,
+                fields=recipe.fields,
+                template_name=recipe.template_name,
+                question_format=recipe.question_format,
+                answer_format=recipe.answer_format,
+                css=recipe.css
+            )
             print(f"Added model '{recipe.model_name}' successfully")
+
+        elif recipe.operation_type == OperationType.MIGRATE_NOTES:
+            if not recipe.model_name:
+                raise ValueError("Source model name must be provided")
+            if not recipe.target_model_name:
+                raise ValueError("Target model name must be provided")
+            if not recipe.field_mapping:
+                raise ValueError("Field mapping must be provided")
+            self._write_ops.migrate_notes(recipe.model_name, recipe.target_model_name, recipe.field_mapping)
+            print(f"Successfully migrated notes from '{recipe.model_name}' to '{recipe.target_model_name}'")
 
         elif recipe.operation_type == OperationType.RUN_ALL:
             self.run(OperationRecipe(OperationType.NUM_CARDS))

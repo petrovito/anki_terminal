@@ -59,40 +59,43 @@ class WriteOperations:
         # Note: We don't need to update the database since note fields are stored as ordered values
         self.changelog.add_model_change()
 
-    def add_model(self, model_name: str, model_id: Optional[int] = None) -> None:
-        """Add a new model with the given name and optional ID.
+    def add_model(self, model_name: str, fields: list[str], template_name: str,
+                question_format: str, answer_format: str, css: str) -> None:
+        """Add a new model with the given properties.
         
         Args:
             model_name: Name of the model to create
-            model_id: Optional ID for the model. If not provided, a new unique ID will be generated.
+            fields: List of field names for the model
+            template_name: Name of the template
+            question_format: Format string for the question side
+            answer_format: Format string for the answer side
+            css: CSS styling for the cards
         """
         # Check if model name already exists
         for model in self.collection.models.values():
             if model.name == model_name:
                 raise ValueError(f"Model already exists: {model_name}")
 
-        # Generate model ID if not provided
-        if model_id is None:
-            # Find max ID and add 1, or use a random base number if no models exist
-            model_id = max(self.collection.models.keys(), default=1000000000) + 1
+        # Generate model ID
+        model_id = max(self.collection.models.keys(), default=1000000000) + 1
 
         # Get first available deck ID from collection
         deck_id = next(iter(self.collection.decks.keys()))
 
-        # Create new model with default values
+        # Create new model with provided values
         model = Model(
             id=model_id,
             name=model_name,
-            fields=["Front", "Back"],  # Default fields
+            fields=fields,
             templates=[
                 Template(
-                    name="Card 1",
-                    question_format="{{Front}}",
-                    answer_format="{{FrontSide}}\n<hr id=\"answer\">\n{{Back}}",
+                    name=template_name,
+                    question_format=question_format,
+                    answer_format=answer_format,
                     ordinal=0
                 )
             ],
-            css=".card {\n font-family: arial;\n font-size: 20px;\n text-align: center;\n color: black;\n background-color: white;\n}",
+            css=css,
             deck_id=deck_id,
             modification_time=datetime.now(),
             type=0,  # Standard (not cloze)
@@ -116,4 +119,73 @@ class WriteOperations:
             table='col',
             where={'id': 1},  # Collection row ID is always 1
             updates={'models': json.dumps(models_dict)}
+        ))
+
+    def migrate_notes(self, source_model_name: str, target_model_name: str, field_mapping_json: str) -> None:
+        """Migrate notes from one model to another using a field mapping.
+        
+        Args:
+            source_model_name: Name of the model to migrate notes from
+            target_model_name: Name of the model to migrate notes to
+            field_mapping_json: JSON string mapping source fields to target fields.
+                              Format: {"source_field1": "target_field1", ...}
+        """
+        # Parse field mapping
+        try:
+            field_mapping = json.loads(field_mapping_json)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid field mapping JSON: {e}")
+
+        # Get source and target models
+        source_model = None
+        target_model = None
+        for model in self.collection.models.values():
+            if model.name == source_model_name:
+                source_model = model
+            elif model.name == target_model_name:
+                target_model = model
+        
+        if not source_model:
+            raise ValueError(f"Source model not found: {source_model_name}")
+        if not target_model:
+            raise ValueError(f"Target model not found: {target_model_name}")
+
+        # Validate field mapping
+        for source_field in field_mapping:
+            if source_field not in source_model.fields:
+                raise ValueError(f"Source field not found in {source_model_name}: {source_field}")
+            if field_mapping[source_field] not in target_model.fields:
+                raise ValueError(f"Target field not found in {target_model_name}: {field_mapping[source_field]}")
+
+        # Check that mapping is injective (no duplicate target fields)
+        target_fields = list(field_mapping.values())
+        if len(target_fields) != len(set(target_fields)):
+            raise ValueError("Field mapping must be injective (no duplicate target fields)")
+
+        # Find notes using source model
+        migrated_count = 0
+        for note in self.collection.notes:
+            if note.model_id == source_model.id:
+                # Create new field values using mapping
+                new_fields = {field: "" for field in target_model.fields}  # Initialize all fields empty
+                for source_field, target_field in field_mapping.items():
+                    new_fields[target_field] = note.fields[source_field]
+                
+                # Update note
+                note.model_id = target_model.id
+                note.fields = new_fields
+                migrated_count += 1
+
+        if migrated_count == 0:
+            raise ValueError(f"No notes found for model: {source_model_name}")
+
+        # Add change to changelog
+        self.changelog.add_change(Change(
+            type=ChangeType.MIGRATE_NOTES,
+            table='notes',
+            where={'mid': source_model.id},
+            updates={
+                'mid': target_model.id,
+                'flds': '\x1f'.join(str(v) for v in new_fields.values())
+            }
         ))
