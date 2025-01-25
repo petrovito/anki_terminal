@@ -1,6 +1,7 @@
 import logging
 import json
-from enum import Enum
+from enum import Enum, auto
+from dataclasses import dataclass
 from typing import Optional
 
 from anki_types import Collection
@@ -11,25 +12,40 @@ from changelog import ChangeLog
 logger = logging.getLogger('anki_inspector')
 
 class OperationType(Enum):
-    NUM_CARDS = 'num_cards'
-    LIST_FIELDS = 'list_fields'
-    LIST_MODELS = 'list_models'
-    LIST_TEMPLATES = 'list_templates'
-    PRINT_QUESTION = 'print_question'
-    PRINT_ANSWER = 'print_answer'
-    PRINT_CSS = 'print_css'
-    NOTE_EXAMPLE = 'note_example'
-    RENAME_FIELD = 'rename_field'
-    RUN_ALL = 'run_all'
+    """Types of operations that can be performed."""
+    # Read operations
+    NUM_CARDS = ("num-cards", True)
+    LIST_MODELS = ("list-models", True)
+    LIST_TEMPLATES = ("list-templates", True)
+    LIST_FIELDS = ("list-fields", True)
+    PRINT_QUESTION = ("print-question", True)
+    PRINT_ANSWER = ("print-answer", True)
+    PRINT_CSS = ("print-css", True)
+    NOTE_EXAMPLE = ("note-example", True)
+    
+    # Write operations
+    RENAME_FIELD = ("rename-field", False)
+    
+    # Special operations
+    RUN_ALL = ("run-all", True)  # This is a read-only operation that runs multiple read operations
 
+    def __init__(self, value: str, is_read_only: bool):
+        self._value_ = value
+        self.is_read_only = is_read_only
+
+@dataclass
 class OperationRecipe:
-    def __init__(self, operation_type: OperationType, model_name: str = None, template_name: str = None,
-                 old_field_name: str = None, new_field_name: str = None):
-        self.operation_type = operation_type
-        self.model_name = model_name
-        self.template_name = template_name
-        self.old_field_name = old_field_name
-        self.new_field_name = new_field_name
+    """Recipe for an operation to perform."""
+    operation_type: OperationType
+    model_name: Optional[str] = None
+    template_name: Optional[str] = None
+    old_field_name: Optional[str] = None
+    new_field_name: Optional[str] = None
+
+    @property
+    def is_read_only(self) -> bool:
+        """Whether this operation is read-only."""
+        return self.operation_type.is_read_only
 
 class UserOperations:
     """High-level operations available to users."""

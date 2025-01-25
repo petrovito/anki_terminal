@@ -12,10 +12,16 @@ from changelog import ChangeLog
 logger = logging.getLogger('anki_inspector')
 
 class AnkiContext:
-    def __init__(self, apkg_path, output_path: Optional[Path] = None):
+    def __init__(self, apkg_path: Path, output_path: Optional[Path] = None, read_only: bool = False):
         self._logger = logging.getLogger('anki_inspector')
         self._apkg_path = Path(apkg_path)
         self._output_path = output_path
+        self._read_only = read_only
+        
+        # Validate read-only mode and output path
+        if not read_only and not output_path:
+            raise ValueError("Output path must be specified for write operations")
+        
         self._extractor = None
         self._db_reader = None
         self._collection = None
@@ -28,7 +34,7 @@ class AnkiContext:
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot be reused")
         try:
-            self._extractor = ApkgManager(self._apkg_path).__enter__()
+            self._extractor = ApkgManager(self._apkg_path, read_only=self._read_only).__enter__()
             self._db_reader = DatabaseManager(self._extractor.db_path).__enter__()
             self._collection = self._db_reader.read_collection()
             self._changelog = ChangeLog(self._collection)
@@ -48,11 +54,11 @@ class AnkiContext:
         try:
             # If we have writes and an output path, package the changes
             if self._has_writes():
-                if self._output_path:
+                if not self._read_only:
                     logger.info("Changes detected, packaging new .apkg file")
                     self._package()
                 else:
-                    logger.warning("Changes were made but no output path specified, changes will be lost")
+                    logger.warning("Changes were made in read-only mode, changes will be lost")
         finally:
             # Always clean up resources
             if self._db_reader:
@@ -69,10 +75,17 @@ class AnkiContext:
         """Run an operation after checking context is valid."""
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot run operations")
+            
+        # Validate operation against read-only mode
+        if self._read_only and not recipe.is_read_only:
+            raise RuntimeError("Cannot perform write operation in read-only mode")
+            
         self._operations.run(recipe)
 
     def _package(self) -> None:
         """Internal method to package the current state of the collection."""
+        if self._read_only:
+            raise RuntimeError("Cannot package in read-only mode")
         if not self._output_path:
             raise ValueError("No output path specified")
         if not self._extractor or not self._db_reader:

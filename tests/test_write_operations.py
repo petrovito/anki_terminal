@@ -15,7 +15,7 @@ def test_rename_field_persists():
         output_path = tmp_dir_path / "output.apkg"
         
         # First context: Rename the field and save
-        with AnkiContext("test_data/jap.apkg", output_path) as inspector:
+        with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as inspector:
             recipe = OperationRecipe(
                 OperationType.RENAME_FIELD,
                 old_field_name="Front",
@@ -24,7 +24,7 @@ def test_rename_field_persists():
             inspector._operations.run(recipe)
         
         # Second context: Verify changes persisted
-        with AnkiContext(output_path) as inspector:
+        with AnkiContext(output_path, read_only=True) as inspector:
             # Check model fields
             fields = inspector._operations.read_ops.list_fields()
             field_names = {field["name"] for field in fields}

@@ -7,7 +7,7 @@ from operations import OperationType, OperationRecipe
 def operations():
     """Fixture that provides an Operations instance with loaded test data."""
     apkg_path = Path("test_data/jap.apkg")
-    with AnkiContext(apkg_path) as inspector:
+    with AnkiContext(apkg_path, read_only=True) as inspector:
         yield inspector._operations  # Now yielding the full operations object
 
 @pytest.fixture
