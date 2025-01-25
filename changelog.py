@@ -10,10 +10,10 @@ from anki_types import Model, Collection
 logger = logging.getLogger('anki_inspector')
 
 class ChangeType(Enum):
-    """Types of changes that can be made to the database."""
-    UPDATE_MODEL_FIELD = auto()  # Rename a field in a model
-    UPDATE_TEMPLATE = auto()     # Update template content
-    UPDATE_NOTE_FIELD = auto()   # Update a field in a note
+    """Types of changes that can be made."""
+    UPDATE_NOTE_FIELD = auto()
+    UPDATE_MODEL_FIELD = auto()
+    ADD_MODEL = auto()
 
 @dataclass
 class Change:

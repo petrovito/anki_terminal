@@ -38,7 +38,7 @@ def parse_args():
     parser.add_argument('command', type=operation_type,
                        help=command_help,
                        metavar='COMMAND')
-    parser.add_argument('--model', help='Model name for template operations', default=None)
+    parser.add_argument('--model', help='Model name for operations (required for add-model, optional for others)', default=None)
     parser.add_argument('--template', help='Template name for question/answer operations', default=None)
     parser.add_argument('--old-field', help='Old field name for rename operation', default=None)
     parser.add_argument('--new-field', help='New field name for rename operation', default=None)

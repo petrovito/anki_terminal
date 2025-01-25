@@ -26,6 +26,7 @@ class OperationType(Enum):
     
     # Write operations
     RENAME_FIELD = ("rename-field", False)
+    ADD_MODEL = ("add-model", False)
     
     # Special operations
     RUN_ALL = ("run-all", True)  # This is a read-only operation that runs multiple read operations
@@ -112,6 +113,12 @@ class UserOperations:
                 raise ValueError("Both old_field_name and new_field_name must be specified for rename_field operation")
             self._write_ops.rename_field(recipe.model_name, recipe.old_field_name, recipe.new_field_name)
             print(f"Renamed field '{recipe.old_field_name}' to '{recipe.new_field_name}'")
+
+        elif recipe.operation_type == OperationType.ADD_MODEL:
+            if not recipe.model_name:
+                raise ValueError("Model name must be provided")
+            self._write_ops.add_model(recipe.model_name)
+            print(f"Added model '{recipe.model_name}' successfully")
 
         elif recipe.operation_type == OperationType.RUN_ALL:
             self.run(OperationRecipe(OperationType.NUM_CARDS))
