@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from anki_types import Collection, Model, Template
 
 logger = logging.getLogger('anki_inspector')
@@ -10,9 +10,38 @@ class ReadOperations:
         self.collection = collection
 
     def num_cards(self) -> int:
-        """Get the total number of cards in the collection."""
-        logger.debug("Counting total number of cards")
+        """Get total number of cards."""
         return len(self.collection.cards)
+
+    def num_notes(self, model_name: Optional[str] = None) -> Union[int, Dict[str, int]]:
+        """Get number of notes, either total per model or for a specific model.
+        
+        Args:
+            model_name: If provided, only count notes for this model.
+                      If None, return a map of model names to their note counts.
+        
+        Returns:
+            Either an integer count for a specific model,
+            or a dictionary mapping model names to their note counts.
+        """
+        if model_name is not None:
+            # Find model by name
+            model_id = None
+            for mid, model in self.collection.models.items():
+                if model.name == model_name:
+                    model_id = mid
+                    break
+            if model_id is None:
+                raise ValueError(f"Model not found: {model_name}")
+            
+            # Count notes for this model
+            return sum(1 for note in self.collection.notes if note.model_id == model_id)
+        
+        # Count notes per model
+        counts = {}
+        for model_id, model in self.collection.models.items():
+            counts[model.name] = sum(1 for note in self.collection.notes if note.model_id == model_id)
+        return counts
 
     def list_fields(self, model_name: Optional[str] = None) -> List[dict]:
         """Get fields for a specific model."""

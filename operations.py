@@ -15,6 +15,7 @@ class OperationType(Enum):
     """Types of operations that can be performed."""
     # Read operations
     NUM_CARDS = ("num-cards", True)
+    NUM_NOTES = ("num-notes", True)
     LIST_MODELS = ("list-models", True)
     LIST_TEMPLATES = ("list-templates", True)
     LIST_FIELDS = ("list-fields", True)
@@ -70,6 +71,13 @@ class UserOperations:
         if recipe.operation_type == OperationType.NUM_CARDS:
             result = self._read_ops.num_cards()
             print(result)
+
+        elif recipe.operation_type == OperationType.NUM_NOTES:
+            result = self._read_ops.num_notes(recipe.model_name)
+            if recipe.model_name:
+                print(result)
+            else:
+                print(json.dumps(result, indent=2))
 
         elif recipe.operation_type == OperationType.LIST_FIELDS:
             fields = self._read_ops.list_fields(recipe.model_name)

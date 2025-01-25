@@ -30,7 +30,7 @@ def operation_type(value: str) -> OperationType:
 
 def parse_args():
     # Get list of available commands
-    commands = [op.value[0] for op in OperationType]
+    commands = [op.value for op in OperationType]
     command_help = f"Command to execute. Available commands: {', '.join(commands)}"
 
     parser = argparse.ArgumentParser(description='Inspect Anki .apkg files')
