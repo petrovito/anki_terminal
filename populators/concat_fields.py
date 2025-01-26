@@ -30,11 +30,17 @@ class ConcatFieldsPopulator(FieldPopulator):
         self.separator = config.get("separator", " ")
     
     @property
+    def supports_batching(self) -> bool:
+        """Whether this populator supports batch operations."""
+        return True
+    
+    @property
     def target_fields(self) -> List[str]:
         """Get list of fields that will be modified by this populator."""
         return [self.target_field]
     
     def populate_fields(self, note: Note) -> Dict[str, str]:
+        """Populate fields for a single note."""
         # Verify all source fields exist
         missing_fields = [f for f in self.source_fields if f not in note.fields]
         if missing_fields:
@@ -44,4 +50,33 @@ class ConcatFieldsPopulator(FieldPopulator):
         values = [note.fields[field] for field in self.source_fields]
         
         # Concatenate with separator
-        return {self.target_field: self.separator.join(values)} 
+        return {self.target_field: self.separator.join(values)}
+
+    def populate_batch(self, notes: List[Note]) -> Dict[int, Dict[str, str]]:
+        """Populate fields for a batch of notes.
+        
+        This is more efficient than processing one note at a time because we:
+        1. Check field existence once for all notes
+        2. Process valid notes in bulk
+        3. Skip invalid notes without stopping the batch
+        """
+        updates = {}
+        
+        # First verify all source fields exist in at least one note
+        # This helps catch configuration errors early
+        all_fields = set()
+        for note in notes:
+            all_fields.update(note.fields.keys())
+        missing_fields = [f for f in self.source_fields if f not in all_fields]
+        if missing_fields:
+            raise ValueError(f"Source fields not found in any note: {missing_fields}")
+        
+        # Process each note, skipping those with missing fields
+        for note in notes:
+            # Check if this note has all required fields
+            if all(field in note.fields for field in self.source_fields):
+                # Get values and concatenate
+                values = [note.fields[field] for field in self.source_fields]
+                updates[note.id] = {self.target_field: self.separator.join(values)}
+        
+        return updates 

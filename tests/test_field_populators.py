@@ -181,4 +181,121 @@ def test_missing_config_fields(tmp_path):
                 populator_class="populators.copy_field.CopyFieldPopulator",
                 populator_config=str(config_path)
             )
-            context.run(recipe) 
+            context.run(recipe)
+
+def test_concat_fields_batch_populator(tmp_path):
+    """Test batch processing with ConcatFieldsPopulator."""
+    # Create config file
+    config_path = tmp_path / "concat_config.json"
+    config = {
+        "source_fields": ["Front", "Back"],
+        "target_field": "Combined",
+        "separator": " | "
+    }
+    with open(config_path, "w") as f:
+        json.dump(config, f)
+    
+    # Create test notes
+    notes = [
+        Note(
+            id=1,
+            guid="abc123",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags="",
+            fields={"Front": "Hello", "Back": "World"},
+            sort_field=0,
+            checksum=0
+        ),
+        Note(
+            id=2,
+            guid="def456",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags="",
+            fields={"Front": "Test", "Back": "Note"},
+            sort_field=0,
+            checksum=0
+        ),
+        Note(
+            id=3,
+            guid="ghi789",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags="",
+            fields={"Front": "Missing", "Other": "Field"},  # Missing Back field
+            sort_field=0,
+            checksum=0
+        ),
+        Note(
+            id=4,
+            guid="jkl012",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags="",
+            fields={"Front": "Another", "Back": "One"},
+            sort_field=0,
+            checksum=0
+        )
+    ]
+    
+    # Create populator
+    populator = ConcatFieldsPopulator(str(config_path))
+    
+    # Test batch population
+    updates = populator.populate_batch(notes)
+    
+    # Verify updates
+    assert len(updates) == 3  # Should skip note with missing field
+    assert updates[1] == {"Combined": "Hello | World"}
+    assert updates[2] == {"Combined": "Test | Note"}
+    assert updates[4] == {"Combined": "Another | One"}
+    assert 3 not in updates  # Note 3 should be skipped
+
+def test_concat_fields_batch_all_missing(tmp_path):
+    """Test batch processing when all notes are missing required fields."""
+    # Create config file
+    config_path = tmp_path / "concat_config.json"
+    config = {
+        "source_fields": ["Field1", "Field2"],
+        "target_field": "Combined"
+    }
+    with open(config_path, "w") as f:
+        json.dump(config, f)
+    
+    # Create test notes with missing fields
+    notes = [
+        Note(
+            id=1,
+            guid="abc123",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags="",
+            fields={"Other": "Field"},
+            sort_field=0,
+            checksum=0
+        ),
+        Note(
+            id=2,
+            guid="def456",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags="",
+            fields={"Another": "Field"},
+            sort_field=0,
+            checksum=0
+        )
+    ]
+    
+    # Create populator
+    populator = ConcatFieldsPopulator(str(config_path))
+    
+    # Test batch population
+    with pytest.raises(ValueError, match="Source fields not found in any note: \\['Field1', 'Field2'\\]"):
+        populator.populate_batch(notes) 

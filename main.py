@@ -54,6 +54,7 @@ def parse_args():
     parser.add_argument('--populator-config', help='Path to JSON configuration file for the field populator', default=None)
     parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
                        default='error', help='Set logging level')
+    parser.add_argument('--batch-size', type=int, help='Batch size for populate-fields operation')
 
     if len(sys.argv) < 3:
         parser.print_help()
@@ -76,21 +77,18 @@ def main():
             logger.error(f"Invalid fields JSON: {e}")
             sys.exit(1)
 
-    # Create recipe from arguments
+    # Create operation recipe
     recipe = OperationRecipe(
         operation_type=args.command,
         model_name=args.model,
         template_name=args.template,
         old_field_name=args.old_field,
         new_field_name=args.new_field,
-        target_model_name=args.target_model,
-        field_mapping=args.field_mapping,
-        fields=fields,
+        fields=json.loads(args.fields) if args.fields else None,
         question_format=args.question_format,
         answer_format=args.answer_format,
         css=args.css,
-        populator_class=args.populator_class,
-        populator_config=args.populator_config
+        batch_size=args.batch_size
     )
 
     # Create output path if specified

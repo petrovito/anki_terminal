@@ -32,13 +32,15 @@ class WriteOperations:
         model_names = [model.name for model in self.collection.models.values()]
         raise ValueError(f"Multiple models found, please specify one: {', '.join(model_names)}")
 
-    def populate_fields(self, model_name: str, populator_class: str, config_path: str) -> None:
+    def populate_fields(self, model_name: str, populator_class: str, config_path: str, batch_size: int = 1) -> None:
         """Populate fields in notes using a field populator.
         
         Args:
             model_name: Name of the model to populate fields in
             populator_class: Full path to the populator class (e.g. "populators.copy_field.CopyFieldPopulator")
             config_path: Path to the JSON configuration file for the populator
+            batch_size: Size of batches to process notes in. Default is 1 (no batching).
+                       If greater than 1, the populator must support batching.
         """
         # Find model by name
         model = None
@@ -69,25 +71,38 @@ class WriteOperations:
         invalid_fields = [f for f in populator.target_fields if f not in model.fields]
         if invalid_fields:
             raise ValueError(f"Target fields not found in model: {invalid_fields}")
+
+        # Get all notes for this model
+        model_notes = [note for note in self.collection.notes if note.model_id == model_id]
+        if not model_notes:
+            raise ValueError(f"No notes found for model: {model_name}")
+
+        # Check if batching is requested and supported
+        if batch_size is not None and batch_size > 1:
+            if not populator.supports_batching:
+                raise ValueError(f"Populator {populator_class} does not support batch operations")
             
-        # Process each note
-        for note in self.collection.notes:
-            if note.model_id == model_id:
-                try:
-                    # Get field updates from populator
-                    updates = populator.populate_fields(note)
-                    
-                    # Update note fields
-                    note.fields.update(updates)
-                    
-                    # Add change to changelog
+            # Process notes in batches
+            for i in range(0, len(model_notes), batch_size):
+                batch = model_notes[i:i + batch_size]
+                updates = populator.populate_batch(batch)
+                
+                # Apply updates and add to changelog
+                for note_id, field_updates in updates.items():
+                    note = next(n for n in batch if n.id == note_id)
+                    note.fields.update(field_updates)
                     self.changelog.add_note_fields_change(note, model)
-                    
+                
+                logger.info(f"Processed batch of {len(updates)} notes (skipped {len(batch) - len(updates)})")
+        else:
+            # Process notes one at a time
+            for note in model_notes:
+                try:
+                    updates = populator.populate_fields(note)
+                    note.fields.update(updates)
+                    self.changelog.add_note_fields_change(note, model)
                 except ValueError as e:
                     logger.warning(f"Skipping note {note.id}: {str(e)}")
-                    continue
-                    
-        logger.info(f"Populated fields in notes for model '{model_name}' using {populator_class}")
 
     def rename_field(self, model_name: Optional[str], old_field_name: str, new_field_name: str) -> None:
         """Rename a field in a model and update all related notes. Does not update templates."""

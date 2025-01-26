@@ -53,6 +53,7 @@ class OperationRecipe:
     css: Optional[str] = None  # Required for add-model
     populator_class: Optional[str] = None  # Required for populate-fields (e.g. "populators.copy_field.CopyFieldPopulator")
     populator_config: Optional[str] = None  # Required for populate-fields (path to JSON config file)
+    batch_size: Optional[int] = None  # Optional for populate-fields, controls batch processing
 
     @property
     def is_read_only(self) -> bool:
@@ -166,7 +167,12 @@ class UserOperations:
                 raise ValueError("Populator class must be provided")
             if not recipe.populator_config:
                 raise ValueError("Populator configuration must be provided")
-            self._write_ops.populate_fields(recipe.model_name, recipe.populator_class, recipe.populator_config)
+            self._write_ops.populate_fields(
+                model_name=recipe.model_name,
+                populator_class=recipe.populator_class,
+                config_path=recipe.populator_config,
+                batch_size=recipe.batch_size
+            )
             print(f"Successfully populated fields in model '{recipe.model_name}' using {recipe.populator_class} populator")
 
         elif recipe.operation_type == OperationType.RUN_ALL:
