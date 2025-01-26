@@ -64,6 +64,11 @@ class WriteOperations:
             
         except (ImportError, AttributeError) as e:
             raise ValueError(f"Could not load populator class {populator_class}: {str(e)}")
+
+        # Verify target fields exist in model
+        invalid_fields = [f for f in populator.target_fields if f not in model.fields]
+        if invalid_fields:
+            raise ValueError(f"Target fields not found in model: {invalid_fields}")
             
         # Process each note
         for note in self.collection.notes:
@@ -71,11 +76,6 @@ class WriteOperations:
                 try:
                     # Get field updates from populator
                     updates = populator.populate_fields(note)
-                    
-                    # Verify target fields exist in model
-                    invalid_fields = [f for f in updates.keys() if f not in model.fields]
-                    if invalid_fields:
-                        raise ValueError(f"Target fields not found in model: {invalid_fields}")
                     
                     # Update note fields
                     note.fields.update(updates)

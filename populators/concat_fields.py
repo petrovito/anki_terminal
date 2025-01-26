@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import json
 from anki_types import Note
 from .base import FieldPopulator
@@ -28,6 +28,11 @@ class ConcatFieldsPopulator(FieldPopulator):
         self.source_fields = config["source_fields"]
         self.target_field = config["target_field"]
         self.separator = config.get("separator", " ")
+    
+    @property
+    def target_fields(self) -> List[str]:
+        """Get list of fields that will be modified by this populator."""
+        return [self.target_field]
     
     def populate_fields(self, note: Note) -> Dict[str, str]:
         # Verify all source fields exist

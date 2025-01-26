@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, List
 from anki_types import Note
 
 class FieldPopulator(ABC):
@@ -9,6 +9,12 @@ class FieldPopulator(ABC):
     Subclasses must implement the populate_fields method to define
     how fields should be populated based on the current note content.
     """
+    
+    @property
+    @abstractmethod
+    def target_fields(self) -> List[str]:
+        """Get list of fields that will be modified by this populator."""
+        pass
     
     @abstractmethod
     def populate_fields(self, note: Note) -> Dict[str, str]:

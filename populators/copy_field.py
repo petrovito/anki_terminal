@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import json
 from anki_types import Note
 from .base import FieldPopulator
@@ -26,6 +26,11 @@ class CopyFieldPopulator(FieldPopulator):
             
         self.source_field = config["source_field"]
         self.target_field = config["target_field"]
+    
+    @property
+    def target_fields(self) -> List[str]:
+        """Get list of fields that will be modified by this populator."""
+        return [self.target_field]
     
     def populate_fields(self, note: Note) -> Dict[str, str]:
         if self.source_field not in note.fields:
