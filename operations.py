@@ -28,6 +28,7 @@ class OperationType(Enum):
     RENAME_FIELD = ("rename-field", False)
     ADD_MODEL = ("add-model", False)
     MIGRATE_NOTES = ("migrate-notes", False)
+    POPULATE_FIELDS = ("populate-fields", False)  # New operation
     
     # Special operations
     RUN_ALL = ("run-all", True)  # This is a read-only operation that runs multiple read operations
@@ -50,6 +51,8 @@ class OperationRecipe:
     question_format: Optional[str] = None  # Required for add-model
     answer_format: Optional[str] = None  # Required for add-model
     css: Optional[str] = None  # Required for add-model
+    populator_class: Optional[str] = None  # Required for populate-fields (e.g. "populators.copy_field.CopyFieldPopulator")
+    populator_config: Optional[str] = None  # Required for populate-fields (path to JSON config file)
 
     @property
     def is_read_only(self) -> bool:
@@ -154,6 +157,16 @@ class UserOperations:
                 raise ValueError("Field mapping must be provided")
             self._write_ops.migrate_notes(recipe.model_name, recipe.target_model_name, recipe.field_mapping)
             print(f"Successfully migrated notes from '{recipe.model_name}' to '{recipe.target_model_name}'")
+
+        elif recipe.operation_type == OperationType.POPULATE_FIELDS:
+            if not recipe.model_name:
+                raise ValueError("Model name must be provided")
+            if not recipe.populator_class:
+                raise ValueError("Populator class must be provided")
+            if not recipe.populator_config:
+                raise ValueError("Populator configuration must be provided")
+            self._write_ops.populate_fields(recipe.model_name, recipe.populator_class, recipe.populator_config)
+            print(f"Successfully populated fields in model '{recipe.model_name}' using {recipe.populator_class} populator")
 
         elif recipe.operation_type == OperationType.RUN_ALL:
             self.run(OperationRecipe(OperationType.NUM_CARDS))

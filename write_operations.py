@@ -1,10 +1,12 @@
 import logging
 import json
-from typing import Optional
+import importlib
+from typing import Optional, Dict
 from anki_types import Collection, Model, Template
 from changelog import ChangeLog, Change, ChangeType
 import time
 from datetime import datetime
+from populators.base import FieldPopulator
 
 logger = logging.getLogger('anki_inspector')
 
@@ -29,6 +31,71 @@ class WriteOperations:
         
         model_names = [model.name for model in self.collection.models.values()]
         raise ValueError(f"Multiple models found, please specify one: {', '.join(model_names)}")
+
+    def populate_fields(self, model_name: str, populator_class: str, config_path: str) -> None:
+        """Populate fields in notes using a field populator.
+        
+        Args:
+            model_name: Name of the model to populate fields in
+            populator_class: Full path to the populator class (e.g. "populators.copy_field.CopyFieldPopulator")
+            config_path: Path to the JSON configuration file for the populator
+        """
+        # Find model by name
+        model = None
+        model_id = None
+        for mid, m in self.collection.models.items():
+            if m.name == model_name:
+                model = m
+                model_id = mid
+                break
+        if not model:
+            raise ValueError(f"Model not found: {model_name}")
+            
+        # Import and instantiate the populator class
+        try:
+            module_path, class_name = populator_class.rsplit('.', 1)
+            module = importlib.import_module(module_path)
+            populator_cls = getattr(module, class_name)
+            
+            if not issubclass(populator_cls, FieldPopulator):
+                raise ValueError(f"Class {populator_class} is not a subclass of FieldPopulator")
+                
+            populator = populator_cls(config_path)
+            
+        except (ImportError, AttributeError) as e:
+            raise ValueError(f"Could not load populator class {populator_class}: {str(e)}")
+            
+        # Process each note
+        for note in self.collection.notes:
+            if note.model_id == model_id:
+                try:
+                    # Get field updates from populator
+                    updates = populator.populate_fields(note)
+                    
+                    # Verify target fields exist in model
+                    invalid_fields = [f for f in updates.keys() if f not in model.fields]
+                    if invalid_fields:
+                        raise ValueError(f"Target fields not found in model: {invalid_fields}")
+                    
+                    # Update note fields
+                    note.fields.update(updates)
+                    
+                    # Create ordered list of field values
+                    field_values = [note.fields[field] for field in model.fields]
+                    
+                    # Add change to changelog
+                    self.changelog.add_change(Change(
+                        type=ChangeType.UPDATE_NOTE_FIELD,
+                        table='notes',
+                        where={'id': note.id},
+                        updates={'flds': '\x1f'.join(str(v) for v in field_values)}
+                    ))
+                    
+                except ValueError as e:
+                    logger.warning(f"Skipping note {note.id}: {str(e)}")
+                    continue
+                    
+        logger.info(f"Populated fields in notes for model '{model_name}' using {populator_class}")
 
     def rename_field(self, model_name: Optional[str], old_field_name: str, new_field_name: str) -> None:
         """Rename a field in a model and update all related notes. Does not update templates."""

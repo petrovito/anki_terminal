@@ -50,6 +50,8 @@ def parse_args():
     parser.add_argument('--question-format', help='Question template format for add-model', default=None)
     parser.add_argument('--answer-format', help='Answer template format for add-model', default=None)
     parser.add_argument('--css', help='Card CSS styling for add-model', default=None)
+    parser.add_argument('--populator-class', help='Python class path for field populator (e.g. "populators.copy_field.CopyFieldPopulator")', default=None)
+    parser.add_argument('--populator-config', help='Path to JSON configuration file for the field populator', default=None)
     parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
                        default='error', help='Set logging level')
 
@@ -86,7 +88,9 @@ def main():
         fields=fields,
         question_format=args.question_format,
         answer_format=args.answer_format,
-        css=args.css
+        css=args.css,
+        populator_class=args.populator_class,
+        populator_config=args.populator_config
     )
 
     # Create output path if specified
