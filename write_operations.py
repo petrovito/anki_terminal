@@ -12,9 +12,9 @@ logger = logging.getLogger('anki_inspector')
 
 class WriteOperations:
     """Low-level write operations on the collection."""
-    def __init__(self, collection: Collection, changelog: ChangeLog):
+    def __init__(self, collection: Collection):
         self.collection = collection
-        self.changelog = changelog
+        self.changelog = ChangeLog()
 
     def _get_model(self, model_name: Optional[str]) -> Model:
         """Get a model by name or return the only model if there's just one."""
@@ -80,16 +80,8 @@ class WriteOperations:
                     # Update note fields
                     note.fields.update(updates)
                     
-                    # Create ordered list of field values
-                    field_values = [note.fields[field] for field in model.fields]
-                    
                     # Add change to changelog
-                    self.changelog.add_change(Change(
-                        type=ChangeType.UPDATE_NOTE_FIELD,
-                        table='notes',
-                        where={'id': note.id},
-                        updates={'flds': '\x1f'.join(str(v) for v in field_values)}
-                    ))
+                    self.changelog.add_note_fields_change(note, model)
                     
                 except ValueError as e:
                     logger.warning(f"Skipping note {note.id}: {str(e)}")
@@ -101,9 +93,11 @@ class WriteOperations:
         """Rename a field in a model and update all related notes. Does not update templates."""
         logger.debug(f"Renaming field '{old_field_name}' to '{new_field_name}' in model: {model_name if model_name else 'default'}")
         model = self._get_model(model_name)        
-        # Check if old field exists and new field doesn't
+        # Check if old field exists
         if old_field_name not in model.fields:
             raise ValueError(f"Field '{old_field_name}' not found in model '{model.name}'")
+        
+        # Check if new field already exists
         if new_field_name in model.fields:
             raise ValueError(f"Field '{new_field_name}' already exists in model '{model.name}'")
 
@@ -124,7 +118,7 @@ class WriteOperations:
 
         # Add model change to changelog
         # Note: We don't need to update the database since note fields are stored as ordered values
-        self.changelog.add_model_change()
+        self.changelog.add_model_change(self.collection.models)
 
     def add_model(self, model_name: str, fields: list[str], template_name: str,
                 question_format: str, answer_format: str, css: str) -> None:
@@ -174,19 +168,9 @@ class WriteOperations:
         self.collection.models[model_id] = model
 
         # Add change to changelog
-        # Create a dictionary of all models including the new one
-        models_dict = {
-            str(mid): m.to_dict() 
-            for mid, m in self.collection.models.items()
-        }
-        
-        # Add change to changelog
-        self.changelog.add_change(Change(
-            type=ChangeType.ADD_MODEL,
-            table='col',
-            where={'id': 1},  # Collection row ID is always 1
-            updates={'models': json.dumps(models_dict)}
-        ))
+        self.changelog.add_model_change(self.collection.models)
+
+        logger.info(f"Added model '{model_name}' successfully")
 
     def migrate_notes(self, source_model_name: str, target_model_name: str, field_mapping_json: str) -> None:
         """Migrate notes from one model to another using a field mapping.
@@ -247,12 +231,6 @@ class WriteOperations:
             raise ValueError(f"No notes found for model: {source_model_name}")
 
         # Add change to changelog
-        self.changelog.add_change(Change(
-            type=ChangeType.MIGRATE_NOTES,
-            table='notes',
-            where={'mid': source_model.id},
-            updates={
-                'mid': target_model.id,
-                'flds': '\x1f'.join(str(v) for v in new_fields.values())
-            }
-        ))
+        self.changelog.add_note_migration_change(source_model, target_model, note)
+
+        logger.info(f"Migrated {migrated_count} notes from '{source_model_name}' to '{target_model_name}'")

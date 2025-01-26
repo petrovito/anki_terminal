@@ -63,7 +63,8 @@ class UserOperations:
     """High-level operations available to users."""
     def __init__(self, collection: Collection, changelog: ChangeLog):
         self._read_ops = ReadOperations(collection)
-        self._write_ops = WriteOperations(collection, changelog)
+        self._write_ops = WriteOperations(collection)
+        self._write_ops.changelog = changelog  # Use the same changelog instance
 
     @property
     def read_ops(self) -> ReadOperations:
@@ -78,7 +79,7 @@ class UserOperations:
     def run(self, recipe: OperationRecipe) -> None:
         """Execute operation based on the recipe and format output."""
         logger.info(f"Running operation: {recipe.operation_type.value}")
-        
+
         if recipe.operation_type == OperationType.NUM_CARDS:
             result = self._read_ops.num_cards()
             print(result)

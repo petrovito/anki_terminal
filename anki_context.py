@@ -37,7 +37,7 @@ class AnkiContext:
             self._extractor = ApkgManager(self._apkg_path, read_only=self._read_only).__enter__()
             self._db_reader = DatabaseManager(self._extractor.db_path).__enter__()
             self._collection = self._db_reader.read_collection()
-            self._changelog = ChangeLog(self._collection)
+            self._changelog = ChangeLog()
             self._operations = UserOperations(self._collection, self._changelog)
             return self
         except Exception:
