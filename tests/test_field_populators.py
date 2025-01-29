@@ -298,4 +298,171 @@ def test_concat_fields_batch_all_missing(tmp_path):
     
     # Test batch population
     with pytest.raises(ValueError, match="Source fields not found in any note: \\['Field1', 'Field2'\\]"):
-        populator.populate_batch(notes) 
+        populator.populate_batch(notes)
+
+def test_jap_llm_populator(tmp_path, monkeypatch):
+    """Test that Japanese LLM populator works correctly for a single note."""
+    # Mock OpenAI API response
+    class MockResponse:
+        def __init__(self, content):
+            self.choices = [
+                type('Choice', (), {
+                    'message': type('Message', (), {
+                        'content': content
+                    })()
+                })
+            ]
+
+    class MockOpenAI:
+        def __init__(self, api_key):
+            self.chat = type('Chat', (), {
+                'completions': type('Completions', (), {
+                    'create': self.mock_create
+                })()
+            })()
+
+        def mock_create(self, **kwargs):
+            # Return a string that matches what the OpenAI API would return
+            return MockResponse('[{"translation": "I keep getting saved by you.", "words": [{"jap": "助けられて (tasukerarete)", "eng": "being saved; passive form of \'to help\'"}, {"jap": "ばっか (bakka)", "eng": "only; informal expression"}], "nuance": "Shows reliance and gratitude"}]')
+
+    # Mock OpenAI client
+    monkeypatch.setattr("populators.jap_llm.OpenAI", MockOpenAI)
+
+    # Create test config
+    config = {
+        "source_field": "Japanese",
+        "translation_field": "Translation",
+        "breakdown_field": "Breakdown",
+        "nuance_field": "Nuance",
+        "api_key": "dummy-key"
+    }
+    config_path = create_test_config(tmp_path, config)
+
+    # Create test note
+    note = Note(
+        id=1,
+        guid="test123",
+        model_id=1000,
+        modification_time=0,
+        usn=-1,
+        tags=[],
+        fields={
+            "Japanese": "助けられてばっか",
+            "Translation": "",
+            "Breakdown": "",
+            "Nuance": ""
+        },
+        sort_field=0,
+        checksum=0
+    )
+
+    # Create and run populator
+    from populators.jap_llm import JapLlmPopulator
+    populator = JapLlmPopulator(str(config_path))
+    updates = populator.populate_fields(note)
+
+    # Verify updates
+    assert updates["Translation"] == "I keep getting saved by you."
+    assert "助けられて (tasukerarete): being saved; passive form of 'to help'" in updates["Breakdown"]
+    assert "ばっか (bakka): only; informal expression" in updates["Breakdown"]
+    assert updates["Nuance"] == "Shows reliance and gratitude"
+
+def test_jap_llm_populator_batch(tmp_path, monkeypatch):
+    """Test that Japanese LLM populator works correctly for batch processing."""
+    # Mock OpenAI API response
+    class MockResponse:
+        def __init__(self, content):
+            self.choices = [
+                type('Choice', (), {
+                    'message': type('Message', (), {
+                        'content': content
+                    })()
+                })
+            ]
+
+    class MockOpenAI:
+        def __init__(self, api_key):
+            self.chat = type('Chat', (), {
+                'completions': type('Completions', (), {
+                    'create': self.mock_create
+                })()
+            })()
+
+        def mock_create(self, **kwargs):
+            # Return a string that matches what the OpenAI API would return for multiple sentences
+            return MockResponse('[{"translation": "I keep getting saved by you.", "words": [{"jap": "助けられて (tasukerarete)", "eng": "being saved; passive form of \'to help\'"}], "nuance": "Shows reliance"}, {"translation": "Thank you very much.", "words": [{"jap": "ありがとう (arigatou)", "eng": "thank you"}], "nuance": "Shows gratitude"}]')
+
+    # Mock OpenAI client
+    monkeypatch.setattr("populators.jap_llm.OpenAI", MockOpenAI)
+
+    # Create test config
+    config = {
+        "source_field": "Japanese",
+        "translation_field": "Translation",
+        "breakdown_field": "Breakdown",
+        "nuance_field": "Nuance",
+        "api_key": "dummy-key"
+    }
+    config_path = create_test_config(tmp_path, config)
+
+    # Create test notes
+    notes = [
+        Note(
+            id=1,
+            guid="abc123",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags=[],
+            fields={
+                "Japanese": "助けられて",
+                "Translation": "",
+                "Breakdown": "",
+                "Nuance": ""
+            },
+            sort_field=0,
+            checksum=0
+        ),
+        Note(
+            id=2,
+            guid="def456",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags=[],
+            fields={
+                "Japanese": "ありがとう",
+                "Translation": "",
+                "Breakdown": "",
+                "Nuance": ""
+            },
+            sort_field=0,
+            checksum=0
+        ),
+        Note(
+            id=3,
+            guid="ghi789",
+            model_id=1000,
+            modification_time=0,
+            usn=-1,
+            tags=[],
+            fields={"Other": "Field"},  # Missing Japanese field
+            sort_field=0,
+            checksum=0
+        )
+    ]
+
+    # Create and run populator
+    from populators.jap_llm import JapLlmPopulator
+    populator = JapLlmPopulator(str(config_path))
+    updates = populator.populate_batch(notes)
+
+    # Verify updates
+    assert len(updates) == 2  # Should skip note with missing field
+    assert updates[1]["Translation"] == "I keep getting saved by you."
+    assert "助けられて (tasukerarete): being saved; passive form of 'to help'" in updates[1]["Breakdown"]
+    assert updates[1]["Nuance"] == "Shows reliance"
+    assert updates[2]["Translation"] == "Thank you very much."
+    assert "ありがとう (arigatou): thank you" in updates[2]["Breakdown"]
+    assert updates[2]["Nuance"] == "Shows gratitude"
+    assert 3 not in updates  # Note 3 should be skipped 
