@@ -74,7 +74,7 @@ class JapLlmPopulator(FieldPopulator):
 - A JSON list of Japanese sentences that logically follow each other, typically from anime subtitles.
 
 **Output:** 
-- A JSON array where each element corresponds to one input sentence, containing:
+- A JSON object with a single key "analyses" containing an array where each element corresponds to one input sentence:
   - **translation**: A literal English translation of the sentence.
   - **words**: An array of objects, each explaining a word or phrase from the sentence which aren't particles, names or pronouns:
     -**jap**: The Japanese word or phrase, and the romaji spelling in brackets.
@@ -84,7 +84,7 @@ class JapLlmPopulator(FieldPopulator):
 Don't list particles, pronouns, or names!
 Example output:
 ```json
-[{"translation":"I didn't die to become an excuse for your suicide.","words":[{"jap":"自殺 (jisatsu)","eng":"suicide; the act of intentionally taking one's own life."},{"jap":"口実 (koujitsu)","eng":"excuse; a reason or justification for doing something, often perceived as insincere or inadequate."},{"jap":"死んだ (shinda)","eng":"died; the past tense of 'to die', indicating the completion of the action."}],"nuance":"The sentence conveys a strong emotional intensity, reflecting an accusation or confrontation."}]
+{"analyses":[{"translation":"I didn't die to become an excuse for your suicide.","words":[{"jap":"自殺 (jisatsu)","eng":"suicide; the act of intentionally taking one's own life."},{"jap":"口実 (koujitsu)","eng":"excuse; a reason or justification for doing something, often perceived as insincere or inadequate."},{"jap":"死んだ (shinda)","eng":"died; the past tense of 'to die', indicating the completion of the action."}],"nuance":"The sentence conveys a strong emotional intensity, reflecting an accusation or confrontation."}]}
 ```
 In the output use unindented JSON to reduce the number of output tokens.""",
                             "type": "text"
@@ -102,28 +102,34 @@ In the output use unindented JSON to reduce the number of output tokens.""",
                     "name": "japformat",
                     "strict": True,
                     "schema": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "required": ["translation", "words", "nuance"],
-                            "properties": {
-                                "words": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "required": ["jap", "eng"],
-                                        "properties": {
-                                            "eng": {"type": "string"},
-                                            "jap": {"type": "string"}
-                                        }
-                                    }
-                                },
-                                "nuance": {"type": "string"},
-                                "translation": {"type": "string"}
+                        "type": "object",
+                        "properties": {
+                            "analyses": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "required": ["translation", "words", "nuance"],
+                                    "properties": {
+                                        "words": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "required": ["jap", "eng"],
+                                                "properties": {
+                                                    "eng": {"type": "string"},
+                                                    "jap": {"type": "string"}
+                                                },
+                                                "additionalProperties": False
+                                            }
+                                        },
+                                        "nuance": {"type": "string"},
+                                        "translation": {"type": "string"}
+                                    },
+                                    "additionalProperties": False
+                                }
                             }
                         },
-                        "required": [],
-                        "properties": {},
+                        "required": ["analyses"],
                         "additionalProperties": False
                     }
                 }
@@ -136,7 +142,8 @@ In the output use unindented JSON to reduce the number of output tokens.""",
         )
         
         try:
-            return json.loads(response.choices[0].message.content)
+            response_data = json.loads(response.choices[0].message.content)
+            return response_data["analyses"]
         except (json.JSONDecodeError, KeyError, IndexError) as e:
             raise ValueError(f"Failed to parse API response: {str(e)}")
     

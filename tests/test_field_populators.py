@@ -323,7 +323,7 @@ def test_jap_llm_populator(tmp_path, monkeypatch):
 
         def mock_create(self, **kwargs):
             # Return a string that matches what the OpenAI API would return
-            return MockResponse('[{"translation": "I keep getting saved by you.", "words": [{"jap": "助けられて (tasukerarete)", "eng": "being saved; passive form of \'to help\'"}, {"jap": "ばっか (bakka)", "eng": "only; informal expression"}], "nuance": "Shows reliance and gratitude"}]')
+            return MockResponse('{"analyses":[{"translation":"I want to protect you.","words":[{"jap":"守りたい (mamoritai)","eng":"want to protect"}],"nuance":"Expresses a strong desire to protect someone, showing care and determination"}]}')
 
     # Mock OpenAI client
     monkeypatch.setattr("populators.jap_llm.OpenAI", MockOpenAI)
@@ -362,10 +362,9 @@ def test_jap_llm_populator(tmp_path, monkeypatch):
     updates = populator.populate_fields(note)
 
     # Verify updates
-    assert updates["Translation"] == "I keep getting saved by you."
-    assert "助けられて (tasukerarete): being saved; passive form of 'to help'" in updates["Breakdown"]
-    assert "ばっか (bakka): only; informal expression" in updates["Breakdown"]
-    assert updates["Nuance"] == "Shows reliance and gratitude"
+    assert updates["Translation"] == "I want to protect you."
+    assert "守りたい (mamoritai): want to protect" in updates["Breakdown"]
+    assert updates["Nuance"] == "Expresses a strong desire to protect someone, showing care and determination"
 
 def test_jap_llm_populator_batch(tmp_path, monkeypatch):
     """Test that Japanese LLM populator works correctly for batch processing."""
@@ -390,7 +389,7 @@ def test_jap_llm_populator_batch(tmp_path, monkeypatch):
 
         def mock_create(self, **kwargs):
             # Return a string that matches what the OpenAI API would return for multiple sentences
-            return MockResponse('[{"translation": "I keep getting saved by you.", "words": [{"jap": "助けられて (tasukerarete)", "eng": "being saved; passive form of \'to help\'"}], "nuance": "Shows reliance"}, {"translation": "Thank you very much.", "words": [{"jap": "ありがとう (arigatou)", "eng": "thank you"}], "nuance": "Shows gratitude"}]')
+            return MockResponse('{"analyses":[{"translation":"I want to protect you.","words":[{"jap":"守りたい (mamoritai)","eng":"want to protect"}],"nuance":"Expresses a strong desire to protect someone, showing care and determination"},{"translation":"Thank you very much.","words":[{"jap":"ありがとうございました (arigatou gozaimashita)","eng":"thank you very much (polite past)"}],"nuance":"A very polite expression of gratitude for a past action"}]}')
 
     # Mock OpenAI client
     monkeypatch.setattr("populators.jap_llm.OpenAI", MockOpenAI)
@@ -459,10 +458,10 @@ def test_jap_llm_populator_batch(tmp_path, monkeypatch):
 
     # Verify updates
     assert len(updates) == 2  # Should skip note with missing field
-    assert updates[1]["Translation"] == "I keep getting saved by you."
-    assert "助けられて (tasukerarete): being saved; passive form of 'to help'" in updates[1]["Breakdown"]
-    assert updates[1]["Nuance"] == "Shows reliance"
+    assert updates[1]["Translation"] == "I want to protect you."
+    assert "守りたい (mamoritai): want to protect" in updates[1]["Breakdown"]
+    assert updates[1]["Nuance"] == "Expresses a strong desire to protect someone, showing care and determination"
     assert updates[2]["Translation"] == "Thank you very much."
-    assert "ありがとう (arigatou): thank you" in updates[2]["Breakdown"]
-    assert updates[2]["Nuance"] == "Shows gratitude"
+    assert "ありがとうございました (arigatou gozaimashita): thank you very much (polite past)" in updates[2]["Breakdown"]
+    assert updates[2]["Nuance"] == "A very polite expression of gratitude for a past action"
     assert 3 not in updates  # Note 3 should be skipped 
