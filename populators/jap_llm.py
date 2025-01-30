@@ -25,6 +25,8 @@ class JapLlmPopulator(FieldPopulator):
                 config = json.load(f)
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid populator configuration: {str(e)}")
+        
+        os.environ['OPENAI_LOG'] = 'debug'
             
         required_fields = ["source_field", "translation_field", "breakdown_field", "nuance_field"]
         missing_fields = [f for f in required_fields if f not in config]
@@ -81,12 +83,12 @@ class JapLlmPopulator(FieldPopulator):
     -**eng**: A short explanation or translation of the word/phrase in English, noting any informal, slang, or cultural nuances.
   - **nuance**: A brief single-sentence string detailing any cultural, contextual, or linguistic nuances not captured by the literal translation. 
 
-Don't list particles, pronouns, or names!
+Don't list particles, personal pronouns or names!
 Example output:
 ```json
 {"analyses":[{"translation":"I didn't die to become an excuse for your suicide.","words":[{"jap":"自殺 (jisatsu)","eng":"suicide; the act of intentionally taking one's own life."},{"jap":"口実 (koujitsu)","eng":"excuse; a reason or justification for doing something, often perceived as insincere or inadequate."},{"jap":"死んだ (shinda)","eng":"died; the past tense of 'to die', indicating the completion of the action."}],"nuance":"The sentence conveys a strong emotional intensity, reflecting an accusation or confrontation."}]}
 ```
-In the output use unindented JSON to reduce the number of output tokens.""",
+""",
                             "type": "text"
                         }
                     ]
@@ -134,7 +136,7 @@ In the output use unindented JSON to reduce the number of output tokens.""",
                     }
                 }
             },
-            temperature=1,
+            temperature=0.34,
             max_tokens=2048,
             top_p=1,
             frequency_penalty=0,
