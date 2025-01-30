@@ -4,10 +4,11 @@ from anki_context import AnkiContext
 from operation_models import OperationType, OperationRecipe
 
 @pytest.fixture
-def operations():
+def operations(tmp_path):
     """Fixture that provides Operations instance with loaded test data."""
     apkg_path = Path("test_data/jap.apkg")
-    with AnkiContext(apkg_path, read_only=True) as inspector:
+    output_path = tmp_path / "test_output.apkg"
+    with AnkiContext(apkg_path, output_path, read_only=False) as inspector:
         class Operations:
             def __init__(self, read_ops, write_ops):
                 self.read_ops = read_ops

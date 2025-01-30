@@ -91,7 +91,7 @@ class OperationExecutor:
             self._write_ops.migrate_notes(
                 source_model_name=recipe.model_name,
                 target_model_name=recipe.target_model_name,
-                field_mapping=recipe.field_mapping
+                field_mapping_json=recipe.field_mapping
             )
         elif recipe.operation_type == OperationType.POPULATE_FIELDS:
             if not recipe.model_name or not recipe.populator_class or not recipe.populator_config:

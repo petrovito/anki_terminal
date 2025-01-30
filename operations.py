@@ -37,6 +37,7 @@ class UserOperationParser:
             template_name=user_recipe.template_name,
             old_field_name=user_recipe.old_field_name,
             new_field_name=user_recipe.new_field_name,
+            field_name=user_recipe.field_name,
             target_model_name=user_recipe.target_model_name,
             field_mapping=user_recipe.field_mapping,
             fields=user_recipe.fields,

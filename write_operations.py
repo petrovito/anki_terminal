@@ -249,3 +249,30 @@ class WriteOperations:
         self.changelog.add_note_migration_change(source_model, target_model, note)
 
         logger.info(f"Migrated {migrated_count} notes from '{source_model_name}' to '{target_model_name}'")
+
+    def add_field(self, model_name: str, field_name: str) -> None:
+        """Add a new field to an existing model.
+        
+        Args:
+            model_name: Name of the model to add the field to
+            field_name: Name of the new field to add
+        """
+        logger.debug(f"Adding field '{field_name}' to model: {model_name}")
+        model = self._get_model(model_name)
+        
+        # Check if field already exists
+        if field_name in model.fields:
+            raise ValueError(f"Field '{field_name}' already exists in model '{model.name}'")
+
+        # Add field to model
+        model.fields.append(field_name)
+
+        # Initialize field in existing notes
+        for note in self.collection.notes:
+            if note.model_id == model.id:
+                note.fields[field_name] = ""
+
+        # Add model change to changelog
+        self.changelog.add_model_change(self.collection.models)
+
+        logger.info(f"Added field '{field_name}' to model '{model.name}' successfully")
