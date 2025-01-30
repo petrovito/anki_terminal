@@ -6,8 +6,10 @@ from typing import Optional
 
 from apkg_manager import ApkgManager
 from database_manager import DatabaseManager
-from operations import UserOperations, OperationRecipe
 from changelog import ChangeLog
+from operation_models import UserOperationRecipe
+from operation_executor import OperationExecutor
+from operations import UserOperationParser, ReadOperations, WriteOperations
 
 logger = logging.getLogger('anki_inspector')
 
@@ -26,7 +28,10 @@ class AnkiContext:
         self._db_reader = None
         self._collection = None
         self._changelog = None
-        self._operations = None
+        self._read_ops = None
+        self._write_ops = None
+        self._parser = None
+        self._executor = None
         self._is_destroyed = False
 
     def __enter__(self):
@@ -38,7 +43,10 @@ class AnkiContext:
             self._db_reader = DatabaseManager(self._extractor.db_path).__enter__()
             self._collection = self._db_reader.read_collection()
             self._changelog = ChangeLog()
-            self._operations = UserOperations(self._collection, self._changelog)
+            self._read_ops = ReadOperations(self._collection)
+            self._write_ops = None if self._read_only else WriteOperations(self._collection, self._changelog)
+            self._parser = UserOperationParser()
+            self._executor = OperationExecutor(self._read_ops, self._write_ops)
             return self
         except Exception:
             self._cleanup()
@@ -71,16 +79,21 @@ class AnkiContext:
         """Check if any write operations were performed."""
         return self._changelog is not None and len(self._changelog.changes) > 0
 
-    def run(self, recipe: OperationRecipe) -> None:
-        """Run an operation after checking context is valid."""
+    def run(self, user_recipe: UserOperationRecipe) -> None:
+        """Parse user operation and execute the operation plan."""
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot run operations")
-            
+        
         # Validate operation against read-only mode
-        if self._read_only and not recipe.is_read_only:
+        if self._read_only and not user_recipe.is_read_only:
             raise RuntimeError("Cannot perform write operation in read-only mode")
-            
-        self._operations.run(recipe)
+        
+        # Parse user operation into an operation plan
+        plan = self._parser.parse(user_recipe)
+
+        # Execute the operation plan
+        for operation in plan.operations:
+            self._executor.execute(operation)
 
     def _package(self) -> None:
         """Internal method to package the current state of the collection."""

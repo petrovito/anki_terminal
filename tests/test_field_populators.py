@@ -3,7 +3,9 @@ import json
 import tempfile
 from pathlib import Path
 from anki_context import AnkiContext
-from operations import OperationType, OperationRecipe
+from operation_models import UserOperationType, UserOperationRecipe
+from operations import UserOperationParser
+from operation_executor import OperationExecutor
 from populators.copy_field import CopyFieldPopulator
 from populators.concat_fields import ConcatFieldsPopulator
 from anki_types import Note
@@ -29,17 +31,20 @@ def test_copy_field_populator(tmp_path):
     
     # Run populate fields operation
     with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-        recipe = OperationRecipe(
-            operation_type=OperationType.POPULATE_FIELDS,
+        user_recipe = UserOperationRecipe(
+            operation_type=UserOperationType.POPULATE_FIELDS,
             model_name="Basic Card",
             populator_class="populators.copy_field.CopyFieldPopulator",
             populator_config=str(config_path)
         )
-        context.run(recipe)
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe)
+        executor = OperationExecutor(context._read_ops, context._write_ops)
+        executor.execute(operation_plan.operations[0])
     
     # Verify changes
     with AnkiContext(output_path, read_only=True) as context:
-        example = context._operations._read_ops.get_note_example("Basic Card")
+        example = context._read_ops.get_note_example("Basic Card")
         assert example["Back"] == example["Front"]
 
 def test_concat_fields_populator(tmp_path):
@@ -47,47 +52,42 @@ def test_concat_fields_populator(tmp_path):
     # First add a new field to copy into
     output1 = tmp_path / "with_new_field.apkg"
     with AnkiContext("test_data/jap.apkg", output1, read_only=False) as context:
-        # Add new model with extra field
-        context.run(OperationRecipe(
-            operation_type=OperationType.ADD_MODEL,
-            model_name="Test Model",
-            fields=["Front", "Back", "Combined"],
-            template_name="Card 1",
-            question_format="{{Front}}",
-            answer_format="{{Back}}",
-            css=".card { font-family: arial; }"
-        ))
-        
-        # Migrate notes to new model
-        context.run(OperationRecipe(
-            operation_type=OperationType.MIGRATE_NOTES,
+        # Add new field
+        user_recipe = UserOperationRecipe(
+            operation_type=UserOperationType.ADD_FIELD,
             model_name="Basic Card",
-            target_model_name="Test Model",
-            field_mapping='{"Front": "Front", "Back": "Back"}'
-        ))
+            field_name="Combined"
+        )
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe)
+        executor = OperationExecutor(context._read_ops, context._write_ops)
+        executor.execute(operation_plan.operations[0])
     
-    # Now test concatenation
+    # Now populate the new field
     config = {
         "source_fields": ["Front", "Back"],
         "target_field": "Combined",
-        "separator": " - "
+        "separator": " | "
     }
     config_path = create_test_config(tmp_path, config)
     output2 = tmp_path / "populated.apkg"
     
     with AnkiContext(output1, output2, read_only=False) as context:
-        recipe = OperationRecipe(
-            operation_type=OperationType.POPULATE_FIELDS,
-            model_name="Test Model",
+        user_recipe = UserOperationRecipe(
+            operation_type=UserOperationType.POPULATE_FIELDS,
+            model_name="Basic Card",
             populator_class="populators.concat_fields.ConcatFieldsPopulator",
             populator_config=str(config_path)
         )
-        context.run(recipe)
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe)
+        executor = OperationExecutor(context._read_ops, context._write_ops)
+        executor.execute(operation_plan.operations[0])
     
     # Verify changes
     with AnkiContext(output2, read_only=True) as context:
-        example = context._operations._read_ops.get_note_example("Test Model")
-        assert example["Combined"] == f"{example['Front']} - {example['Back']}"
+        example = context._read_ops.get_note_example("Basic Card")
+        assert example["Combined"] == f"{example['Front']} | {example['Back']}"
 
 def test_copy_field_populator_missing_source(tmp_path):
     """Test that copy field populator handles missing source field."""
@@ -102,14 +102,17 @@ def test_copy_field_populator_missing_source(tmp_path):
     
     # Run populate fields operation
     with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-        recipe = OperationRecipe(
-            operation_type=OperationType.POPULATE_FIELDS,
+        user_recipe = UserOperationRecipe(
+            operation_type=UserOperationType.POPULATE_FIELDS,
             model_name="Basic Card",
             populator_class="populators.copy_field.CopyFieldPopulator",
             populator_config=str(config_path)
         )
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe)
+        executor = OperationExecutor(context._read_ops, context._write_ops)
         # Should log warning and skip notes, but not fail
-        context.run(recipe)
+        executor.execute(operation_plan.operations[0])
 
 def test_concat_fields_populator_missing_source(tmp_path):
     """Test that concat fields populator handles missing source field."""
@@ -124,14 +127,17 @@ def test_concat_fields_populator_missing_source(tmp_path):
     
     # Run populate fields operation
     with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-        recipe = OperationRecipe(
-            operation_type=OperationType.POPULATE_FIELDS,
+        user_recipe = UserOperationRecipe(
+            operation_type=UserOperationType.POPULATE_FIELDS,
             model_name="Basic Card",
             populator_class="populators.concat_fields.ConcatFieldsPopulator",
             populator_config=str(config_path)
         )
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe)
+        executor = OperationExecutor(context._read_ops, context._write_ops)
         # Should log warning and skip notes, but not fail
-        context.run(recipe)
+        executor.execute(operation_plan.operations[0])
 
 def test_invalid_populator_class(tmp_path):
     """Test that invalid populator class is handled gracefully."""
@@ -140,13 +146,16 @@ def test_invalid_populator_class(tmp_path):
     
     with pytest.raises(ValueError, match="Could not load populator class"):
         with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-            recipe = OperationRecipe(
-                operation_type=OperationType.POPULATE_FIELDS,
+            user_recipe = UserOperationRecipe(
+                operation_type=UserOperationType.POPULATE_FIELDS,
                 model_name="Basic Card",
                 populator_class="nonexistent.populator.Class",
                 populator_config=str(config_path)
             )
-            context.run(recipe)
+            parser = UserOperationParser()
+            operation_plan = parser.parse(user_recipe)
+            executor = OperationExecutor(context._read_ops, context._write_ops)
+            executor.execute(operation_plan.operations[0])
 
 def test_invalid_config_file(tmp_path):
     """Test that invalid config file is handled gracefully."""
@@ -159,13 +168,16 @@ def test_invalid_config_file(tmp_path):
     
     with pytest.raises(ValueError, match="Invalid populator configuration"):
         with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-            recipe = OperationRecipe(
-                operation_type=OperationType.POPULATE_FIELDS,
+            user_recipe = UserOperationRecipe(
+                operation_type=UserOperationType.POPULATE_FIELDS,
                 model_name="Basic Card",
                 populator_class="populators.copy_field.CopyFieldPopulator",
                 populator_config=str(config_path)
             )
-            context.run(recipe)
+            parser = UserOperationParser()
+            operation_plan = parser.parse(user_recipe)
+            executor = OperationExecutor(context._read_ops, context._write_ops)
+            executor.execute(operation_plan.operations[0])
 
 def test_missing_config_fields(tmp_path):
     """Test that missing required config fields are handled gracefully."""
@@ -175,13 +187,16 @@ def test_missing_config_fields(tmp_path):
     
     with pytest.raises(ValueError, match="Config must specify"):
         with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-            recipe = OperationRecipe(
-                operation_type=OperationType.POPULATE_FIELDS,
+            user_recipe = UserOperationRecipe(
+                operation_type=UserOperationType.POPULATE_FIELDS,
                 model_name="Basic Card",
                 populator_class="populators.copy_field.CopyFieldPopulator",
                 populator_config=str(config_path)
             )
-            context.run(recipe)
+            parser = UserOperationParser()
+            operation_plan = parser.parse(user_recipe)
+            executor = OperationExecutor(context._read_ops, context._write_ops)
+            executor.execute(operation_plan.operations[0])
 
 def test_concat_fields_batch_populator(tmp_path):
     """Test batch processing with ConcatFieldsPopulator."""

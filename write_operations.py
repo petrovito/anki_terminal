@@ -12,9 +12,9 @@ logger = logging.getLogger('anki_inspector')
 
 class WriteOperations:
     """Low-level write operations on the collection."""
-    def __init__(self, collection: Collection):
+    def __init__(self, collection: Collection, changelog: ChangeLog):
         self.collection = collection
-        self.changelog = ChangeLog()
+        self.changelog = changelog
 
     def _get_model(self, model_name: Optional[str]) -> Model:
         """Get a model by name or return the only model if there's just one."""
@@ -32,13 +32,13 @@ class WriteOperations:
         model_names = [model.name for model in self.collection.models.values()]
         raise ValueError(f"Multiple models found, please specify one: {', '.join(model_names)}")
 
-    def populate_fields(self, model_name: str, populator_class: str, config_path: str, batch_size: int = 1) -> None:
+    def populate_fields(self, model_name: str, populator_class: str, populator_config: str, batch_size: int = 1) -> None:
         """Populate fields in notes using a field populator.
         
         Args:
             model_name: Name of the model to populate fields in
             populator_class: Full path to the populator class (e.g. "populators.copy_field.CopyFieldPopulator")
-            config_path: Path to the JSON configuration file for the populator
+            populator_config: Path to the JSON configuration file for the populator
             batch_size: Size of batches to process notes in. Default is 1 (no batching).
                        If greater than 1, the populator must support batching.
         """
@@ -62,7 +62,7 @@ class WriteOperations:
             if not issubclass(populator_cls, FieldPopulator):
                 raise ValueError(f"Class {populator_class} is not a subclass of FieldPopulator")
                 
-            populator = populator_cls(config_path)
+            populator = populator_cls(populator_config)
             
         except (ImportError, AttributeError) as e:
             raise ValueError(f"Could not load populator class {populator_class}: {str(e)}")

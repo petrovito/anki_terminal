@@ -5,7 +5,8 @@ import sys
 import logging
 from pathlib import Path
 from anki_context import AnkiContext
-from operations import OperationType, OperationRecipe
+from operation_models import UserOperationRecipe, OperationPlan
+from operation_executor import OperationExecutor
 import json
 
 logger = logging.getLogger('anki_inspector')
@@ -77,14 +78,14 @@ def main():
             logger.error(f"Invalid fields JSON: {e}")
             sys.exit(1)
 
-    # Create operation recipe
-    recipe = OperationRecipe(
+    # Create user operation recipe
+    user_recipe = UserOperationRecipe(
         operation_type=args.command,
         model_name=args.model,
         template_name=args.template,
         old_field_name=args.old_field,
         new_field_name=args.new_field,
-        fields=json.loads(args.fields) if args.fields else None,
+        fields=fields,
         question_format=args.question_format,
         answer_format=args.answer_format,
         css=args.css,
@@ -95,16 +96,22 @@ def main():
     output_path = Path(args.output) if args.output else None
 
     # Validate output path against operation type
-    if not recipe.is_read_only and not output_path:
+    if not user_recipe.is_read_only and not output_path:
         logger.error("Output path must be specified for write operations")
         sys.exit(1)
-    if recipe.is_read_only and output_path:
+    if user_recipe.is_read_only and output_path:
         logger.warning("Output path will be ignored for read-only operation")
         output_path = None
 
-    # Run operation in context
-    with AnkiContext(args.apkg_file, output_path, read_only=recipe.is_read_only) as context:
-        context.run(recipe)
+    # Parse user operation into an operation plan
+    with AnkiContext(args.apkg_file, output_path, read_only=user_recipe.is_read_only) as context:
+        parser = UserOperationParser(context.collection, context.changelog)
+        plan = parser.parse(user_recipe)
+
+        # Execute the operation plan
+        executor = OperationExecutor(parser.read_ops, parser.write_ops)
+        for operation in plan.operations:
+            executor.execute(operation)
 
 if __name__ == '__main__':
     main() 

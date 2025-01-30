@@ -3,7 +3,9 @@ import tempfile
 import zipfile
 from pathlib import Path
 from anki_context import AnkiContext
-from operations import OperationType, OperationRecipe
+from operation_models import UserOperationType, UserOperationRecipe
+from operations import UserOperationParser
+from operation_executor import OperationExecutor
 
 def test_read_only_extracts_only_db():
     """Test that read-only mode only extracts the database file."""
@@ -28,25 +30,33 @@ def test_read_only_operations_work():
     with AnkiContext("test_data/jap.apkg", read_only=True) as inspector:
         # Test a few read operations
         recipes = [
-            OperationRecipe(OperationType.NUM_CARDS),
-            OperationRecipe(OperationType.LIST_MODELS),
-            OperationRecipe(OperationType.LIST_FIELDS)
+            UserOperationRecipe(operation_type=UserOperationType.NUM_CARDS),
+            UserOperationRecipe(operation_type=UserOperationType.LIST_MODELS),
+            UserOperationRecipe(operation_type=UserOperationType.LIST_FIELDS)
         ]
         
+        parser = UserOperationParser()
+        executor = OperationExecutor(inspector._read_ops, inspector._write_ops)
+        
         for recipe in recipes:
-            inspector.run(recipe)  # Should not raise any errors
+            operation_plan = parser.parse(recipe)
+            executor.execute(operation_plan.operations[0])  # Should not raise any errors
 
 def test_write_operation_fails_in_read_only():
     """Test that write operations fail in read-only mode."""
     with AnkiContext("test_data/jap.apkg", read_only=True) as inspector:
-        recipe = OperationRecipe(
-            OperationType.RENAME_FIELD,
+        user_recipe = UserOperationRecipe(
+            operation_type=UserOperationType.RENAME_FIELD,
             old_field_name="Front",
             new_field_name="Question"
         )
         
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe)
+        executor = OperationExecutor(inspector._read_ops, inspector._write_ops)
+        
         with pytest.raises(RuntimeError, match="Cannot perform write operation in read-only mode"):
-            inspector.run(recipe)
+            executor.execute(operation_plan.operations[0])
 
 def test_write_mode_without_output_path_fails():
     """Test that write mode without output path fails."""
