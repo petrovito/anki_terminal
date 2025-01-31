@@ -3,94 +3,84 @@ from typing import Optional, List
 from pathlib import Path
 from enum import Enum, auto
 
-class UserOperationType(Enum):
-    """Types of operations that can be performed by users."""
-    # Read operations
-    NUM_CARDS = ("num-cards", True)
-    NUM_NOTES = ("num-notes", True)
-    LIST_MODELS = ("list-models", True)
-    LIST_TEMPLATES = ("list-templates", True)
-    LIST_FIELDS = ("list-fields", True)
-    PRINT_QUESTION = ("print-question", True)
-    PRINT_ANSWER = ("print-answer", True)
-    PRINT_CSS = ("print-css", True)
-    NOTE_EXAMPLE = ("note-example", True)
-    
-    # Write operations
-    RENAME_FIELD = ("rename-field", False)
-    ADD_MODEL = ("add-model", False)
-    ADD_FIELD = ("add-field", False)  # Added missing operation
-    MIGRATE_NOTES = ("migrate-notes", False)
-    POPULATE_FIELDS = ("populate-fields", False)  # New operation
-    
-    # Special operations
-    RUN_ALL = ("run-all", True)  # This is a read-only operation that runs multiple read operations
-
-    def __init__(self, value: str, is_read_only: bool):
-        self._value_ = value
-        self.is_read_only = is_read_only
-
-class OperationType(Enum):
-    """Types of operations that can be executed internally."""
-    # Read operations
-    NUM_CARDS = (auto(), True)
-    NUM_NOTES = (auto(), True)
-    LIST_MODELS = (auto(), True)
-    LIST_TEMPLATES = (auto(), True)
-    LIST_FIELDS = (auto(), True)
-    PRINT_QUESTION = (auto(), True)
-    PRINT_ANSWER = (auto(), True)
-    PRINT_CSS = (auto(), True)
-    NOTE_EXAMPLE = (auto(), True)
-    
-    # Write operations
-    RENAME_FIELD = (auto(), False)
-    ADD_MODEL = (auto(), False)
-    ADD_FIELD = (auto(), False)  # Added missing operation
-    MIGRATE_NOTES = (auto(), False)
-    POPULATE_FIELDS = (auto(), False)
-    
-    # Special operations
-    RUN_ALL = (auto(), True)
-
-    def __init__(self, value: int, is_read_only: bool):
-        self._value_ = value
-        self.is_read_only = is_read_only
-
-@dataclass
-class UserOperationRecipe:
-    """Recipe for an operation to perform."""
-    operation_type: UserOperationType
-    model_name: Optional[str] = None  # Required for add-model and migrate-notes (source)
-    template_name: Optional[str] = None  # Required for add-model and template operations
-    old_field_name: Optional[str] = None  # Required for rename-field
-    new_field_name: Optional[str] = None  # Required for rename-field
-    field_name: Optional[str] = None  # Required for add-field
-    target_model_name: Optional[str] = None  # Required for migrate-notes
-    field_mapping: Optional[str] = None  # Required for migrate-notes
-    fields: Optional[List[str]] = None  # Required for add-model
-    question_format: Optional[str] = None  # Required for add-model
-    answer_format: Optional[str] = None  # Required for add-model
-    css: Optional[str] = None  # Required for add-model
-    populator_class: Optional[str] = None  # Required for populate-fields (e.g. "populators.copy_field.CopyFieldPopulator")
-    populator_config: Optional[str] = None  # Required for populate-fields (path to JSON config file)
-    batch_size: Optional[int] = None  # Optional for populate-fields, controls batch processing
+class UserOperationType(str, Enum):
+    """User-facing operation types."""
+    NUM_CARDS = 'num-cards'
+    NUM_NOTES = 'num-notes'
+    LIST_MODELS = 'list-models'
+    LIST_TEMPLATES = 'list-templates'
+    LIST_FIELDS = 'list-fields'
+    PRINT_QUESTION = 'print-question'
+    PRINT_ANSWER = 'print-answer'
+    PRINT_CSS = 'print-css'
+    NOTE_EXAMPLE = 'note-example'
+    RENAME_FIELD = 'rename-field'
+    ADD_MODEL = 'add-model'
+    ADD_FIELD = 'add-field'
+    MIGRATE_NOTES = 'migrate-notes'
+    POPULATE_FIELDS = 'populate-fields'
+    RUN_ALL = 'run-all'
+    RUN_SCRIPT = 'run-script'
 
     @property
     def is_read_only(self) -> bool:
-        """Whether this operation is read-only."""
-        return self.operation_type.is_read_only
+        """Return True if this operation type is read-only."""
+        return self in [
+            UserOperationType.NUM_CARDS,
+            UserOperationType.NUM_NOTES,
+            UserOperationType.LIST_MODELS,
+            UserOperationType.LIST_TEMPLATES,
+            UserOperationType.LIST_FIELDS,
+            UserOperationType.PRINT_QUESTION,
+            UserOperationType.PRINT_ANSWER,
+            UserOperationType.PRINT_CSS,
+            UserOperationType.NOTE_EXAMPLE,
+            UserOperationType.RUN_ALL,
+            UserOperationType.RUN_SCRIPT  # Script is read-only if all its operations are
+        ]
 
+class OperationType(Enum):
+    """Internal operation types."""
+    NUM_CARDS = auto()
+    NUM_NOTES = auto()
+    LIST_MODELS = auto()
+    LIST_TEMPLATES = auto()
+    LIST_FIELDS = auto()
+    PRINT_QUESTION = auto()
+    PRINT_ANSWER = auto()
+    PRINT_CSS = auto()
+    NOTE_EXAMPLE = auto()
+    RENAME_FIELD = auto()
+    ADD_MODEL = auto()
+    ADD_FIELD = auto()
+    MIGRATE_NOTES = auto()
+    POPULATE_FIELDS = auto()
+    RUN_ALL = auto()
+
+    @property
+    def is_read_only(self) -> bool:
+        """Return True if this operation type is read-only."""
+        return self in [
+            OperationType.NUM_CARDS,
+            OperationType.NUM_NOTES,
+            OperationType.LIST_MODELS,
+            OperationType.LIST_TEMPLATES,
+            OperationType.LIST_FIELDS,
+            OperationType.PRINT_QUESTION,
+            OperationType.PRINT_ANSWER,
+            OperationType.PRINT_CSS,
+            OperationType.NOTE_EXAMPLE
+        ]
 
 @dataclass
-class OperationRecipe:
-    """Represents an operation ready for execution."""
-    operation_type: OperationType
+class UserOperationRecipe:
+    """Recipe for executing a user operation."""
+    operation_type: UserOperationType
     model_name: Optional[str] = None
     template_name: Optional[str] = None
     old_field_name: Optional[str] = None
     new_field_name: Optional[str] = None
-    field_name: Optional[str] = None  # Required for add-field
+    field_name: Optional[str] = None
     target_model_name: Optional[str] = None
     field_mapping: Optional[str] = None
     fields: Optional[List[str]] = None
@@ -99,9 +89,27 @@ class OperationRecipe:
     css: Optional[str] = None
     populator_class: Optional[str] = None
     populator_config: Optional[str] = None
-    batch_size: Optional[int] = None 
-    
-    
+    batch_size: Optional[int] = None
+
+@dataclass
+class OperationRecipe:
+    """Recipe for executing an operation."""
+    operation_type: OperationType
+    model_name: Optional[str] = None
+    template_name: Optional[str] = None
+    old_field_name: Optional[str] = None
+    new_field_name: Optional[str] = None
+    field_name: Optional[str] = None
+    target_model_name: Optional[str] = None
+    field_mapping: Optional[str] = None
+    fields: Optional[List[str]] = None
+    question_format: Optional[str] = None
+    answer_format: Optional[str] = None
+    css: Optional[str] = None
+    populator_class: Optional[str] = None
+    populator_config: Optional[str] = None
+    batch_size: Optional[int] = None
+
 @dataclass
 class OperationPlan:
     """A plan of operations to execute."""

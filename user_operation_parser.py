@@ -11,61 +11,18 @@ from write_operations import WriteOperations
 from changelog import ChangeLog
 from operation_executor import OperationExecutor
 from operation_models import UserOperationRecipe, OperationPlan, OperationRecipe, UserOperationType, OperationType
+from arg_parser import parse_script_line
 
 logger = logging.getLogger('anki_inspector')
 
 class UserOperationParser:
     """Parse user inputs into an operation plan."""
-    def parse_from_args(self, args) -> OperationPlan:
-        """Parse command line arguments into an operation plan.
-        
-        Args:
-            args: The parsed command line arguments
-            
-        Returns:
-            An operation plan ready for execution
-            
-        Raises:
-            ValueError: If the arguments are invalid or missing required fields
-        """
-        # Parse fields JSON if provided
-        fields = None
-        if args.fields:
-            try:
-                fields = json.loads(args.fields)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid fields JSON: {e}")
-
-        # Create user operation recipe from args
-        user_recipe = UserOperationRecipe(
-            operation_type=args.command,
-            model_name=args.model,
-            template_name=args.template,
-            old_field_name=args.old_field,
-            new_field_name=args.new_field,
-            fields=fields,
-            question_format=args.question_format,
-            answer_format=args.answer_format,
-            css=args.css,
-            batch_size=args.batch_size,
-            populator_class=args.populator_class,
-            populator_config=args.populator_config,
-            target_model_name=args.target_model,
-            field_mapping=args.field_mapping
-        )
-
-        # Create output path if specified
-        output_path = Path(args.output) if args.output else None
-
-        return self.parse(user_recipe, output_path, args.config)
-
-    def parse(self, user_recipe: UserOperationRecipe, output_path: Optional[Path] = None, config_file: Optional[Path] = None) -> OperationPlan:
+    def parse(self, user_recipe: UserOperationRecipe, output_path: Optional[Path] = None) -> OperationPlan:
         """Parse the user operation recipe into an operation plan.
         
         Args:
             user_recipe: The user operation recipe to parse
             output_path: Optional output path for write operations
-            config_file: Optional path to a JSON config file containing operation arguments
             
         Returns:
             An operation plan ready for execution
@@ -73,55 +30,8 @@ class UserOperationParser:
         Raises:
             ValueError: If the recipe is invalid or missing required fields
         """
-        logger.info(f"Parsing operation: {user_recipe.operation_type.value}")
-
-        # Load config file if provided
-        config_args = {}
-        if config_file:
-            try:
-                with open(config_file) as f:
-                    config_args = json.load(f)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON in config file: {e}")
-            except OSError as e:
-                raise ValueError(f"Could not read config file: {e}")
-
-        # Create a new recipe by merging config args with user recipe
-        # Command line args (user_recipe) take precedence over config file
-        merged_recipe = UserOperationRecipe(
-            operation_type=user_recipe.operation_type,
-            model_name=user_recipe.model_name or config_args.get('model_name'),
-            template_name=user_recipe.template_name or config_args.get('template_name'),
-            old_field_name=user_recipe.old_field_name or config_args.get('old_field_name'),
-            new_field_name=user_recipe.new_field_name or config_args.get('new_field_name'),
-            field_name=user_recipe.field_name or config_args.get('field_name'),
-            target_model_name=user_recipe.target_model_name or config_args.get('target_model_name'),
-            field_mapping=user_recipe.field_mapping or config_args.get('field_mapping'),
-            fields=user_recipe.fields or config_args.get('fields'),
-            question_format=user_recipe.question_format or config_args.get('question_format'),
-            answer_format=user_recipe.answer_format or config_args.get('answer_format'),
-            css=user_recipe.css or config_args.get('css'),
-            populator_class=user_recipe.populator_class or config_args.get('populator_class'),
-            populator_config=user_recipe.populator_config or config_args.get('populator_config'),
-            batch_size=user_recipe.batch_size or config_args.get('batch_size')
-        )
-
-        # Validate fields JSON if provided
-        fields = None
-        if merged_recipe.fields is not None:
-            if not isinstance(merged_recipe.fields, list):
-                raise ValueError("Fields must be a JSON array")
-            fields = merged_recipe.fields
-
-        # Validate output path against operation type
-        if not merged_recipe.operation_type.is_read_only and not output_path:
-            raise ValueError("Output path must be specified for write operations")
-
-        # Validate required fields based on operation type
-        self._validate_operation_fields(merged_recipe)
-
         # Handle RUN_ALL operation type
-        if merged_recipe.operation_type == UserOperationType.RUN_ALL:
+        if user_recipe.operation_type == UserOperationType.RUN_ALL:
             operations = [
                 # Basic read operations
                 OperationRecipe(operation_type=OperationType.NUM_CARDS),
@@ -141,17 +51,115 @@ class UserOperationParser:
                 output_path=None,
                 read_only=True
             )
+
+        # For all other operations
+        # Validate required fields based on operation type
+        self._validate_required_fields(user_recipe)
         
-        # For all other operations, convert and return a single operation
-        operation_recipe = self._convert_to_operation_recipe(merged_recipe)
+        # Validate output path for write operations
+        if not user_recipe.operation_type.is_read_only and not output_path:
+            raise ValueError("Output path must be specified for write operations")
+
+        # Convert to operation recipe
+        operation = self._convert_to_operation_recipe(user_recipe)
+        
         return OperationPlan(
-            operations=[operation_recipe],
+            operations=[operation],
             output_path=output_path,
-            read_only=merged_recipe.operation_type.is_read_only
+            read_only=user_recipe.operation_type.is_read_only
         )
 
-    def _validate_operation_fields(self, recipe: UserOperationRecipe) -> None:
-        """Validate that all required fields are present for the given operation type."""
+    def parse_from_args(self, args) -> OperationPlan:
+        """Parse command line arguments into an operation plan.
+        
+        Args:
+            args: The parsed command line arguments
+            
+        Returns:
+            An operation plan ready for execution
+            
+        Raises:
+            ValueError: If the arguments are invalid or missing required fields
+        """
+        # Handle script file if provided
+        if args.command == UserOperationType.RUN_SCRIPT:
+            if not args.script_file:
+                raise ValueError("Must specify script-file for run-script operation")
+            if not args.script_file.exists():
+                raise ValueError(f"Script file not found: {args.script_file}")
+            
+            # Read and parse script file
+            operations = []
+            read_only = True
+            with open(args.script_file) as f:
+                for line_num, line in enumerate(f, 1):
+                    try:
+                        line_args = parse_script_line(line)
+                        if line_args:
+                            # Parse into operation recipe
+                            line_recipe = UserOperationRecipe(
+                                operation_type=line_args.command,
+                                model_name=line_args.model,
+                                template_name=line_args.template,
+                                old_field_name=line_args.old_field,
+                                new_field_name=line_args.new_field,
+                                fields=json.loads(line_args.fields) if line_args.fields else None,
+                                question_format=line_args.question_format,
+                                answer_format=line_args.answer_format,
+                                css=line_args.css,
+                                batch_size=line_args.batch_size,
+                                populator_class=line_args.populator_class,
+                                populator_config=line_args.populator_config,
+                                target_model_name=line_args.target_model,
+                                field_mapping=line_args.field_mapping
+                            )
+                            operation = self._convert_to_operation_recipe(line_recipe)
+                            operations.append(operation)
+                            # Update read_only status
+                            if not line_recipe.operation_type.is_read_only:
+                                read_only = False
+                    except Exception as e:
+                        raise ValueError(f"Error in script file at line {line_num}: {str(e)}")
+            
+            return OperationPlan(
+                operations=operations,
+                output_path=Path(args.output) if args.output else None,
+                read_only=read_only
+            )
+
+        # Load config file if provided
+        config_args = {}
+        if args.config:
+            try:
+                with open(args.config) as f:
+                    config_args = json.load(f)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON in config file: {e}")
+            except OSError as e:
+                raise ValueError(f"Could not read config file: {e}")
+
+        # Create operation recipe from command line args, using config values as fallback
+        user_recipe = UserOperationRecipe(
+            operation_type=args.command,
+            model_name=args.model or config_args.get('model_name'),
+            template_name=args.template or config_args.get('template_name'),
+            old_field_name=args.old_field or config_args.get('old_field_name'),
+            new_field_name=args.new_field or config_args.get('new_field_name'),
+            fields=json.loads(args.fields) if args.fields else config_args.get('fields'),
+            question_format=args.question_format or config_args.get('question_format'),
+            answer_format=args.answer_format or config_args.get('answer_format'),
+            css=args.css or config_args.get('css'),
+            batch_size=args.batch_size or config_args.get('batch_size'),
+            populator_class=args.populator_class or config_args.get('populator_class'),
+            populator_config=args.populator_config or config_args.get('populator_config'),
+            target_model_name=args.target_model or config_args.get('target_model_name'),
+            field_mapping=args.field_mapping or config_args.get('field_mapping')
+        )
+
+        return self.parse(user_recipe, Path(args.output) if args.output else None)
+
+    def _validate_required_fields(self, recipe: UserOperationRecipe):
+        """Validate that all required fields are provided for the operation type."""
         op_type = recipe.operation_type
 
         if op_type == UserOperationType.ADD_MODEL:

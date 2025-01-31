@@ -207,4 +207,129 @@ def test_run_all_operation():
     assert len(plan.operations) > 1  # Should create multiple operations
     # Verify all operations are read-only
     for op in plan.operations:
-        assert op.operation_type.is_read_only 
+        assert op.operation_type.is_read_only
+
+def test_run_script():
+    """Test running a script file with multiple operations."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Create script file
+        script_path = Path(tmp_dir) / "script.txt"
+        script_content = """
+# This is a comment
+list-models
+list-templates --model "Basic Card"
+num-notes
+# Another comment
+print-css --model "Basic Card"
+"""
+        with open(script_path, "w") as f:
+            f.write(script_content)
+
+        args = Namespace(
+            command=UserOperationType.RUN_SCRIPT,
+            model=None,
+            template=None,
+            old_field=None,
+            new_field=None,
+            fields=None,
+            question_format=None,
+            answer_format=None,
+            css=None,
+            batch_size=None,
+            populator_class=None,
+            populator_config=None,
+            target_model=None,
+            field_mapping=None,
+            output=None,
+            config=None,
+            script_file=script_path
+        )
+
+        parser = UserOperationParser()
+        plan = parser.parse_from_args(args)
+
+        assert plan.read_only == True
+        assert plan.output_path == None
+        assert len(plan.operations) == 4  # 4 operations, skipping comments
+        # Verify operations are in correct order
+        assert plan.operations[0].operation_type == OperationType.LIST_MODELS
+        assert plan.operations[1].operation_type == OperationType.LIST_TEMPLATES
+        assert plan.operations[1].model_name == "Basic Card"
+        assert plan.operations[2].operation_type == OperationType.NUM_NOTES
+        assert plan.operations[3].operation_type == OperationType.PRINT_CSS
+        assert plan.operations[3].model_name == "Basic Card"
+
+def test_script_with_write_operations():
+    """Test script containing write operations sets read_only correctly."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Create script file with mix of read and write operations
+        script_path = Path(tmp_dir) / "script.txt"
+        script_content = """
+list-models
+add-field --model "Basic Card" --new-field "NewField"
+num-notes
+"""
+        with open(script_path, "w") as f:
+            f.write(script_content)
+
+        args = Namespace(
+            command=UserOperationType.RUN_SCRIPT,
+            model=None,
+            template=None,
+            old_field=None,
+            new_field=None,
+            fields=None,
+            question_format=None,
+            answer_format=None,
+            css=None,
+            batch_size=None,
+            populator_class=None,
+            populator_config=None,
+            target_model=None,
+            field_mapping=None,
+            output=str(Path(tmp_dir) / "output.apkg"),
+            config=None,
+            script_file=script_path
+        )
+
+        parser = UserOperationParser()
+        plan = parser.parse_from_args(args)
+
+        assert not plan.read_only  # Should be False because add-field is a write operation
+        assert plan.output_path == Path(args.output)
+        assert len(plan.operations) == 3
+
+def test_script_with_invalid_command():
+    """Test that invalid commands in script file are handled properly."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Create script file with invalid command
+        script_path = Path(tmp_dir) / "script.txt"
+        script_content = """list-models
+invalid-command
+num-notes"""
+        with open(script_path, "w") as f:
+            f.write(script_content)
+
+        args = Namespace(
+            command=UserOperationType.RUN_SCRIPT,
+            model=None,
+            template=None,
+            old_field=None,
+            new_field=None,
+            fields=None,
+            question_format=None,
+            answer_format=None,
+            css=None,
+            batch_size=None,
+            populator_class=None,
+            populator_config=None,
+            target_model=None,
+            field_mapping=None,
+            output=None,
+            config=None,
+            script_file=script_path
+        )
+
+        parser = UserOperationParser()
+        with pytest.raises(ValueError, match="Error in script file at line 2"):
+            parser.parse_from_args(args) 
