@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from anki_context import AnkiContext
 from operation_models import UserOperationType, UserOperationRecipe
-from operations import UserOperationParser
+from user_operation_parser import UserOperationParser
 from operation_executor import OperationExecutor
 from populators.copy_field import CopyFieldPopulator
 from populators.concat_fields import ConcatFieldsPopulator
@@ -38,7 +38,7 @@ def test_copy_field_populator(tmp_path):
             populator_config=str(config_path)
         )
         parser = UserOperationParser()
-        operation_plan = parser.parse(user_recipe)
+        operation_plan = parser.parse(user_recipe, output_path)
         executor = OperationExecutor(context._read_ops, context._write_ops)
         executor.execute(operation_plan.operations[0])
     
@@ -59,7 +59,7 @@ def test_concat_fields_populator(tmp_path):
             field_name="Combined"
         )
         parser = UserOperationParser()
-        operation_plan = parser.parse(user_recipe)
+        operation_plan = parser.parse(user_recipe, output1)
         executor = OperationExecutor(context._read_ops, context._write_ops)
         executor.execute(operation_plan.operations[0])
     
@@ -80,7 +80,7 @@ def test_concat_fields_populator(tmp_path):
             populator_config=str(config_path)
         )
         parser = UserOperationParser()
-        operation_plan = parser.parse(user_recipe)
+        operation_plan = parser.parse(user_recipe, output2)
         executor = OperationExecutor(context._read_ops, context._write_ops)
         executor.execute(operation_plan.operations[0])
     
@@ -109,7 +109,7 @@ def test_copy_field_populator_missing_source(tmp_path):
             populator_config=str(config_path)
         )
         parser = UserOperationParser()
-        operation_plan = parser.parse(user_recipe)
+        operation_plan = parser.parse(user_recipe, output_path)
         executor = OperationExecutor(context._read_ops, context._write_ops)
         # Should log warning and skip notes, but not fail
         executor.execute(operation_plan.operations[0])
@@ -134,7 +134,7 @@ def test_concat_fields_populator_missing_source(tmp_path):
             populator_config=str(config_path)
         )
         parser = UserOperationParser()
-        operation_plan = parser.parse(user_recipe)
+        operation_plan = parser.parse(user_recipe, output_path)
         executor = OperationExecutor(context._read_ops, context._write_ops)
         # Should log warning and skip notes, but not fail
         executor.execute(operation_plan.operations[0])
@@ -153,7 +153,7 @@ def test_invalid_populator_class(tmp_path):
                 populator_config=str(config_path)
             )
             parser = UserOperationParser()
-            operation_plan = parser.parse(user_recipe)
+            operation_plan = parser.parse(user_recipe, output_path)
             executor = OperationExecutor(context._read_ops, context._write_ops)
             executor.execute(operation_plan.operations[0])
 
@@ -175,7 +175,7 @@ def test_invalid_config_file(tmp_path):
                 populator_config=str(config_path)
             )
             parser = UserOperationParser()
-            operation_plan = parser.parse(user_recipe)
+            operation_plan = parser.parse(user_recipe, output_path)
             executor = OperationExecutor(context._read_ops, context._write_ops)
             executor.execute(operation_plan.operations[0])
 
@@ -194,7 +194,7 @@ def test_missing_config_fields(tmp_path):
                 populator_config=str(config_path)
             )
             parser = UserOperationParser()
-            operation_plan = parser.parse(user_recipe)
+            operation_plan = parser.parse(user_recipe, output_path)
             executor = OperationExecutor(context._read_ops, context._write_ops)
             executor.execute(operation_plan.operations[0])
 

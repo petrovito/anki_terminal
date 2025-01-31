@@ -22,47 +22,40 @@ class OperationExecutor:
         
         # Execute based on operation type
         if recipe.operation_type == OperationType.NUM_CARDS:
-            print(f"Number of cards: {self._read_ops.num_cards()}")
+            print(self._read_ops.num_cards())
         elif recipe.operation_type == OperationType.NUM_NOTES:
-            print(f"Number of notes: {self._read_ops.count_notes()}")
+            print(self._read_ops.num_notes())
         elif recipe.operation_type == OperationType.LIST_MODELS:
             models = self._read_ops.list_models()
-            print("\nModels:")
             for model in models:
-                print(f"  - {model['name']} ({model['type']})")
+                print(f"{model['name']} ({model['type']})")
         elif recipe.operation_type == OperationType.LIST_TEMPLATES:
             templates = self._read_ops.list_templates(model_name=recipe.model_name)
-            print(f"\nTemplates for model '{recipe.model_name}':")
             for template in templates:
-                print(f"  - {template['name']} (ordinal: {template['ordinal']})")
+                print(f"{template['name']} (ordinal: {template['ordinal']})")
         elif recipe.operation_type == OperationType.LIST_FIELDS:
             fields = self._read_ops.list_fields(model_name=recipe.model_name)
-            print(f"\nFields for model '{recipe.model_name}':")
             for field in fields:
-                print(f"  - {field['name']}")
+                print(field['name'])
         elif recipe.operation_type == OperationType.PRINT_QUESTION:
             question = self._read_ops.get_question_format(
                 model_name=recipe.model_name,
                 template_name=recipe.template_name
             )
-            print(f"\nQuestion format for template '{recipe.template_name}' in model '{recipe.model_name}':")
             print(question)
         elif recipe.operation_type == OperationType.PRINT_ANSWER:
             answer = self._read_ops.get_answer_format(
                 model_name=recipe.model_name,
                 template_name=recipe.template_name
             )
-            print(f"\nAnswer format for template '{recipe.template_name}' in model '{recipe.model_name}':")
             print(answer)
         elif recipe.operation_type == OperationType.PRINT_CSS:
             css = self._read_ops.get_css(model_name=recipe.model_name)
-            print(f"\nCSS for model '{recipe.model_name}':")
             print(css)
         elif recipe.operation_type == OperationType.NOTE_EXAMPLE:
             example = self._read_ops.get_note_example(model_name=recipe.model_name)
-            print(f"\nExample note for model '{recipe.model_name}':")
             for field, value in example.items():
-                print(f"  {field}: {value}")
+                print(f"{field}: {value}")
         elif recipe.operation_type == OperationType.RENAME_FIELD:
             if not recipe.old_field_name or not recipe.new_field_name:
                 raise ValueError("Must specify old_field_name and new_field_name for rename-field operation")
@@ -102,32 +95,5 @@ class OperationExecutor:
                 populator_config=recipe.populator_config,
                 batch_size=recipe.batch_size
             )
-        elif recipe.operation_type == OperationType.RUN_ALL:
-            # Run all read operations
-            self.execute(OperationRecipe(OperationType.NUM_CARDS))
-            self.execute(OperationRecipe(OperationType.NUM_NOTES))
-            self.execute(OperationRecipe(OperationType.LIST_MODELS))
-            # Get list of models for further operations
-            models = self._read_ops.list_models()
-            for model in models:
-                model_name = model["name"]
-                self.execute(OperationRecipe(OperationType.LIST_TEMPLATES, model_name=model_name))
-                self.execute(OperationRecipe(OperationType.LIST_FIELDS, model_name=model_name))
-                self.execute(OperationRecipe(OperationType.PRINT_CSS, model_name=model_name))
-                self.execute(OperationRecipe(OperationType.NOTE_EXAMPLE, model_name=model_name))
-                # Get templates for this model
-                templates = self._read_ops.list_templates(model_name=model_name)
-                for template in templates:
-                    template_name = template["name"]
-                    self.execute(OperationRecipe(
-                        OperationType.PRINT_QUESTION,
-                        model_name=model_name,
-                        template_name=template_name
-                    ))
-                    self.execute(OperationRecipe(
-                        OperationType.PRINT_ANSWER,
-                        model_name=model_name,
-                        template_name=template_name
-                    ))
         else:
             raise ValueError(f"Unknown operation type: {recipe.operation_type}") 

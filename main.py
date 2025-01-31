@@ -3,11 +3,11 @@
 import argparse
 import sys
 import logging
+import json
 from pathlib import Path
 from anki_context import AnkiContext
-from operation_models import UserOperationRecipe, OperationPlan
-from operation_executor import OperationExecutor
-import json
+from operation_models import UserOperationRecipe, UserOperationType
+from user_operation_parser import UserOperationParser
 
 logger = logging.getLogger('anki_inspector')
 
@@ -23,16 +23,16 @@ def setup_logging(level: str):
     log_level = getattr(logging, level.upper())
     logger.setLevel(log_level)
 
-def operation_type(value: str) -> OperationType:
-    """Convert string to OperationType, using the operation's value."""
+def operation_type(value: str) -> UserOperationType:
+    """Convert string to UserOperationType, using the operation's value."""
     try:
-        return next(op for op in OperationType if op.value == value)
+        return next(op for op in UserOperationType if op.value == value)
     except StopIteration:
         raise argparse.ArgumentTypeError(f"Invalid operation: {value}")
 
 def parse_args():
     # Get list of available commands
-    commands = [op.value for op in OperationType]
+    commands = [op.value for op in UserOperationType]
     command_help = f"Command to execute. Available commands: {', '.join(commands)}"
 
     parser = argparse.ArgumentParser(description='Inspect Anki .apkg files')
@@ -72,8 +72,6 @@ def main():
     if args.fields:
         try:
             fields = json.loads(args.fields)
-            if not isinstance(fields, list):
-                raise ValueError("Fields must be a JSON array")
         except json.JSONDecodeError as e:
             logger.error(f"Invalid fields JSON: {e}")
             sys.exit(1)
@@ -89,29 +87,27 @@ def main():
         question_format=args.question_format,
         answer_format=args.answer_format,
         css=args.css,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
+        populator_class=args.populator_class,
+        populator_config=args.populator_config,
+        target_model_name=args.target_model,
+        field_mapping=args.field_mapping
     )
 
     # Create output path if specified
     output_path = Path(args.output) if args.output else None
 
-    # Validate output path against operation type
-    if not user_recipe.is_read_only and not output_path:
-        logger.error("Output path must be specified for write operations")
+    try:
+        # Parse user operation into an operation plan
+        parser = UserOperationParser()
+        operation_plan = parser.parse(user_recipe, output_path)
+
+        # Execute the operation plan in the AnkiContext
+        with AnkiContext(args.apkg_file, output_path, read_only=user_recipe.is_read_only) as context:
+            context.run(operation_plan)
+    except ValueError as e:
+        logger.error(str(e))
         sys.exit(1)
-    if user_recipe.is_read_only and output_path:
-        logger.warning("Output path will be ignored for read-only operation")
-        output_path = None
-
-    # Parse user operation into an operation plan
-    with AnkiContext(args.apkg_file, output_path, read_only=user_recipe.is_read_only) as context:
-        parser = UserOperationParser(context.collection, context.changelog)
-        plan = parser.parse(user_recipe)
-
-        # Execute the operation plan
-        executor = OperationExecutor(parser.read_ops, parser.write_ops)
-        for operation in plan.operations:
-            executor.execute(operation)
 
 if __name__ == '__main__':
     main() 

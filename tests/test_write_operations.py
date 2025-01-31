@@ -3,8 +3,8 @@ import tempfile
 import logging
 from pathlib import Path
 from anki_context import AnkiContext
-from operation_models import UserOperationType, UserOperationRecipe, OperationType, OperationRecipe
-from operations import UserOperationParser
+from operation_models import UserOperationType, UserOperationRecipe, OperationType, OperationRecipe, OperationPlan
+from user_operation_parser import UserOperationParser
 from operation_executor import OperationExecutor
 
 logger = logging.getLogger('anki_inspector')
@@ -24,7 +24,7 @@ def test_rename_field_persists():
                 new_field_name="Question"
             )
             parser = UserOperationParser()
-            operation_plan = parser.parse(user_recipe)
+            operation_plan = parser.parse(user_recipe, output_path)
             executor = OperationExecutor(inspector._read_ops, inspector._write_ops)
             executor.execute(operation_plan.operations[0])
         
@@ -49,11 +49,12 @@ def test_rename_field_persists():
             assert "{{Front}}" in question_format
             assert "{{Question}}" not in question_format 
 
-def create_test_model(context: AnkiContext, model_name: str = "Test Model") -> None:
+def create_test_model(context: AnkiContext, output_path: Path, model_name: str = "Test Model") -> None:
     """Create a test model with predefined fields and template.
-    
+
     Args:
         context: The AnkiContext to use
+        output_path: Path where the output file will be written
         model_name: Optional name for the model (default: "Test Model")
     """
     user_recipe = UserOperationRecipe(
@@ -66,7 +67,7 @@ def create_test_model(context: AnkiContext, model_name: str = "Test Model") -> N
         css=".card { font-family: times; font-size: 18px; text-align: left; color: navy; }"
     )
     parser = UserOperationParser()
-    operation_plan = parser.parse(user_recipe)
+    operation_plan = parser.parse(user_recipe, output_path)
     executor = OperationExecutor(context._read_ops, context._write_ops)
     executor.execute(operation_plan.operations[0])
 
@@ -77,7 +78,7 @@ def test_add_model_creates_new_model(tmp_path):
     
     # Add new model with all required fields
     with AnkiContext("test_data/jap.apkg", output_path, read_only=False) as context:
-        create_test_model(context)
+        create_test_model(context, output_path)
     
     # Verify model was added by opening the file again
     with AnkiContext(output_path, read_only=True) as context:
@@ -124,7 +125,7 @@ def test_migrate_notes_moves_notes_correctly(tmp_path):
     
     # First add a new model
     with AnkiContext("test_data/jap.apkg", model_output, read_only=False) as context:
-        create_test_model(context, "Target Model")
+        create_test_model(context, model_output, "Target Model")
     
     # Then migrate notes
     with AnkiContext(model_output, final_output, read_only=False) as context:
@@ -134,12 +135,12 @@ def test_migrate_notes_moves_notes_correctly(tmp_path):
         assert initial_counts["Target Model"] == 0
         
         # Migrate notes
-        context.run(OperationRecipe(
+        context.run(OperationPlan(operations=[OperationRecipe(
             operation_type=OperationType.MIGRATE_NOTES,
             model_name="Basic Card",
             target_model_name="Target Model",
             field_mapping='{"Front": "Question", "Back": "Answer"}'
-        ))
+        )]))
         
         # Verify notes were migrated
         final_counts = context._read_ops.num_notes()

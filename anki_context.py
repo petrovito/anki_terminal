@@ -7,9 +7,10 @@ from typing import Optional
 from apkg_manager import ApkgManager
 from database_manager import DatabaseManager
 from changelog import ChangeLog
-from operation_models import UserOperationRecipe
+from operation_models import OperationPlan
 from operation_executor import OperationExecutor
-from operations import UserOperationParser, ReadOperations, WriteOperations
+from read_operations import ReadOperations
+from write_operations import WriteOperations
 
 logger = logging.getLogger('anki_inspector')
 
@@ -30,7 +31,6 @@ class AnkiContext:
         self._changelog = None
         self._read_ops = None
         self._write_ops = None
-        self._parser = None
         self._executor = None
         self._is_destroyed = False
 
@@ -45,7 +45,6 @@ class AnkiContext:
             self._changelog = ChangeLog()
             self._read_ops = ReadOperations(self._collection)
             self._write_ops = None if self._read_only else WriteOperations(self._collection, self._changelog)
-            self._parser = UserOperationParser()
             self._executor = OperationExecutor(self._read_ops, self._write_ops)
             return self
         except Exception:
@@ -79,20 +78,13 @@ class AnkiContext:
         """Check if any write operations were performed."""
         return self._changelog is not None and len(self._changelog.changes) > 0
 
-    def run(self, user_recipe: UserOperationRecipe) -> None:
-        """Parse user operation and execute the operation plan."""
+    def run(self, operation_plan: OperationPlan) -> None:
+        """Execute an operation plan."""
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot run operations")
         
-        # Validate operation against read-only mode
-        if self._read_only and not user_recipe.is_read_only:
-            raise RuntimeError("Cannot perform write operation in read-only mode")
-        
-        # Parse user operation into an operation plan
-        plan = self._parser.parse(user_recipe)
-
         # Execute the operation plan
-        for operation in plan.operations:
+        for operation in operation_plan.operations:
             self._executor.execute(operation)
 
     def _package(self) -> None:
