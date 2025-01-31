@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List
+from pathlib import Path
 from enum import Enum, auto
 
 class UserOperationType(Enum):
@@ -80,10 +81,6 @@ class UserOperationRecipe:
         """Whether this operation is read-only."""
         return self.operation_type.is_read_only
 
-@dataclass
-class OperationPlan:
-    """Plan for executing a series of operations."""
-    operations: List[UserOperationRecipe]
 
 @dataclass
 class OperationRecipe:
@@ -103,3 +100,11 @@ class OperationRecipe:
     populator_class: Optional[str] = None
     populator_config: Optional[str] = None
     batch_size: Optional[int] = None 
+    
+    
+@dataclass
+class OperationPlan:
+    """A plan of operations to execute."""
+    operations: List[OperationRecipe]
+    output_path: Optional[Path] = None
+    read_only: bool = True

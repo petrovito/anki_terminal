@@ -56,6 +56,7 @@ def parse_args():
     parser.add_argument('--log-level', choices=['error', 'info', 'debug'], 
                        default='error', help='Set logging level')
     parser.add_argument('--batch-size', type=int, help='Batch size for populate-fields operation')
+    parser.add_argument('--config', type=Path, help='Path to JSON config file containing operation arguments', default=None)
 
     if len(sys.argv) < 3:
         parser.print_help()
@@ -67,44 +68,14 @@ def main():
     args = parse_args()
     setup_logging(args.log_level)
 
-    # Parse fields JSON if provided
-    fields = None
-    if args.fields:
-        try:
-            fields = json.loads(args.fields)
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid fields JSON: {e}")
-            sys.exit(1)
-
-    # Create user operation recipe
-    user_recipe = UserOperationRecipe(
-        operation_type=args.command,
-        model_name=args.model,
-        template_name=args.template,
-        old_field_name=args.old_field,
-        new_field_name=args.new_field,
-        fields=fields,
-        question_format=args.question_format,
-        answer_format=args.answer_format,
-        css=args.css,
-        batch_size=args.batch_size,
-        populator_class=args.populator_class,
-        populator_config=args.populator_config,
-        target_model_name=args.target_model,
-        field_mapping=args.field_mapping
-    )
-
-    # Create output path if specified
-    output_path = Path(args.output) if args.output else None
-
     try:
         # Parse user operation into an operation plan
         parser = UserOperationParser()
-        operation_plan = parser.parse(user_recipe, output_path)
+        op_plan = parser.parse_from_args(args)
 
         # Execute the operation plan in the AnkiContext
-        with AnkiContext(args.apkg_file, output_path, read_only=user_recipe.is_read_only) as context:
-            context.run(operation_plan)
+        with AnkiContext(args.apkg_file, op_plan.output_path, read_only=op_plan.read_only) as context:
+            context.run(op_plan)
     except ValueError as e:
         logger.error(str(e))
         sys.exit(1)
