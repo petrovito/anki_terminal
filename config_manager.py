@@ -4,6 +4,7 @@ import logging
 import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+from template_manager import TemplateManager
 
 logger = logging.getLogger('anki_inspector')
 
@@ -14,6 +15,7 @@ class ConfigManager:
         # Get the directory where this file is located
         self.package_dir = Path(__file__).parent
         self.builtin_configs_dir = self.package_dir / "configs" / "builtin"
+        self.template_manager = TemplateManager()
         
     def get_builtin_config_path(self, config_name: str) -> Optional[Path]:
         """Get the path to a built-in configuration.
@@ -87,7 +89,18 @@ class ConfigManager:
         try:
             path = self.resolve_config_path(config_path)
             with open(path) as f:
-                return json.load(f)
+                config = json.load(f)
+            
+            # Handle template files if specified
+            if 'question_format_file' in config:
+                config['question_format'] = self.template_manager.load_template(config['question_format_file'])
+            if 'answer_format_file' in config:
+                config['answer_format'] = self.template_manager.load_template(config['answer_format_file'])
+            if 'css_file' in config:
+                config['css'] = self.template_manager.load_template(config['css_file'])
+            
+            return config
+            
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in configuration file {config_path}: {str(e)}")
         except Exception as e:
