@@ -1,0 +1,8 @@
+{
+    "model_name": "Japanese Anime Card",
+    "fields": ["Japanese", "English", "Context", "Audio", "Image"],
+    "template_name": "Japanese Card",
+    "question_format": "{{Japanese}}\n{{#Audio}}[sound:{{Audio}}]{{/Audio}}\n{{#Image}}<img src=\"{{Image}}\">{{/Image}}",
+    "answer_format": "{{FrontSide}}\n<hr id=\"answer\">\n<div class=\"english\">{{English}}</div>\n{{#Context}}<div class=\"context\">{{Context}}</div>{{/Context}}",
+    "css": ".card {\n    font-family: Arial;\n    font-size: 20px;\n    text-align: center;\n    color: black;\n    background-color: white;\n}\n\n.english {\n    font-size: 16px;\n    color: #666;\n}\n\n.context {\n    font-size: 14px;\n    font-style: italic;\n    color: #888;\n    margin-top: 10px;\n}"
+} 

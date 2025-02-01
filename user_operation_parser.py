@@ -12,11 +12,17 @@ from changelog import ChangeLog
 from operation_executor import OperationExecutor
 from operation_models import UserOperationRecipe, OperationPlan, OperationRecipe, UserOperationType, OperationType
 from arg_parser import parse_script_line
+from script_manager import ScriptManager
+from config_manager import ConfigManager
 
 logger = logging.getLogger('anki_inspector')
 
 class UserOperationParser:
     """Parse user inputs into an operation plan."""
+    def __init__(self):
+        self.script_manager = ScriptManager()
+        self.config_manager = ConfigManager()
+
     def parse(self, user_recipe: UserOperationRecipe, output_path: Optional[Path] = None) -> OperationPlan:
         """Parse the user operation recipe into an operation plan.
         
@@ -70,48 +76,54 @@ class UserOperationParser:
         )
 
     def parse_from_args(self, args) -> OperationPlan:
-        """Parse command line arguments into an operation plan.
-        
-        Args:
-            args: The parsed command line arguments
-            
-        Returns:
-            An operation plan ready for execution
-            
-        Raises:
-            ValueError: If the arguments are invalid or missing required fields
-        """
+        """Parse command line arguments into an operation plan."""
         # Handle script file if provided
         if args.command == UserOperationType.RUN_SCRIPT:
             if not args.script_file:
                 raise ValueError("Must specify script-file for run-script operation")
-            if not args.script_file.exists():
-                raise ValueError(f"Script file not found: {args.script_file}")
+                
+            # Resolve script path using ScriptManager
+            try:
+                script_path = self.script_manager.resolve_script_path(str(args.script_file))
+            except ValueError as e:
+                raise ValueError(f"Script file error: {str(e)}")
+            
+            if not script_path.exists():
+                raise ValueError(f"Script file not found: {script_path}")
             
             # Read and parse script file
             operations = []
             read_only = True
-            with open(args.script_file) as f:
+            with open(script_path) as f:
                 for line_num, line in enumerate(f, 1):
                     try:
                         line_args = parse_script_line(line)
                         if line_args:
+                            # Load config if specified in the line
+                            config_args = {}
+                            if line_args.config:
+                                try:
+                                    config_path = self.config_manager.resolve_config_path(str(line_args.config))
+                                    config_args = self.config_manager.load_config(str(config_path))
+                                except ValueError as e:
+                                    raise ValueError(f"Configuration error at line {line_num}: {str(e)}")
+
                             # Parse into operation recipe
                             line_recipe = UserOperationRecipe(
                                 operation_type=line_args.command,
-                                model_name=line_args.model,
-                                template_name=line_args.template,
-                                old_field_name=line_args.old_field,
-                                new_field_name=line_args.new_field,
-                                fields=json.loads(line_args.fields) if line_args.fields else None,
-                                question_format=line_args.question_format,
-                                answer_format=line_args.answer_format,
-                                css=line_args.css,
-                                batch_size=line_args.batch_size,
-                                populator_class=line_args.populator_class,
-                                populator_config=line_args.populator_config,
-                                target_model_name=line_args.target_model,
-                                field_mapping=line_args.field_mapping
+                                model_name=line_args.model or config_args.get('model_name'),
+                                template_name=line_args.template or config_args.get('template_name'),
+                                old_field_name=line_args.old_field or config_args.get('old_field_name'),
+                                new_field_name=line_args.new_field or config_args.get('new_field_name'),
+                                fields=json.loads(line_args.fields) if line_args.fields else config_args.get('fields'),
+                                question_format=line_args.question_format or config_args.get('question_format'),
+                                answer_format=line_args.answer_format or config_args.get('answer_format'),
+                                css=line_args.css or config_args.get('css'),
+                                batch_size=line_args.batch_size or config_args.get('batch_size'),
+                                populator_class=line_args.populator_class or config_args.get('populator_class'),
+                                populator_config=line_args.populator_config or config_args.get('populator_config'),
+                                target_model_name=line_args.target_model or config_args.get('target_model_name'),
+                                field_mapping=line_args.field_mapping or config_args.get('field_mapping')
                             )
                             operation = self._convert_to_operation_recipe(line_recipe)
                             operations.append(operation)
@@ -131,12 +143,11 @@ class UserOperationParser:
         config_args = {}
         if args.config:
             try:
-                with open(args.config) as f:
-                    config_args = json.load(f)
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON in config file: {e}")
-            except OSError as e:
-                raise ValueError(f"Could not read config file: {e}")
+                # Try to resolve config path using ConfigManager
+                config_path = self.config_manager.resolve_config_path(str(args.config))
+                config_args = self.config_manager.load_config(str(config_path))
+            except ValueError as e:
+                raise ValueError(f"Configuration error: {str(e)}")
 
         # Create operation recipe from command line args, using config values as fallback
         user_recipe = UserOperationRecipe(

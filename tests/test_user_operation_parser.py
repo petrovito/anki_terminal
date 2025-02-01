@@ -150,7 +150,7 @@ def test_invalid_config_file():
         )
 
         parser = UserOperationParser()
-        with pytest.raises(ValueError, match="Invalid JSON in config file"):
+        with pytest.raises(ValueError, match="Configuration error: Invalid JSON in configuration file"):
             parser.parse_from_args(args)
 
 def test_write_operation_requires_output():
@@ -332,4 +332,88 @@ num-notes"""
 
         parser = UserOperationParser()
         with pytest.raises(ValueError, match="Error in script file at line 2"):
-            parser.parse_from_args(args) 
+            parser.parse_from_args(args)
+
+def test_parse_with_builtin_config():
+    """Test parsing arguments with a built-in configuration."""
+    args = Namespace(
+        command=UserOperationType.ADD_MODEL,
+        model=None,  # Should use config value
+        template=None,  # Should use config value
+        old_field=None,
+        new_field=None,
+        fields=None,  # Should use config value
+        question_format=None,  # Should use config value
+        answer_format=None,  # Should use config value
+        css=None,  # Should use config value
+        batch_size=None,
+        populator_class=None,
+        populator_config=None,
+        target_model=None,
+        field_mapping=None,
+        output="output.apkg",
+        config="jap_anime_reformat"  # Using built-in config
+    )
+
+    parser = UserOperationParser()
+    plan = parser.parse_from_args(args)
+
+    assert plan.read_only == False
+    assert plan.output_path == Path("output.apkg")
+    assert len(plan.operations) == 1
+    op = plan.operations[0]
+    assert op.operation_type == OperationType.ADD_MODEL
+    assert op.model_name == "Japanese Anime Card"
+    assert op.template_name == "Japanese Card"
+    assert op.fields == ["Japanese", "English", "Context", "Audio", "Image"]
+    assert "{{Japanese}}" in op.question_format
+    assert "{{English}}" in op.answer_format
+    assert ".card {" in op.css
+
+def test_script_with_builtin_config():
+    """Test running a script that uses built-in configuration."""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        # Create script file that uses built-in config
+        script_path = Path(tmp_dir) / "script.txt"
+        script_content = """
+add-model --config jap_anime_reformat
+migrate-notes --model "Basic" --target-model "Japanese Anime Card" --config jap_anime_reformat
+"""
+        with open(script_path, "w") as f:
+            f.write(script_content)
+
+        args = Namespace(
+            command=UserOperationType.RUN_SCRIPT,
+            model=None,
+            template=None,
+            old_field=None,
+            new_field=None,
+            fields=None,
+            question_format=None,
+            answer_format=None,
+            css=None,
+            batch_size=None,
+            populator_class=None,
+            populator_config=None,
+            target_model=None,
+            field_mapping=None,
+            output=str(Path(tmp_dir) / "output.apkg"),
+            config=None,
+            script_file=script_path
+        )
+
+        parser = UserOperationParser()
+        plan = parser.parse_from_args(args)
+
+        assert not plan.read_only  # Should be False because add-model is a write operation
+        assert plan.output_path == Path(tmp_dir) / "output.apkg"
+        assert len(plan.operations) == 2
+        
+        # Check first operation (add-model)
+        assert plan.operations[0].operation_type == OperationType.ADD_MODEL
+        assert plan.operations[0].model_name == "Japanese Anime Card"
+        
+        # Check second operation (migrate-notes)
+        assert plan.operations[1].operation_type == OperationType.MIGRATE_NOTES
+        assert plan.operations[1].model_name == "Basic"
+        assert plan.operations[1].target_model_name == "Japanese Anime Card" 
