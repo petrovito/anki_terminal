@@ -1,3 +1,76 @@
-{{Japanese}}
-{{#Audio}}[sound:{{Audio}}]{{/Audio}}
-{{#Image}}<img src="{{Image}}">{{/Image}} 
+
+{{#Audio}}
+	<div id="Audio_Sentence">
+		{{Audio}}
+	</div>
+{{/Audio}}
+
+
+{{#Morph}}
+	<div class="Morph">
+		{{hint:Morph}}
+	</div>
+	<div style='visibility:hidden ;'>
+		<div class="Definition">
+			{{edit:Japanese}}
+		</div>
+	</div>
+{{/Morph}}
+
+
+<div style='visibility:hidden ;'>
+	<div class="Reading">
+		<span class="field">
+			{{furigana:JapaneseKana}}
+		</span>
+	</div>
+</div>
+
+
+<div style='visibility:hidden ;'>
+	{{#English}}
+		<div class="English">
+			{{English}}
+		</div>
+	{{/English}}
+</div>
+
+<script>
+fields = document.querySelectorAll('.field');
+for (var i = 0; i < fields.length; i++) {
+fields[i].innerHTML = fields[i].innerHTML
+.replace('{{Morph}}', '<span style="color: #d48872; font-weight: bold; ">{{Morph}}</span>')}
+</script>
+
+
+<br>
+
+{{#Image}}
+	<div id=ScreenshotFront>
+		{{Image}}
+	</div>
+{{/Image}}
+
+
+{{#Morph}}
+	<div class="Morph">
+		{{Morph}}
+	</div>
+	<div style='visibility: ;'>
+		<div class="Definition">
+			{{edit:Japanese}}
+		</div>
+	</div>
+{{/Morph}}
+<div class="Reading">
+	<span class="field">
+		{{Japanese}}
+	</span>
+</div>
+<div class="Opacity">
+
+<br>
+	{{Tags}}
+<br>
+	{{ID}}
+</div>

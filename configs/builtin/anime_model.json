@@ -1,6 +1,6 @@
 {
     "model_name": "AnimeSub",
-    "fields": ["Japanese", "English", "Context", "Audio", "Image"],
+    "fields": ["ID", "Japanese", "JapaneseKana", "English", "Audio", "Image", "Morph", "am-unknown-morphs"],
     "template_name": "AnimeCard",
     "question_format_file": "jap_anime_question.html",
     "answer_format_file": "jap_anime_answer.html",

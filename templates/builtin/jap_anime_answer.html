@@ -1,4 +1,68 @@
-{{FrontSide}}
-<hr id="answer">
-<div class="english">{{English}}</div>
-{{#Context}}<div class="context">{{Context}}</div>{{/Context}} 
+
+{{#Morph}}
+	<div class="Morph">
+		{{Morph}}
+	</div>
+	<div style='visibility: ;'>
+		<div class="Definition">
+			{{edit:Japanese}}
+		</div>
+	</div>
+{{/Morph}}
+<div class="Reading">
+	<span class="field">
+		{{furigana:JapaneseKana}}
+	</span>
+</div>
+
+
+{{#English}}
+	<div class="English">
+		{{Japanese}}
+	</div>
+{{/English}}
+
+<script>
+fields = document.querySelectorAll('.field');
+for (var i = 0; i < fields.length; i++) {
+fields[i].innerHTML = fields[i].innerHTML
+.replace('{{Morph}}', '<span style="color: #d48872; font-weight: bold; ">{{Morph}}</span>')}
+</script>
+
+<br>
+
+{{#Image}}
+<html>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+
+* {box-sizing: border-box;}
+		.row {display: flex; flex: 50%;}
+
+/* Createl columns that sits next to each other. Flex should be 100% divided by number of columns (2=50%, 3=33%, 4=25%) */
+		.column2 {flex: 70%; width: 100%;}
+	</style>
+
+	<div class="row">
+		<div class="column1">
+			<div id=ScreenshotFront>
+			</div>
+		</div>
+		<div class="column2">
+			<embed src="https://ichi.moe/cl/qr/?q={{Japanese}}" style="width: 100%; height:100%; min-height: 400px; ">
+		</div>
+	</div>
+</html>
+{{/Image}}
+
+{{^Image}}
+	<embed src="https://ichi.moe/cl/qr/?q={{Japanese}}" style="width: 100%; height:100%; min-height: 400px; ">
+{{/Image}}
+
+<div class="Opacity">
+
+<br>
+	{{Tags}}
+<br>
+	{{ID}}
+</div>

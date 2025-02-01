@@ -10,4 +10,4 @@ add-model --config anime_model
 
 # Migrate notes from the old model to the new one
 # The field mapping will be loaded from the configuration
-migrate-notes --config anime_migration
+migrate-notes --config anime_migration_${version}
