@@ -331,7 +331,7 @@ num-notes"""
         )
 
         parser = UserOperationParser()
-        with pytest.raises(ValueError, match="Error in script file at line 2"):
+        with pytest.raises(ValueError, match="Error in script: Error in script line: Error parsing line 'invalid-command': argument COMMAND: Invalid operation: invalid-command"):
             parser.parse_from_args(args)
 
 @pytest.fixture

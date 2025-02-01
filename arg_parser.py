@@ -108,4 +108,23 @@ def parse_script_line(line: str) -> Optional[argparse.Namespace]:
         except Exception as e:
             raise ValueError(f"Error parsing line '{line}': {str(e)}")
     except Exception as e:
-        raise ValueError(f"Error parsing line '{line}': {str(e)}") 
+        raise ValueError(f"Error parsing line '{line}': {str(e)}")
+
+def add_run_script_args(subparser):
+    """Add arguments for run-script command."""
+    parser = subparser.add_parser(
+        'run-script',
+        help='Run a script file containing multiple operations'
+    )
+    parser.add_argument(
+        '--script-file',
+        help='Path to script file to run'
+    )
+    parser.add_argument(
+        '--output',
+        help='Output path for modified Anki package'
+    )
+    parser.add_argument(
+        '--variables',
+        help='JSON object containing variable values for script expansion'
+    ) 

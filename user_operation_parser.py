@@ -97,8 +97,19 @@ class UserOperationParser:
             # Read and parse script file
             operations = []
             read_only = True
-            with open(script_path) as f:
-                for line_num, line in enumerate(f, 1):
+            
+            # Get variables from command line if provided
+            variables = {}
+            if hasattr(args, 'variables') and args.variables:
+                try:
+                    variables = json.loads(args.variables)
+                    if not isinstance(variables, dict):
+                        raise ValueError("Variables must be a JSON object")
+                except json.JSONDecodeError as e:
+                    raise ValueError(f"Invalid JSON in variables: {str(e)}")
+            
+            try:
+                for line in self.script_manager.read_script(str(script_path), variables):
                     try:
                         line_args = parse_script_line(line)
                         if line_args:
@@ -109,7 +120,7 @@ class UserOperationParser:
                                     config_path = self.config_manager.resolve_config_path(str(line_args.config))
                                     config_args = self.config_manager.load_config(str(config_path))
                                 except ValueError as e:
-                                    raise ValueError(f"Configuration error at line {line_num}: {str(e)}")
+                                    raise ValueError(f"Configuration error: {str(e)}")
 
                             # Parse into operation recipe
                             line_recipe = UserOperationRecipe(
@@ -134,7 +145,9 @@ class UserOperationParser:
                             if not line_recipe.operation_type.is_read_only:
                                 read_only = False
                     except Exception as e:
-                        raise ValueError(f"Error in script file at line {line_num}: {str(e)}")
+                        raise ValueError(f"Error in script line: {str(e)}")
+            except ValueError as e:
+                raise ValueError(f"Error in script: {str(e)}")
             
             return OperationPlan(
                 operations=operations,
