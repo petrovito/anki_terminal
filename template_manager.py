@@ -9,10 +9,14 @@ logger = logging.getLogger('anki_inspector')
 class TemplateManager:
     """Manages access to built-in and user templates."""
     
-    def __init__(self):
+    def __init__(self, builtin_templates_dir: Optional[Path] = None):
         # Get the directory where this file is located
         self.package_dir = Path(__file__).parent
-        self.builtin_templates_dir = self.package_dir / "templates" / "builtin"
+        self.builtin_templates_dir = (
+            builtin_templates_dir 
+            if builtin_templates_dir is not None 
+            else self.package_dir / "templates" / "builtin"
+        )
         
     def get_builtin_template_path(self, template_name: str) -> Optional[Path]:
         """Get the path to a built-in template.

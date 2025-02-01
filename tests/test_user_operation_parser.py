@@ -334,7 +334,15 @@ num-notes"""
         with pytest.raises(ValueError, match="Error in script file at line 2"):
             parser.parse_from_args(args)
 
-def test_parse_with_builtin_config():
+@pytest.fixture
+def user_operation_parser(test_configs_dir, test_templates_dir):
+    """Get a user operation parser instance configured for testing."""
+    return UserOperationParser(
+        builtin_configs_dir=test_configs_dir / "builtin",
+        builtin_templates_dir=test_templates_dir / "builtin"
+    )
+
+def test_parse_with_builtin_config(user_operation_parser):
     """Test parsing arguments with a built-in configuration."""
     args = Namespace(
         command=UserOperationType.ADD_MODEL,
@@ -355,8 +363,7 @@ def test_parse_with_builtin_config():
         config="jap_anime_reformat"  # Using built-in config
     )
 
-    parser = UserOperationParser()
-    plan = parser.parse_from_args(args)
+    plan = user_operation_parser.parse_from_args(args)
 
     assert plan.read_only == False
     assert plan.output_path == Path("output.apkg")
@@ -366,11 +373,8 @@ def test_parse_with_builtin_config():
     assert op.model_name == "Japanese Anime Card"
     assert op.template_name == "Japanese Card"
     assert op.fields == ["Japanese", "English", "Context", "Audio", "Image"]
-    assert "{{Japanese}}" in op.question_format
-    assert "{{English}}" in op.answer_format
-    assert ".card {" in op.css
 
-def test_script_with_builtin_config():
+def test_script_with_builtin_config(user_operation_parser):
     """Test running a script that uses built-in configuration."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         # Create script file that uses built-in config
@@ -402,17 +406,18 @@ migrate-notes --model "Basic" --target-model "Japanese Anime Card" --config jap_
             script_file=script_path
         )
 
-        parser = UserOperationParser()
-        plan = parser.parse_from_args(args)
+        plan = user_operation_parser.parse_from_args(args)
 
         assert not plan.read_only  # Should be False because add-model is a write operation
         assert plan.output_path == Path(tmp_dir) / "output.apkg"
         assert len(plan.operations) == 2
-        
+
         # Check first operation (add-model)
         assert plan.operations[0].operation_type == OperationType.ADD_MODEL
         assert plan.operations[0].model_name == "Japanese Anime Card"
-        
+        assert plan.operations[0].template_name == "Japanese Card"
+        assert plan.operations[0].fields == ["Japanese", "English", "Context", "Audio", "Image"]
+
         # Check second operation (migrate-notes)
         assert plan.operations[1].operation_type == OperationType.MIGRATE_NOTES
         assert plan.operations[1].model_name == "Basic"

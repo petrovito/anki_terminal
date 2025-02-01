@@ -11,11 +11,15 @@ logger = logging.getLogger('anki_inspector')
 class ConfigManager:
     """Manages access to built-in and user configurations."""
     
-    def __init__(self):
+    def __init__(self, builtin_configs_dir: Optional[Path] = None, builtin_templates_dir: Optional[Path] = None):
         # Get the directory where this file is located
         self.package_dir = Path(__file__).parent
-        self.builtin_configs_dir = self.package_dir / "configs" / "builtin"
-        self.template_manager = TemplateManager()
+        self.builtin_configs_dir = (
+            builtin_configs_dir 
+            if builtin_configs_dir is not None 
+            else self.package_dir / "configs" / "builtin"
+        )
+        self.template_manager = TemplateManager(builtin_templates_dir)
         
     def get_builtin_config_path(self, config_name: str) -> Optional[Path]:
         """Get the path to a built-in configuration.

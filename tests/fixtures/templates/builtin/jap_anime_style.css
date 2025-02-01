@@ -1,0 +1,19 @@
+.card {
+    font-family: Arial;
+    font-size: 20px;
+    text-align: center;
+    color: black;
+    background-color: white;
+}
+
+.english {
+    font-size: 16px;
+    color: #666;
+}
+
+.context {
+    font-size: 14px;
+    font-style: italic;
+    color: #888;
+    margin-top: 10px;
+} 

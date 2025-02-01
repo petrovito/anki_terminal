@@ -31,4 +31,24 @@ def pytest_collection_modifyitems(config, items):
         skip_api = pytest.mark.skip(reason="need --run-api option to run API tests")
         for item in items:
             if "api" in item.keywords:
-                item.add_marker(skip_api) 
+                item.add_marker(skip_api)
+
+@pytest.fixture
+def test_root_dir() -> Path:
+    """Get the root directory for test fixtures."""
+    return Path(__file__).parent / "fixtures"
+
+@pytest.fixture
+def test_configs_dir(test_root_dir: Path) -> Path:
+    """Get the directory containing test config files."""
+    return test_root_dir / "configs"
+
+@pytest.fixture
+def test_templates_dir(test_root_dir: Path) -> Path:
+    """Get the directory containing test template files."""
+    return test_root_dir / "templates"
+
+@pytest.fixture
+def test_scripts_dir(test_root_dir: Path) -> Path:
+    """Get the directory containing test script files."""
+    return test_root_dir / "scripts" 

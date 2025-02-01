@@ -6,8 +6,8 @@
 # 3. Applies field population rules
 
 # Create the new model using the built-in configuration
-add-model --config jap_anime_reformat
+add-model --config anime_model
 
 # Migrate notes from the old model to the new one
 # The field mapping will be loaded from the configuration
-migrate-notes --model "Basic" --target-model "Japanese Anime Card" --config jap_anime_reformat 
+migrate-notes --config anime_migration

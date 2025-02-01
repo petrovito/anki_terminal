@@ -19,9 +19,12 @@ logger = logging.getLogger('anki_inspector')
 
 class UserOperationParser:
     """Parse user inputs into an operation plan."""
-    def __init__(self):
+    def __init__(self, builtin_configs_dir: Optional[Path] = None, builtin_templates_dir: Optional[Path] = None):
         self.script_manager = ScriptManager()
-        self.config_manager = ConfigManager()
+        self.config_manager = ConfigManager(
+            builtin_configs_dir=builtin_configs_dir,
+            builtin_templates_dir=builtin_templates_dir
+        )
 
     def parse(self, user_recipe: UserOperationRecipe, output_path: Optional[Path] = None) -> OperationPlan:
         """Parse the user operation recipe into an operation plan.

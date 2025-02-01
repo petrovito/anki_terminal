@@ -1,7 +1,7 @@
 {
-    "model_name": "AnimeSub",
+    "model_name": "Japanese Anime Card",
     "fields": ["Japanese", "English", "Context", "Audio", "Image"],
-    "template_name": "AnimeCard",
+    "template_name": "Japanese Card",
     "question_format_file": "jap_anime_question.html",
     "answer_format_file": "jap_anime_answer.html",
     "css_file": "jap_anime_style.css"
