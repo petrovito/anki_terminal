@@ -1,0 +1,96 @@
+cards   col     graves  notes   revlog
+
+------------------------------------------------------
+
+CREATE TABLE cards
+(
+    id     integer primary key,
+    nid    integer not null,
+    did    integer not null,
+    ord    integer not null,
+    mod    integer not null,
+    usn    integer not null,
+    type   integer not null,
+    queue  integer not null,
+    due    integer not null,
+    ivl    integer not null,
+    factor integer not null,
+    reps   integer not null,
+    lapses integer not null,
+    left   integer not null,
+    odue   integer not null,
+    odid   integer not null,
+    flags  integer not null,
+    data   text    not null
+);
+CREATE INDEX ix_cards_usn on cards (usn);
+CREATE INDEX ix_cards_nid on cards (nid);
+CREATE INDEX ix_cards_sched on cards (did, queue, due);
+
+------------------------------------------------------
+
+1701749097910|1701749097479|1701749075043|0|1701749097|-1|0|0|1182463400|0|0|0|0|0|0|0|0|
+1701749097913|1701749097480|1701749075043|0|1701749097|-1|0|0|1182463401|0|0|0|0|0|0|0|0|
+1701749097914|1701749097482|1701749075043|0|1701749097|-1|0|0|1182463403|0|0|0|0|0|0|0|0|
+1701749097916|1701749097483|1701749075043|0|1701749097|-1|0|0|1182463404|0|0|0|0|0|0|0|0|
+1701749097917|1701749097484|1701749075043|0|1701749097|-1|0|0|1182463405|0|0|0|0|0|0|0|0|
+1701749097918|1701749097485|1701749075043|0|1701749097|-1|0|0|1182463406|0|0|0|0|0|0|0|0|
+1701749097919|1701749097486|1701749075043|0|1701749097|-1|0|0|1182463407|0|0|0|0|0|0|0|0|
+1701749097920|1701749097487|1701749075043|0|1701749097|-1|0|0|1182463408|0|0|0|0|0|0|0|0|
+1701749097921|1701749097488|1701749075043|0|1701749097|-1|0|0|1182463409|0|0|0|0|0|0|0|0|
+1701749097922|1701749097489|1701749075043|0|1701749097|-1|0|0|1182463410|0|0|0|0|0|0|0|0|
+
+------------------------------------------------------
+
+CREATE TABLE notes
+(
+    id    integer primary key,
+    guid  text    not null,
+    mid   integer not null,
+    mod   integer not null,
+    usn   integer not null,
+    tags  text    not null,
+    flds  text    not null,
+    sfld  integer not null,
+    csum  integer not null,
+    flags integer not null,
+    data  text    not null
+);
+CREATE INDEX ix_notes_usn on notes (usn);
+CREATE INDEX ix_notes_csum on notes (csum);
+
+------------------------------------------------------
+
+1701749097479||}.F_/DZA|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0001_0.00.05.631[sound:golden_kamuy_s3_01_0.00.05.381-0.00.08.425.mp3]<img src="golden_kamuy_s3_01_0.00.06.903.jpg">（のっぺら坊(ぼう)） アイヌを殺したのは 私じゃない|（のっぺら坊(ぼう)） アイヌを殺したのは 私じゃない|2905722877|0|
+1701749097480|zo&N[zTdRR|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0002_0.00.08.926[sound:golden_kamuy_s3_01_0.00.08.676-0.00.10.052.mp3]<img src="golden_kamuy_s3_01_0.00.09.364.jpg">（杉元佐一(すぎもとさいち)）ああ？|（杉元佐一(すぎもとさいち)）ああ？|258091039|0|
+1701749097481|i!gu;#!)do|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0003_0.00.10.636[sound:golden_kamuy_s3_01_0.00.10.386-0.00.13.347.mp3]<img src="golden_kamuy_s3_01_0.00.11.867.jpg">アシㇼパに伝えろ 金塊…|アシㇼパに伝えろ 金塊…|3189962025|0|
+1701749097482|lI;]Xnm-#p|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0004_0.00.13.264[sound:golden_kamuy_s3_01_0.00.13.014-0.00.14.306.mp3]<img src="golden_kamuy_s3_01_0.00.13.660.jpg">（銃声）|（銃声）|1041612987|0|
+1701749097483|i9Z#-zOw~e|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0005_0.00.17.977[sound:golden_kamuy_s3_01_0.00.17.727-0.00.19.061.mp3]<img src="golden_kamuy_s3_01_0.00.18.394.jpg">ぬう…|ぬう…|4044286313|0|
+1701749097484|H_x[I[%{^[|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0006_0.00.18.894[sound:golden_kamuy_s3_01_0.00.18.644-0.00.20.688.mp3]<img src="golden_kamuy_s3_01_0.00.19.666.jpg">（銃声）|（銃声）|1114578968|0|
+1701749097485|p~~ZI1Mz@j|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0007_0.00.25.401[sound:golden_kamuy_s3_01_0.00.25.151-0.00.26.860.mp3]<img src="golden_kamuy_s3_01_0.00.26.006.jpg">（倒れた音）|（倒れた音）|3998068963|0|
+1701749097486|G(U1wj5vl!|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0008_0.00.27.278[sound:golden_kamuy_s3_01_0.00.27.028-0.00.31.156.mp3]<img src="golden_kamuy_s3_01_0.00.29.092.jpg">（アシㇼパ）杉元～！|（アシㇼパ）杉元～！|1018601637|0|
+1701749097487|CV9tY-B5-2|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0009_0.00.40.875[sound:golden_kamuy_s3_01_0.00.40.625-0.00.42.376.mp3]<img src="golden_kamuy_s3_01_0.00.41.501.jpg">（ドアが開く音）|（ドアが開く音）|167235115|0|
+1701749097488|M%mD_I_MKz|1352568357693|1701749097|-1| golden_kamuy_s3_01 |01_0010_0.00.43.544[sound:golden_kamuy_s3_01_0.00.43.294-0.00.44.670.mp3]<img src="golden_kamuy_s3_01_0.00.43.982.jpg">（月島基(つきしまはじめ)）着いたぞ|（月島基(つきしまはじめ)）着いたぞ|4170875113|0|
+
+------------------------------------------------------
+
+CREATE TABLE col
+(
+    id     integer primary key,
+    crt    integer not null,
+    mod    integer not null,
+    scm    integer not null,
+    ver    integer not null,
+    dty    integer not null,
+    usn    integer not null,
+    ls     integer not null,
+    conf   text    not null,
+    models text    not null,
+    decks  text    not null,
+    dconf  text    not null,
+    tags   text    not null
+);
+
+------------------------------------------------------
+
+1|1576382400|1701749533887|1701749487161|11|0|0|0|{"curDeck":1,"dueCounts":true,"activeDecks":[1],"estTimes":true,"addToCur":true,"curModel":1352568357693,"newSpread":0,"timeLim":0,"nextPos":1,"sortType":"noteFld","collapseTime":1200,"dayLearnFirst":false,"schedVer":1,"sortBackwards":false}|{"1352568357693":{"id":1352568357693,"name":"subs2srs","type":0,"mod":1701749096,"usn":-1,"sortf":3,"did":1701749075043,"tmpls":[{"name":"Card 1","ord":0,"qfmt":"<div class='reading'></div>\n<div class='meaning'></div>\n<div class='expression'>{{Expression}}</div>","afmt":"{{FrontSide}}\n\n<hr id=answer>\n\n<span class='media'>{{Audio}}</span><span class='media'></span>\n\n<br />\n<div class='media'>{{Snapshot}}</div>\n<br />\n<div class='expression'>{{Expression}}</div>\n\n\n\n\n\n\n\n\n","bqfmt":"","bafmt":"","did":null,"bfont":"","bsize":0,"id":null}],"flds":[{"name":"SequenceMarker","ord":0,"sticky":false,"rtl":false,"font":"Arial","size":10,"tag":null,"media":[],"description":"","collapsed":false,"plainText":false,"excludeFromSearch":false,"preventDeletion":false,"id":null},{"name":"Audio","ord":1,"sticky":false,"rtl":false,"font":"Arial","size":8,"plainText":false,"excludeFromSearch":false,"id":null,"tag":null,"description":"","media":[],"preventDeletion":false,"collapsed":false},{"name":"Snapshot","ord":2,"sticky":false,"rtl":false,"font":"Arial","size":8,"id":null,"description":"","excludeFromSearch":false,"collapsed":false,"plainText":false,"preventDeletion":false,"media":[],"tag":null},{"name":"Expression","ord":3,"sticky":false,"rtl":false,"font":"MS PMincho","size":20,"media":[],"preventDeletion":false,"description":"","id":null,"excludeFromSearch":false,"plainText":false,"tag":null,"collapsed":false},{"name":"MorphMan_FocusMorph","ord":4,"sticky":false,"rtl":false,"font":"Arial","size":20,"collapsed":false,"description":"","plainText":false,"preventDeletion":false,"excludeFromSearch":false,"tag":null,"id":null}],"css":".card \n{\n  font-family: arial;\n  font-size: 20px;\n  text-align: center;\n  color: white;\n  background-color: white;\n}\n\n.expression\n{\n  font-family: 'MS PMincho';\n  font-size: 32px;\n  color: #FFF8DC;\n}\n\n.reading\n{\n  font-family: 'MS PGothic';\n  font-size: 24px;\n  color: #FFF8DC;\n}\n\n.meaning\n{\n  font-family: Arial;\n  font-size: 16px;\n  color: #000080;\n}\n\n.sequence_marker\n{\n  font-family: Arial;\n  font-size: 9px;\n  color: #000000;\n}\n\n.media\n{\n  font-family: Arial;\n  font-size: 8px;\n  color: #000000;\n}\n\n\n\n","latexPre":"\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n","latexPost":"\\end{document}","latexsvg":false,"req":[[0,"any",[3]]],"tags":[],"vers":[]},"1701749487161":{"id":1701749487161,"name":"Basic","type":0,"mod":0,"usn":0,"sortf":0,"did":1,"tmpls":[{"name":"Card 1","ord":0,"qfmt":"{{Front}}","afmt":"{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}","bqfmt":"","bafmt":"","did":null,"bfont":"","bsize":0}],"flds":[{"name":"Front","ord":0,"sticky":false,"rtl":false,"font":"Arial","size":20},{"name":"Back","ord":1,"sticky":false,"rtl":false,"font":"Arial","size":20}],"css":".card {\n  font-family: arial;\n  font-size: 20px;\n  text-align: center;\n  color: black;\n  background-color: white;\n}\n","latexPre":"\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n","latexPost":"\\end{document}","latexsvg":false,"req":[[0,"any",[0]]]}}|{"1":{"id":1,"mod":0,"name":"Default","usn":0,"lrnToday":[0,0],"revToday":[0,0],"newToday":[0,0],"timeToday":[0,0],"collapsed":false,"browserCollapsed":false,"desc":"","dyn":0,"conf":1,"extendNew":0,"extendRev":0},"1701749075043":{"id":1701749075043,"mod":1701749075,"name":"golden kamuy s2","usn":-1,"lrnToday":[0,0],"revToday":[0,0],"newToday":[0,0],"timeToday":[0,0],"collapsed":false,"browserCollapsed":false,"desc":"","dyn":0,"conf":1,"extendNew":0,"extendRev":0}}|{"1":{"id":1,"mod":0,"name":"Default","usn":0,"maxTaken":60,"autoplay":true,"timer":0,"replayq":true,"new":{"bury":false,"delays":[1.0,10.0],"initialFactor":2500,"ints":[1,4,0],"order":1,"perDay":20},"rev":{"bury":false,"ease4":1.3,"ivlFct":1.0,"maxIvl":36500,"perDay":200,"hardFactor":1.2},"lapse":{"delays":[10.0],"leechAction":1,"leechFails":8,"minInt":1,"mult":0.0},"dyn":false}}|{}
