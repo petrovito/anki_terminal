@@ -37,7 +37,7 @@ class CollectionFactoryBase:
                 note_id=row['nid'],
                 deck_id=row['did'],
                 ordinal=row['ord'],
-                modification_time=datetime.fromtimestamp(row['mod']),
+                modification_time=datetime.fromtimestamp(row['mod'] / 1000),  # Convert from milliseconds
                 usn=row['usn'],
                 type=row['type'],
                 queue=row['queue'],
@@ -64,7 +64,7 @@ class CollectionFactoryBase:
                 id=row['id'],
                 guid=row['guid'],
                 model_id=row['mid'],
-                modification_time=datetime.fromtimestamp(row['mod']),
+                modification_time=datetime.fromtimestamp(row['mod'] / 1000),  # Convert from milliseconds
                 usn=row['usn'],
                 tags=tags,
                 fields=self._parse_fields(row['flds']),
@@ -118,7 +118,7 @@ class CollectionV2Factory(CollectionFactoryBase):
                 id=row['id'],
                 guid=row['guid'],
                 model_id=row['mid'],
-                modification_time=datetime.fromtimestamp(row['mod']),
+                modification_time=datetime.fromtimestamp(row['mod'] / 1000),  # Convert from milliseconds
                 usn=row['usn'],
                 tags=row['tags'].split() if row['tags'] else [],
                 fields=fields,
@@ -139,13 +139,13 @@ class CollectionV2Factory(CollectionFactoryBase):
         
         return Collection(
             id=col_data['id'],
-            creation_time=datetime.fromtimestamp(col_data['crt']),
-            modification_time=datetime.fromtimestamp(col_data['mod']),
-            schema_modification=col_data['scm'],
+            creation_time=datetime.fromtimestamp(col_data['crt']),  # crt is in seconds
+            modification_time=datetime.fromtimestamp(col_data['mod'] / 1000),  # Convert from milliseconds
+            schema_modification=col_data['scm'],  # Already in seconds
             version=col_data['ver'],
             dirty=bool(col_data['dty']),
             usn=col_data['usn'],
-            last_sync=datetime.fromtimestamp(col_data['ls']),
+            last_sync=datetime.fromtimestamp(col_data['ls']),  # ls is in seconds
             cards=cards,
             notes=notes,
             decks=decks,
@@ -167,7 +167,7 @@ class CollectionV2Factory(CollectionFactoryBase):
                 templates=self._create_templates_v2(data['tmpls']),
                 css=data['css'],
                 deck_id=data.get('did', 1),  # Default to deck 1 if not specified
-                modification_time=datetime.fromtimestamp(data['mod']),
+                modification_time=datetime.fromtimestamp(data['mod'] / 1000),  # Convert from milliseconds
                 type=data.get('type', 0),
                 usn=data['usn'],
                 version=data.get('vers', 1),
@@ -218,7 +218,7 @@ class CollectionV2Factory(CollectionFactoryBase):
             decks[did] = Deck(
                 id=did,
                 name=data['name'],
-                modification_time=datetime.fromtimestamp(data['mod']),
+                modification_time=datetime.fromtimestamp(data['mod'] / 1000),  # Convert from milliseconds
                 conf_id=data['conf'],
                 description=data.get('desc', ''),
                 dynamic=bool(data.get('dyn', 0)),
@@ -240,7 +240,7 @@ class CollectionV2Factory(CollectionFactoryBase):
             configs[conf_id] = DeckConfig(
                 id=conf_id,
                 name=data['name'],
-                modification_time=datetime.fromtimestamp(data['mod']),
+                modification_time=datetime.fromtimestamp(data['mod'] / 1000),  # Convert from milliseconds
                 usn=data['usn'],
                 max_taken=data.get('maxTaken', 60),
                 autoplay=data.get('autoplay', True),
