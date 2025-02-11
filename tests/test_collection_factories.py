@@ -18,27 +18,67 @@ def v2_table_data() -> Dict[str, Any]:
             'dty': 0,
             'usn': -1,
             'ls': 1577836800,
-            'conf': '{"nextPos": 1}',
+            'conf': json.dumps({
+                "nextPos": 1,
+                "estTimes": True,
+                "activeDecks": [1],
+                "sortType": "noteFld",
+                "timeLim": 0,
+                "sortBackwards": False,
+                "addToCur": True,
+                "curDeck": 1,
+                "newSpread": 0,
+                "dueCounts": True,
+                "curModel": "1234",
+                "collapseTime": 1200
+            }),
             'models': json.dumps({
                 "1234": {
                     "id": 1234,
                     "name": "Basic",
+                    "type": 0,
+                    "mod": 1577836800,
+                    "usn": -1,
+                    "sortf": 0,
+                    "did": 1,
                     "flds": [
-                        {"name": "Front", "ord": 0},
-                        {"name": "Back", "ord": 1}
+                        {
+                            "name": "Front",
+                            "ord": 0,
+                            "sticky": False,
+                            "rtl": False,
+                            "font": "Arial",
+                            "size": 20,
+                            "media": []
+                        },
+                        {
+                            "name": "Back",
+                            "ord": 1,
+                            "sticky": False,
+                            "rtl": False,
+                            "font": "Arial",
+                            "size": 20,
+                            "media": []
+                        }
                     ],
                     "tmpls": [
                         {
                             "name": "Card 1",
+                            "ord": 0,
                             "qfmt": "{{Front}}",
                             "afmt": "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}",
-                            "ord": 0
+                            "bqfmt": "",
+                            "bafmt": "",
+                            "did": None
                         }
                     ],
-                    "css": ".card { font-family: arial; }",
-                    "mod": 1577836800,
-                    "usn": -1,
-                    "vers": 1
+                    "css": ".card { font-family: arial; font-size: 20px; }",
+                    "latexPre": "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
+                    "latexPost": "\\end{document}",
+                    "latexsvg": False,
+                    "req": [[0, "any", [0]]],
+                    "tags": [],
+                    "vers": []
                 }
             }),
             'decks': json.dumps({
@@ -46,6 +86,14 @@ def v2_table_data() -> Dict[str, Any]:
                     "id": 1,
                     "name": "Default",
                     "mod": 1577836800,
+                    "usn": -1,
+                    "lrnToday": [0, 0],
+                    "revToday": [0, 0],
+                    "newToday": [0, 0],
+                    "timeToday": [0, 0],
+                    "collapsed": False,
+                    "desc": "",
+                    "dyn": 0,
                     "conf": 1
                 }
             }),
@@ -54,7 +102,34 @@ def v2_table_data() -> Dict[str, Any]:
                     "id": 1,
                     "name": "Default",
                     "mod": 1577836800,
-                    "usn": -1
+                    "usn": -1,
+                    "maxTaken": 60,
+                    "autoplay": True,
+                    "timer": 0,
+                    "replayq": True,
+                    "new": {
+                        "bury": False,
+                        "delays": [1, 10],
+                        "initialFactor": 2500,
+                        "ints": [1, 4, 7],
+                        "order": 1,
+                        "perDay": 20
+                    },
+                    "rev": {
+                        "bury": False,
+                        "ease4": 1.3,
+                        "ivlFct": 1.0,
+                        "maxIvl": 36500,
+                        "perDay": 200,
+                        "hardFactor": 1.2
+                    },
+                    "lapse": {
+                        "delays": [10],
+                        "leechAction": 1,
+                        "leechFails": 8,
+                        "minInt": 1,
+                        "mult": 0
+                    }
                 }
             })
         },
@@ -77,7 +152,7 @@ def v2_table_data() -> Dict[str, Any]:
                 'odue': 0,
                 'odid': 0,
                 'flags': 0,
-                'data': '{}'
+                'data': ''
             }
         ],
         'notes': [
@@ -92,14 +167,14 @@ def v2_table_data() -> Dict[str, Any]:
                 'sfld': 'Question',
                 'csum': 1234567890,
                 'flags': 0,
-                'data': '{}'
+                'data': ''
             }
         ]
     }
 
 @pytest.fixture
 def v21_table_data() -> Dict[str, Any]:
-    """Fixture providing sample Anki v21 table data."""
+    """Fixture providing sample Anki 21 table data."""
     return {
         'col': {
             'id': 1,
@@ -112,18 +187,18 @@ def v21_table_data() -> Dict[str, Any]:
             'ls': 1577836800,
             'conf': json.dumps({
                 "curDeck": 1,
-                "newSpread": 0,
-                "collapseTime": 1200,
-                "timeLim": 0,
-                "estTimes": True,
                 "dueCounts": True,
-                "curModel": 1234567890,
-                "nextPos": 1,
-                "sortType": "noteFld",
-                "sortBackwards": False,
+                "activeDecks": [1],
+                "estTimes": True,
                 "addToCur": True,
+                "curModel": 1234,
+                "newSpread": 0,
+                "timeLim": 0,
+                "sortType": "noteFld",
+                "collapseTime": 1200,
                 "dayLearnFirst": False,
-                "schedVer": 1
+                "schedVer": 1,
+                "sortBackwards": False
             }),
             'models': json.dumps({
                 "1234": {
@@ -174,11 +249,13 @@ def v21_table_data() -> Dict[str, Any]:
                         "tag": None,
                         "id": None
                     }],
-                    "css": ".card { }",
-                    "latexPre": "",
-                    "latexPost": "",
+                    "css": ".card { font-family: arial; font-size: 20px; }",
+                    "latexPre": "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
+                    "latexPost": "\\end{document}",
                     "latexsvg": False,
-                    "req": [[0, "any", [0]]]
+                    "req": [[0, "any", [0]]],
+                    "tags": [],
+                    "vers": []
                 }
             }),
             'decks': json.dumps({
@@ -192,6 +269,7 @@ def v21_table_data() -> Dict[str, Any]:
                     "newToday": [0, 0],
                     "timeToday": [0, 0],
                     "collapsed": False,
+                    "browserCollapsed": False,
                     "desc": "",
                     "dyn": 0,
                     "conf": 1
@@ -201,17 +279,19 @@ def v21_table_data() -> Dict[str, Any]:
                 "1": {
                     "id": 1,
                     "name": "Default",
+                    "mod": 1577836800,
+                    "usn": -1,
                     "maxTaken": 60,
                     "autoplay": True,
                     "timer": 0,
                     "replayq": True,
-                    "dyn": False,
                     "new": {
                         "bury": False,
-                        "delays": [1, 10],
+                        "delays": [1.0, 10.0],
                         "initialFactor": 2500,
-                        "perDay": 20,
-                        "order": 1
+                        "ints": [1, 4, 0],
+                        "order": 1,
+                        "perDay": 20
                     },
                     "rev": {
                         "bury": False,
@@ -222,13 +302,18 @@ def v21_table_data() -> Dict[str, Any]:
                         "hardFactor": 1.2
                     },
                     "lapse": {
-                        "delays": [10],
+                        "delays": [10.0],
                         "leechAction": 1,
                         "leechFails": 8,
                         "minInt": 1,
-                        "mult": 0
-                    }
+                        "mult": 0.0
+                    },
+                    "dyn": False
                 }
+            }),
+            'tags': json.dumps({
+                "tag1": None,
+                "tag2": None
             })
         },
         'cards': [
@@ -239,8 +324,8 @@ def v21_table_data() -> Dict[str, Any]:
                 'ord': 0,
                 'mod': 1577836800,
                 'usn': -1,
-                'type': 0,  # 0=new
-                'queue': 0,  # 0=new
+                'type': 0,
+                'queue': 0,
                 'due': 0,
                 'ivl': 0,
                 'factor': 2500,
@@ -250,7 +335,7 @@ def v21_table_data() -> Dict[str, Any]:
                 'odue': 0,
                 'odid': 0,
                 'flags': 0,
-                'data': '{}'
+                'data': ''
             }
         ],
         'notes': [
@@ -265,137 +350,7 @@ def v21_table_data() -> Dict[str, Any]:
                 'sfld': 'Question',
                 'csum': 1234567890,
                 'flags': 0,
-                'data': '{}'
-            }
-        ],
-        'notetypes': [
-            {
-                'id': 1234,
-                'name': 'Basic',
-                'mod': 1577836800,
-                'usn': -1,
-                'config': json.dumps({
-                    'css': '.card { }',
-                    'latexPre': '',
-                    'latexPost': '',
-                    'latexsvg': False,
-                    'req': [[0, "any", [0]]],
-                    'version': 1
-                })
-            }
-        ],
-        'templates': [
-            {
-                'ntid': 1234,
-                'ord': 0,
-                'name': 'Card 1',
-                'config': json.dumps({
-                    'qfmt': '{{Front}}',
-                    'afmt': '{{Back}}',
-                    'bqfmt': '',
-                    'bafmt': '',
-                    'bfont': '',
-                    'bsize': 0
-                })
-            }
-        ],
-        'fields': [
-            {
-                'ntid': 1234,
-                'ord': 0,
-                'name': 'Front',
-                'config': json.dumps({
-                    'sticky': False,
-                    'rtl': False,
-                    'font': 'Arial',
-                    'size': 20,
-                    'plainText': False,
-                    'excludeFromSearch': False,
-                    'preventDeletion': False,
-                    'description': ''
-                })
-            },
-            {
-                'ntid': 1234,
-                'ord': 1,
-                'name': 'Back',
-                'config': json.dumps({
-                    'sticky': False,
-                    'rtl': False,
-                    'font': 'Arial',
-                    'size': 20,
-                    'plainText': False,
-                    'excludeFromSearch': False,
-                    'preventDeletion': False,
-                    'description': ''
-                })
-            }
-        ],
-        'decks': [
-            {
-                'id': 1,
-                'name': 'Default',
-                'mod': 1577836800,
-                'conf': 1,
-                'config': json.dumps({
-                    'collapsed': False,
-                    'browserCollapsed': False,
-                    'desc': '',
-                    'dyn': 0,
-                    'newToday': [0, 0],
-                    'revToday': [0, 0],
-                    'lrnToday': [0, 0],
-                    'timeToday': [0, 0]
-                })
-            }
-        ],
-        'deck_config': [
-            {
-                'id': 1,
-                'name': 'Default',
-                'mod': 1577836800,
-                'usn': -1,
-                'config': json.dumps({
-                    'maxTaken': 60,
-                    'autoplay': True,
-                    'timer': 0,
-                    'replayq': True,
-                    'dyn': False,
-                    'new': {
-                        'bury': False,
-                        'delays': [1, 10],
-                        'initialFactor': 2500,
-                        'perDay': 20,
-                        'order': 1
-                    },
-                    'rev': {
-                        'bury': False,
-                        'ease4': 1.3,
-                        'ivlFct': 1.0,
-                        'maxIvl': 36500,
-                        'perDay': 200,
-                        'hardFactor': 1.2
-                    },
-                    'lapse': {
-                        'delays': [10],
-                        'leechAction': 1,
-                        'leechFails': 8,
-                        'minInt': 1,
-                        'mult': 0
-                    }
-                })
-            }
-        ],
-        'tags': [
-            {
-                'id': 1,
-                'tag': 'tag1',
-                'config': '{}'
-            },
-            {
-                'id': 2,
-                'tag': 'tag2',
-                'config': '{}'
+                'data': ''
             }
         ]
     }
@@ -530,8 +485,8 @@ def test_v2_factory_handles_missing_data(v2_table_data):
 def test_v21_factory_handles_missing_data(v21_table_data):
     """Test that V21 factory gracefully handles missing optional data."""
     # Remove optional data
-    v21_table_data['deck_config'] = []  # No deck configs
-    v21_table_data['tags'] = []  # No tags
+    v21_table_data['col']['dconf'] = '{}'  # Empty deck configs
+    v21_table_data['col']['tags'] = '{}'  # Empty tags
     v21_table_data['notes'][0]['data'] = ''  # Empty note data
     v21_table_data['cards'][0]['data'] = ''  # Empty card data
     
