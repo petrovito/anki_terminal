@@ -4,6 +4,15 @@
 - Anki 2: Uses 0x1f character as field separator in `notes.flds`
 - Anki 21: Uses tab character as field separator in `notes.flds`
 
+Example:
+```sql
+-- Anki 2
+INSERT INTO notes (flds) VALUES ('Front Field\x1fBack Field\x1fExtra Field');
+
+-- Anki 21
+INSERT INTO notes (flds) VALUES ('Front Field\tBack Field\tExtra Field');
+```
+
 ## Configuration Fields
 
 ### col.conf
@@ -11,30 +20,97 @@ Anki 21 adds:
 - `schedVer` field for scheduler version
 - `dayLearnFirst` for learning card order
 
-### col.models
-Anki 21 adds field metadata:
-- `plainText` flag
-- `excludeFromSearch` flag
-- `preventDeletion` flag
-- `description` field
-- `media` array
-- `tag` field
-- `id` field
+Example:
+```json
+// Anki 2
+{
+    "curDeck": 1,
+    "newSpread": 0,
+    "collapseTime": 1200,
+    "timeLim": 0,
+    "estTimes": true,
+    "dueCounts": true,
+    "sortType": "noteFld",
+    "addToCur": true,
+    "curModel": "1384115547412"
+}
 
-### col.dconf
-Anki 21 adds:
-- `hardFactor` (1.2) in rev section
-- `leechAction` default changed from 0 to 1
-- Root level fields:
-  - `autoplay`
-  - `timer`
-  - `replayq`
-  - `dyn`
+// Anki 21
+{
+    "curDeck": 1,
+    "newSpread": 0,
+    "collapseTime": 1200,
+    "timeLim": 0,
+    "estTimes": true,
+    "dueCounts": true,
+    "sortType": "noteFld",
+    "addToCur": true,
+    "curModel": 1352568357693,
+    "schedVer": 1,
+    "dayLearnFirst": false
+}
+```
 
-## Model Templates
-Anki 21 adds browser-specific template fields:
-- `bqfmt` (browser question format)
-- `bafmt` (browser answer format)
-- `bfont` (browser font)
-- `bsize` (browser font size)
-- `did` (deck override) 
+## Model Fields
+Anki 21 adds several new field attributes:
+
+```json
+// Anki 2 field
+{
+    "name": "Front",
+    "media": [],
+    "sticky": false,
+    "rtl": false,
+    "ord": 0,
+    "font": "Arial",
+    "size": 20
+}
+
+// Anki 21 field
+{
+    "name": "Front",
+    "ord": 0,
+    "sticky": false,
+    "rtl": false,
+    "font": "Arial",
+    "size": 20,
+    "plainText": false,      // Whether field should be plain text only
+    "excludeFromSearch": false,  // Whether to exclude from search
+    "preventDeletion": false,    // Whether field can be deleted
+    "description": "",      // Field description
+    "collapsed": false,     // Whether field is collapsed in editor
+    "media": [],           // Media references
+    "tag": null,           // Field tag
+    "id": null            // Field ID
+}
+```
+
+## Template Fields
+Anki 21 adds browser-specific template attributes:
+
+```json
+// Anki 2 template
+{
+    "name": "Card 1",
+    "ord": 0,
+    "qfmt": "{{Front}}",
+    "afmt": "{{Back}}",
+    "bqfmt": "",
+    "bafmt": "",
+    "did": null
+}
+
+// Anki 21 template
+{
+    "name": "Card 1",
+    "ord": 0,
+    "qfmt": "{{Front}}",
+    "afmt": "{{Back}}",
+    "bqfmt": "",
+    "bafmt": "",
+    "did": null,
+    "bfont": "",          // Browser font
+    "bsize": 0,           // Browser font size
+    "id": null           // Template ID
+}
+``` 
