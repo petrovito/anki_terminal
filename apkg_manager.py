@@ -5,17 +5,27 @@ import tempfile
 import zipfile
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 logger = logging.getLogger('anki_inspector')
 
 class ApkgManager:
-    """Manages extraction and packaging of .apkg files."""
+    """Manages extraction and packaging of .apkg files.
+    
+    An Anki package can contain either collection.anki2 (version 2) or collection.anki21 (version 21),
+    or both versions. When both versions are present, version 21 should be preferred.
+    """
+    
+    # Supported database filenames
+    ANKI21_DB = 'collection.anki21'
+    ANKI2_DB = 'collection.anki2'
+    
     def __init__(self, apkg_path: Path, read_only: bool = False):
         self.apkg_path = Path(apkg_path)
         self.read_only = read_only
         self.temp_dir = None
         self.db_path = None
+        self.db_version = None  # Will be set to 21 or 2 based on the file found
 
     def __enter__(self):
         """Extract .apkg file to temporary directory."""
@@ -29,18 +39,35 @@ class ApkgManager:
         logger.debug(f"Created temporary directory: {self.temp_dir}")
 
         try:
-            if self.read_only:
-                # For read-only operations, only extract collection.anki2
-                with zipfile.ZipFile(self.apkg_path, 'r') as zf:
-                    zf.extract('collection.anki2', self.temp_dir)
-            else:
-                # For write operations, extract everything
-                with zipfile.ZipFile(self.apkg_path, 'r') as zf:
+            with zipfile.ZipFile(self.apkg_path, 'r') as zf:
+                # List all files in the archive
+                files = zf.namelist()
+                
+                # Check for database files - prefer version 21 if both exist
+                has_anki21 = self.ANKI21_DB in files
+                has_anki2 = self.ANKI2_DB in files
+                
+                if has_anki21:
+                    db_file = self.ANKI21_DB
+                    self.db_version = 21
+                elif has_anki2:
+                    db_file = self.ANKI2_DB
+                    self.db_version = 2
+                else:
+                    raise ValueError("No valid Anki database file found in apkg")
+                
+                logger.debug(f"Found Anki {self.db_version} database: {db_file}")
+                
+                if self.read_only:
+                    # For read-only operations, only extract the database file
+                    zf.extract(db_file, self.temp_dir)
+                else:
+                    # For write operations, extract everything
                     zf.extractall(self.temp_dir)
 
-            self.db_path = Path(self.temp_dir) / 'collection.anki2'
-            if not self.db_path.exists():
-                raise ValueError("No collection.anki2 file found in apkg")
+                self.db_path = Path(self.temp_dir) / db_file
+                if not self.db_path.exists():
+                    raise ValueError(f"Failed to extract {db_file}")
 
             return self
 
