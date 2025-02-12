@@ -39,8 +39,13 @@ class AnkiContext:
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot be reused")
         try:
+            # Extract the package and get the Anki version
             self._extractor = ApkgManager(self._apkg_path, read_only=self._read_only).__enter__()
-            self._db_reader = DatabaseManager(self._extractor.db_path).__enter__()
+            if not self._extractor.db_version:
+                raise RuntimeError("Failed to determine Anki database version")
+            
+            # Initialize database manager with the correct version
+            self._db_reader = DatabaseManager(self._extractor.db_path, anki_version=self._extractor.db_version).__enter__()
             self._collection = self._db_reader.read_collection()
             self._changelog = ChangeLog()
             self._read_ops = ReadOperations(self._collection)
