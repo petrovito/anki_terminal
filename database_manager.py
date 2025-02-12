@@ -7,6 +7,11 @@ from typing import Dict, List, Any
 
 from anki_types import Collection
 from collection_factories import CollectionV2Factory, CollectionV21Factory
+from changelog import ChangeLog
+from db_operations import (
+    DBOperation, DBOperationType,
+    AnkiV2OperationGenerator, AnkiV21OperationGenerator
+)
 
 logger = logging.getLogger('anki_inspector')
 
@@ -36,6 +41,12 @@ class DatabaseManager:
         self.anki_version = anki_version
         self._conn: sqlite3.Connection = None
         self._collection: Collection = None
+        
+        # Create appropriate operation generator
+        self.op_generator = (
+            AnkiV21OperationGenerator() if anki_version == 21 
+            else AnkiV2OperationGenerator()
+        )
         
     def __enter__(self):
         """Setup database connection and validate version.
@@ -72,6 +83,46 @@ class DatabaseManager:
         # Create collection using factory
         self._collection = factory.create_collection(table_data)
         return self._collection
+
+    def apply_changes(self, changelog: ChangeLog) -> None:
+        """Apply changes from changelog to the database.
+        
+        Args:
+            changelog: The changelog containing the changes to apply
+            
+        Raises:
+            RuntimeError: If database is not connected
+        """
+        if not self._conn:
+            raise RuntimeError("Database not connected")
+            
+        if not changelog.has_changes():
+            return
+
+        with self._conn:  # Use transaction
+            for change in changelog.changes:
+                operations = self.op_generator.generate_operations(change)
+                for op in operations:
+                    self._execute_operation(op)
+
+    def _execute_operation(self, op: DBOperation) -> None:
+        """Execute a single database operation.
+        
+        Args:
+            op: The operation to execute
+        """
+        cursor = self._conn.cursor()
+        
+        # Build SET clause and parameters for UPDATE
+        set_clause = ', '.join(f"{k} = ?" for k in op.values.keys())
+        where_clause = ' AND '.join(f"{k} = ?" for k in op.where.keys())
+        
+        # Build parameters list
+        params = list(op.values.values()) + list(op.where.values())
+        
+        # Execute the UPDATE statement
+        sql = f"UPDATE {op.table} SET {set_clause} WHERE {where_clause}"
+        cursor.execute(sql, params)
 
     def _read_table_data(self) -> Dict[str, Any]:
         """Read table data from database.
