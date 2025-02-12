@@ -43,15 +43,12 @@ class ReadOperations:
             counts[model.name] = sum(1 for note in self.collection.notes if note.model_id == model_id)
         return counts
 
-    def list_fields(self, model_name: Optional[str] = None) -> List[dict]:
-        """Get fields for a specific model."""
+    def list_fields(self, model_name: Optional[str] = None) -> List[Dict[str, str]]:
+        """List all fields in the specified model."""
         logger.debug(f"Listing fields for model: {model_name if model_name else 'default'}")
         model = self._get_model(model_name)
         return [
-            {
-                "name": field,
-                "type": "text"
-            }
+            {"name": field.name, "type": "text"}
             for field in model.fields
         ]
 
@@ -105,12 +102,12 @@ class ReadOperations:
         model = self._get_model(model_name)
         
         # Find the first note that uses this model
-        for note in self.collection.notes:
+        for note in self.collection.notes.values():
             if note.model_id == model.id:
                 return note.fields
         
         # If no notes found, return empty fields
-        return {field: "" for field in model.fields}
+        return {field.name: "" for field in model.fields}
 
     # Helper methods
     def _get_model(self, model_name: Optional[str] = None) -> Model:
