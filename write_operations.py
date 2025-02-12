@@ -67,13 +67,16 @@ class WriteOperations:
         except (ImportError, AttributeError) as e:
             raise ValueError(f"Could not load populator class {populator_class}: {str(e)}")
 
+        # Get field names from model
+        field_names = [f.name for f in model.fields]
+
         # Verify target fields exist in model
-        invalid_fields = [f for f in populator.target_fields if f not in model.fields]
+        invalid_fields = [f for f in populator.target_fields if f not in field_names]
         if invalid_fields:
             raise ValueError(f"Target fields not found in model: {invalid_fields}")
 
         # Get all notes for this model
-        model_notes = [note for note in self.collection.notes if note.model_id == model_id]
+        model_notes = [note for note in self.collection.notes.values() if note.model_id == model_id]
         if not model_notes:
             raise ValueError(f"No notes found for model: {model_name}")
 
@@ -280,14 +283,24 @@ class WriteOperations:
         model = self._get_model(model_name)
         
         # Check if field already exists
-        if field_name in model.fields:
+        if any(f.name == field_name for f in model.fields):
             raise ValueError(f"Field '{field_name}' already exists in model '{model.name}'")
 
-        # Add field to model
-        model.fields.append(field_name)
+        # Create and add new field to model
+        new_field = Field(
+            name=field_name,
+            ordinal=len(model.fields),
+            sticky=False,
+            rtl=False,
+            font="Arial",
+            font_size=20,
+            description="",
+            plain_text=True
+        )
+        model.fields.append(new_field)
 
         # Initialize field in existing notes
-        for note in self.collection.notes:
+        for note in self.collection.notes.values():
             if note.model_id == model.id:
                 note.fields[field_name] = ""
 
