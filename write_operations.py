@@ -2,7 +2,7 @@ import logging
 import json
 import importlib
 from typing import Optional, Dict
-from anki_types import Collection, Model, Template
+from anki_types import Collection, Model, Template, Field
 from changelog import ChangeLog, Change, ChangeType
 import time
 from datetime import datetime
@@ -109,19 +109,19 @@ class WriteOperations:
         logger.debug(f"Renaming field '{old_field_name}' to '{new_field_name}' in model: {model_name if model_name else 'default'}")
         model = self._get_model(model_name)        
         # Check if old field exists
-        if old_field_name not in model.fields:
+        old_field = next((f for f in model.fields if f.name == old_field_name), None)
+        if not old_field:
             raise ValueError(f"Field '{old_field_name}' not found in model '{model.name}'")
         
         # Check if new field already exists
-        if new_field_name in model.fields:
+        if any(f.name == new_field_name for f in model.fields):
             raise ValueError(f"Field '{new_field_name}' already exists in model '{model.name}'")
 
-        # Update field name in model and create changelog entry
-        old_field_idx = model.fields.index(old_field_name)
-        model.fields[old_field_idx] = new_field_name
+        # Update field name in model
+        old_field.name = new_field_name
 
         # Update in-memory note field names
-        for note in self.collection.notes:
+        for note in self.collection.notes.values():
             if note.model_id == model.id:
                 new_fields = {}
                 for field_name, value in note.fields.items():
@@ -158,11 +158,26 @@ class WriteOperations:
         # Get first available deck ID from collection
         deck_id = next(iter(self.collection.decks.keys()))
 
+        # Create Field objects from field names
+        field_objects = [
+            Field(
+                name=name,
+                ordinal=i,
+                sticky=False,
+                rtl=False,
+                font="Arial",
+                font_size=20,
+                description="",
+                plain_text=True
+            )
+            for i, name in enumerate(fields)
+        ]
+
         # Create new model with provided values
         model = Model(
             id=model_id,
             name=model_name,
-            fields=fields,
+            fields=field_objects,
             templates=[
                 Template(
                     name=template_name,
@@ -216,11 +231,15 @@ class WriteOperations:
         if not target_model:
             raise ValueError(f"Target model not found: {target_model_name}")
 
+        # Get field names from models
+        source_field_names = [f.name for f in source_model.fields]
+        target_field_names = [f.name for f in target_model.fields]
+
         # Validate field mapping
         for source_field in field_mapping:
-            if source_field not in source_model.fields:
+            if source_field not in source_field_names:
                 raise ValueError(f"Source field not found in {source_model_name}: {source_field}")
-            if field_mapping[source_field] not in target_model.fields:
+            if field_mapping[source_field] not in target_field_names:
                 raise ValueError(f"Target field not found in {target_model_name}: {field_mapping[source_field]}")
 
         # Check that mapping is injective (no duplicate target fields)
@@ -230,10 +249,10 @@ class WriteOperations:
 
         # Find notes using source model
         migrated_count = 0
-        for note in self.collection.notes:
+        for note in self.collection.notes.values():
             if note.model_id == source_model.id:
                 # Create new field values using mapping
-                new_fields = {field: "" for field in target_model.fields}  # Initialize all fields empty
+                new_fields = {field.name: "" for field in target_model.fields}  # Initialize all fields empty
                 for source_field, target_field in field_mapping.items():
                     new_fields[target_field] = note.fields[source_field]
                 

@@ -149,16 +149,17 @@ def test_rename_field(write_operations):
     """Test renaming a field."""
     # Test with default model
     write_operations.rename_field(None, "Front", "Question")
-    
+
     # Verify the field was renamed in model
     model = next(iter(write_operations.collection.models.values()))
-    assert "Question" in model.fields
-    assert "Front" not in model.fields
-    
-    # Verify the field was renamed in notes
-    note = write_operations.collection.notes[0]
-    assert "Question" in note.fields
-    assert "Front" not in note.fields
+    assert any(f.name == "Question" for f in model.fields)
+    assert not any(f.name == "Front" for f in model.fields)
+
+    # Verify field was renamed in all notes using this model
+    for note in write_operations.collection.notes.values():
+        if note.model_id == model.id:
+            assert "Question" in note.fields
+            assert "Front" not in note.fields
     
     # Test with non-existent model
     with pytest.raises(ValueError, match="Model not found: NonExistent"):

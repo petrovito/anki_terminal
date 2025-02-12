@@ -35,12 +35,12 @@ class ReadOperations:
                 raise ValueError(f"Model not found: {model_name}")
             
             # Count notes for this model
-            return sum(1 for note in self.collection.notes if note.model_id == model_id)
+            return sum(1 for note in self.collection.notes.values() if note.model_id == model_id)
         
         # Count notes per model
         counts = {}
         for model_id, model in self.collection.models.items():
-            counts[model.name] = sum(1 for note in self.collection.notes if note.model_id == model_id)
+            counts[model.name] = sum(1 for note in self.collection.notes.values() if note.model_id == model_id)
         return counts
 
     def list_fields(self, model_name: Optional[str] = None) -> List[Dict[str, str]]:
