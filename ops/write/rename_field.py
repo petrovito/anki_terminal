@@ -1,19 +1,30 @@
-from typing import Dict, Optional
-
-from ops.base import Operation, OperationResult
-from anki_types import Model
-from changelog import ChangeLog, Change, ChangeType
+from ops.base import Operation, OperationResult, OperationArgument
+from changelog import Change, ChangeType
 
 class RenameFieldOperation(Operation):
     """Operation to rename a field in a model."""
     
-    name = "rename_field"
+    name = "rename-field"
     description = "Rename a field in a model and update all related notes"
     readonly = False
-    required_args = {"old_field_name", "new_field_name"}
-    optional_args = {
-        "model_name": None,  # If None, uses default/only model
-    }
+    arguments = [
+        OperationArgument(
+            name="old_field_name",
+            description="Current name of the field to rename",
+            required=True
+        ),
+        OperationArgument(
+            name="new_field_name",
+            description="New name for the field",
+            required=True
+        ),
+        OperationArgument(
+            name="model_name",
+            description="Name of the model containing the field",
+            required=False,
+            default=None
+        )
+    ]
     
     def _validate_impl(self) -> None:
         """Validate that the operation can be executed.

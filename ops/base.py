@@ -5,6 +5,14 @@ from anki_types import Collection, Model, Template
 from changelog import Change
 
 @dataclass
+class OperationArgument:
+    """Represents an argument for an operation."""
+    name: str
+    description: str
+    required: bool = False
+    default: Any = None
+
+@dataclass
 class OperationResult:
     """Result of an operation execution."""
     success: bool
@@ -23,8 +31,7 @@ class Operation(ABC):
     name: str = ""  # Name of the operation
     description: str = ""  # Description of what the operation does
     readonly: bool = True  # Whether the operation modifies data
-    required_args: Set[str] = set()  # Required arguments
-    optional_args: Dict[str, Any] = {}  # Optional arguments with defaults
+    arguments: List[OperationArgument] = []  # Arguments for the operation
     
     def __init__(self, **kwargs):
         """Initialize the operation.
@@ -48,12 +55,19 @@ class Operation(ABC):
             ValueError: If required arguments are missing or invalid
         """
         # Check required args
-        missing_args = self.required_args - set(kwargs.keys())
+        missing_args = [
+            arg.name for arg in self.arguments 
+            if arg.required and arg.name not in kwargs
+        ]
         if missing_args:
             raise ValueError(f"Missing required arguments: {missing_args}")
         
         # Apply defaults for optional args
-        args = self.optional_args.copy()
+        args = {
+            arg.name: arg.default 
+            for arg in self.arguments 
+            if not arg.required
+        }
         args.update(kwargs)
         
         return args

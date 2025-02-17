@@ -1,18 +1,22 @@
 from typing import Dict, List, Optional
 
-from ops.base import Operation, OperationResult
+from ops.base import Operation, OperationResult, OperationArgument
 from anki_types import Model
 
 class ListFieldsOperation(Operation):
     """Operation to list all fields in a model."""
     
-    name = "list_fields"
+    name = "list-fields"
     description = "List all fields in the specified model"
     readonly = True
-    required_args = set()  # No required args since model_name is optional
-    optional_args = {
-        "model_name": None  # If None, uses default/only model
-    }
+    arguments = [
+        OperationArgument(
+            name="model_name",
+            description="Name of the model to list fields from",
+            required=False,
+            default=None
+        )
+    ]
     
     def _validate_impl(self) -> None:
         """Validate that the operation can be executed.

@@ -2,15 +2,13 @@
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from apkg_manager import ApkgManager
 from database_manager import DatabaseManager
 from changelog import ChangeLog
-from operation_models import OperationPlan
 from operation_executor import OperationExecutor
-from read_operations import ReadOperations
-from write_operations import WriteOperations
+from ops.base import Operation, OperationResult
 
 logger = logging.getLogger('anki_inspector')
 
@@ -29,8 +27,6 @@ class AnkiContext:
         self._db_reader = None
         self._collection = None
         self._changelog = None
-        self._read_ops = None
-        self._write_ops = None
         self._executor = None
         self._is_destroyed = False
 
@@ -47,10 +43,8 @@ class AnkiContext:
             # Initialize database manager with the correct version
             self._db_reader = DatabaseManager(self._extractor.db_path, anki_version=self._extractor.db_version).__enter__()
             self._collection = self._db_reader.read_collection()
-            self._changelog = ChangeLog()
-            self._read_ops = ReadOperations(self._collection)
-            self._write_ops = None if self._read_only else WriteOperations(self._collection, self._changelog)
-            self._executor = OperationExecutor(self._read_ops, self._write_ops)
+            self._changelog = None if self._read_only else ChangeLog()
+            self._executor = OperationExecutor(self._collection, self._changelog)
             return self
         except Exception:
             self._cleanup()
@@ -81,16 +75,31 @@ class AnkiContext:
 
     def _has_writes(self) -> bool:
         """Check if any write operations were performed."""
-        return self._changelog is not None and len(self._changelog.changes) > 0
+        return self._changelog is not None and self._changelog.has_changes()
 
-    def run(self, operation_plan: OperationPlan) -> None:
-        """Execute an operation plan."""
+    def run(self, operation: Operation) -> List[OperationResult]:
+        """Execute an operation.
+        
+        Args:
+            operation: The operation to execute
+            
+        Returns:
+            List of operation results
+            
+        Raises:
+            RuntimeError: If context is destroyed or validation fails
+            ValueError: If operation is invalid
+        """
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot run operations")
         
-        # Execute the operation plan
-        for operation in operation_plan.operations:
-            self._executor.execute(operation)
+        # Validate operation
+        errors = self._executor.validate(operation)
+        if errors:
+            raise ValueError("\n".join(errors))
+        
+        # Execute operation
+        return self._executor.execute(operation)
 
     def _package(self) -> None:
         """Internal method to package the current state of the collection."""
@@ -100,8 +109,6 @@ class AnkiContext:
             raise ValueError("No output path specified")
         if not self._extractor or not self._db_reader:
             raise RuntimeError("Cannot package: no collection is loaded")
-        if self._output_path.exists():
-            raise ValueError(f"Output file already exists: {self._output_path}")
         
         # Apply any pending changes to the database
         if self._has_writes():
