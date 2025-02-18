@@ -3,7 +3,6 @@ from typing import Optional, List
 from anki_types import Collection
 from changelog import ChangeLog
 from ops.base import Operation, OperationResult
-from operation_models import OperationPlan
 
 logger = logging.getLogger('anki_inspector')
 
@@ -20,11 +19,11 @@ class OperationExecutor:
         self.collection = collection
         self.changelog = changelog
     
-    def validate(self, plan: OperationPlan) -> List[str]:
+    def validate(self, operation: Operation) -> List[str]:
         """Validate all operations in the plan.
         
         Args:
-            plan: The operation plan to validate
+            operation: The operation to validate
             
         Returns:
             List of validation error messages, empty if all valid
@@ -32,23 +31,22 @@ class OperationExecutor:
         Raises:
             RuntimeError: If changelog is required but not provided
         """
-        if plan.has_write_operations and not self.changelog:
+        if not operation.readonly and not self.changelog:
             raise RuntimeError("Cannot execute write operations without changelog")
         
         errors = []
-        for operation in plan.operations:
-            try:
-                operation.validate(self.collection)
-            except Exception as e:
-                errors.append(f"Validation failed for {operation.name}: {str(e)}")
+        try:
+            operation.validate(self.collection)
+        except Exception as e:
+            errors.append(f"Validation failed for {operation.name}: {str(e)}")
         
         return errors
     
-    def execute(self, plan: OperationPlan) -> List[OperationResult]:
+    def execute(self, operation: Operation) -> List[OperationResult]:
         """Execute all operations in the plan.
         
         Args:
-            plan: The operation plan to execute
+            operation: The operation to execute
             
         Returns:
             List of operation results
@@ -57,32 +55,31 @@ class OperationExecutor:
             RuntimeError: If validation fails or changelog is required but not provided
         """
         # Validate first
-        errors = self.validate(plan)
+        errors = self.validate(operation)
         if errors:
             raise RuntimeError(f"Validation failed:\n" + "\n".join(errors))
         
-        # Execute all operations
+        # Execute operation
         results = []
-        for operation in plan.operations:
-            try:
-                result = operation.execute()
-                
-                # Log result
-                if result.success:
-                    logger.info(result.message)
-                    # Record changes in changelog
-                    if result.changes:
-                        self.changelog.changes.extend(result.changes)
-                else:
-                    logger.error(result.message)
-                
-                results.append(result)
-                
-            except Exception as e:
-                logger.error(f"Operation failed: {str(e)}")
-                results.append(OperationResult(
-                    success=False,
-                    message=f"Operation failed: {str(e)}"
-                ))
-        
-        return results 
+        try:
+            result = operation.execute()
+            
+            # Log result
+            if result.success:
+                logger.info(result.message)
+                # Record changes in changelog
+                if result.changes:
+                    self.changelog.changes.extend(result.changes)
+            else:
+                logger.error(result.message)
+            
+            results.append(result)
+            
+        except Exception as e:
+            logger.error(f"Operation failed: {str(e)}")
+            results.append(OperationResult(
+                success=False,
+                message=f"Operation failed: {str(e)}"
+            ))
+    
+        return results
