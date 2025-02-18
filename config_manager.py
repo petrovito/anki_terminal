@@ -9,15 +9,20 @@ from template_manager import TemplateManager
 logger = logging.getLogger('anki_inspector')
 
 class ConfigManager:
-    """Manages access to built-in and user configurations."""
+    """Manages access to configuration files."""
     
     def __init__(self, builtin_configs_dir: Optional[Path] = None, builtin_templates_dir: Optional[Path] = None):
-        # Get the directory where this file is located
+        """Initialize config manager.
+        
+        Args:
+            builtin_configs_dir: Optional override for builtin configs directory
+            builtin_templates_dir: Optional override for builtin templates directory
+        """
         self.package_dir = Path(__file__).parent
         self.builtin_configs_dir = (
-            builtin_configs_dir 
-            if builtin_configs_dir is not None 
-            else self.package_dir / "configs" / "builtin"
+            builtin_configs_dir
+            if builtin_configs_dir is not None
+            else self.package_dir / "builtin" / "configs"
         )
         self.template_manager = TemplateManager(builtin_templates_dir)
         

@@ -8,12 +8,20 @@ from typing import Optional, List, Dict, Iterator
 logger = logging.getLogger('anki_inspector')
 
 class ScriptManager:
-    """Manages access to built-in and user scripts."""
+    """Manages access to script files."""
     
-    def __init__(self):
-        # Get the directory where this file is located
+    def __init__(self, builtin_scripts_dir: Optional[Path] = None):
+        """Initialize script manager.
+        
+        Args:
+            builtin_scripts_dir: Optional override for builtin scripts directory
+        """
         self.package_dir = Path(__file__).parent
-        self.builtin_scripts_dir = self.package_dir / "scripts" / "builtin"
+        self.builtin_scripts_dir = (
+            builtin_scripts_dir
+            if builtin_scripts_dir is not None
+            else self.package_dir / "builtin" / "scripts"
+        )
         
     def get_builtin_script_path(self, script_name: str) -> Optional[Path]:
         """Get the path to a built-in script.

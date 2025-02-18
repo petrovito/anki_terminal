@@ -7,15 +7,19 @@ from typing import Optional
 logger = logging.getLogger('anki_inspector')
 
 class TemplateManager:
-    """Manages access to built-in and user templates."""
+    """Manages access to template files."""
     
     def __init__(self, builtin_templates_dir: Optional[Path] = None):
-        # Get the directory where this file is located
+        """Initialize template manager.
+        
+        Args:
+            builtin_templates_dir: Optional override for builtin templates directory
+        """
         self.package_dir = Path(__file__).parent
         self.builtin_templates_dir = (
-            builtin_templates_dir 
-            if builtin_templates_dir is not None 
-            else self.package_dir / "templates" / "builtin"
+            builtin_templates_dir
+            if builtin_templates_dir is not None
+            else self.package_dir / "builtin" / "templates"
         )
         
     def get_builtin_template_path(self, template_name: str) -> Optional[Path]:
