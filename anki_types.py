@@ -149,6 +149,26 @@ class Note:
     def __post_init__(self):
         if self.data is None:
             self.data = {}
+            
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert note to dictionary format for database storage.
+        
+        Returns:
+            Dictionary containing note data
+        """
+        return {
+            'id': self.id,
+            'guid': self.guid,
+            'mid': self.model_id,
+            'mod': int(self.modification_time.timestamp()),
+            'usn': self.usn,
+            'tags': ' '.join(self.tags),  # Convert tags list to space-separated string
+            'flds': self.fields,  # Field values
+            'sfld': self.sort_field,
+            'csum': self.checksum,
+            'flags': self.flags,
+            'data': self.data
+        }
 
 @dataclass
 class Card:

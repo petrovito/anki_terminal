@@ -93,6 +93,10 @@ class AnkiContext:
         if self._is_destroyed:
             raise RuntimeError("This context has been destroyed and cannot run operations")
         
+        # Check for write operations in read-only mode
+        if not operation.readonly and self._read_only:
+            raise RuntimeError("Cannot perform write operation in read-only mode")
+        
         # Validate operation
         errors = self._executor.validate(operation)
         if errors:

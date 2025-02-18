@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 from ops.base import Operation
-from anki_types import Collection, Model, Field, Note
+from anki_types import Collection, Model, Field, Note, Deck
 
 class OperationTestBase(ABC):
     """Base class for operation unit tests."""
@@ -47,6 +47,7 @@ class OperationTestBase(ABC):
         - A Basic model with Front and Back fields
         - A sample note using the Basic model
         - An Advanced model with Question, Answer, and Notes fields
+        - A default deck
         """
         # Create a note that uses the Basic model
         basic_note = Note(
@@ -60,6 +61,22 @@ class OperationTestBase(ABC):
             sort_field=0,
             checksum=0,
             flags=0
+        )
+        
+        # Create a default deck
+        default_deck = Deck(
+            id=1,
+            name="Default",
+            description="Default deck",
+            modification_time=datetime.fromtimestamp(0),
+            usn=-1,
+            collapsed=False,
+            browser_collapsed=False,
+            dynamic=False,
+            new_today=(0, 0),
+            review_today=(0, 0),
+            learn_today=(0, 0),
+            time_today=(0, 0)
         )
         
         return Collection(
@@ -104,7 +121,7 @@ class OperationTestBase(ABC):
                     version=1
                 )
             },
-            decks={},
+            decks={1: default_deck},
             notes={1: basic_note},
             cards={},
             config={},
