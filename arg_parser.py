@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Tuple
 from ops.registry import OperationRegistry
 from ops.base import Operation
+from ops.printer import JsonPrinter, HumanReadablePrinter, OperationPrinter
 
 
 
@@ -51,6 +52,17 @@ def create_parser() -> argparse.ArgumentParser:
         help="Output path for modified Anki package (default: overwrite input file)",
         default=None
     )
+    parser.add_argument(
+        "--format",
+        choices=["human", "json"],
+        default="human",
+        help="Output format (default: human)"
+    )
+    parser.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print JSON output (only applies to JSON format)"
+    )
     
     # Create subparsers for each operation
     subparsers = parser.add_subparsers(
@@ -69,6 +81,20 @@ def create_parser() -> argparse.ArgumentParser:
     
     return parser
 
+def get_printer(args: argparse.Namespace) -> OperationPrinter:
+    """Get the appropriate printer based on command line arguments.
+    
+    Args:
+        args: Parsed command line arguments
+        
+    Returns:
+        Configured printer instance
+    """
+    if args.format == "json":
+        return JsonPrinter(pretty=args.pretty)
+    else:
+        return HumanReadablePrinter()
+
 def parse_args() -> Tuple[Path, Path, Operation]:
     """Parse command line arguments and create operation instance.
     
@@ -82,14 +108,17 @@ def parse_args() -> Tuple[Path, Path, Operation]:
     registry = OperationRegistry()
     operation_class = registry.get(args.operation)
     
+    # Get appropriate printer
+    printer = get_printer(args)
+    
     # Convert args to dict, removing None values and operation name
     op_args = {
         k.replace('-', '_'): v 
         for k, v in vars(args).items() 
-        if k not in ('operation', 'apkg_file', 'output') and v is not None
+        if k not in ('operation', 'apkg_file', 'output', 'format', 'pretty') and v is not None
     }
     
-    # Create operation instance
-    operation = operation_class(**op_args)
+    # Create operation instance with printer
+    operation = operation_class(printer=printer, **op_args)
     
     return args.apkg_file, args.output, operation 

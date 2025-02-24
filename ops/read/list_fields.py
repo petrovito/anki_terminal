@@ -40,6 +40,9 @@ class ListFieldsOperation(Operation):
             for field in model.fields
         ]
         
+        # Print the fields
+        self.printer.print_result({"fields": fields})
+        
         return OperationResult(
             success=True,
             message=f"Listed {len(fields)} fields from model '{model.name}'",

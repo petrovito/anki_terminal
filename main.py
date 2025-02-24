@@ -15,25 +15,7 @@ def main():
         
         # Open the Anki context and run the operation
         with AnkiContext(apkg_file, output_path, read_only=operation.readonly) as context:
-            results = context.run(operation)
-            
-            # Process results
-            for result in results:
-                if result.success:
-                    if result.data:
-                        # Pretty print data for read operations
-                        for key, value in result.data.items():
-                            if isinstance(value, list):
-                                print(f"\n{key}:")
-                                for item in value:
-                                    print(f"  {item}")
-                            else:
-                                print(f"{key}: {value}")
-                    else:
-                        print(result.message)
-                else:
-                    logger.error(result.message)
-                    sys.exit(1)
+            context.run(operation)
                     
     except ValueError as e:
         logger.error(str(e))

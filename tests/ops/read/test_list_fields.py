@@ -2,6 +2,7 @@ import pytest
 from typing import Dict, Any
 
 from ops.read.list_fields import ListFieldsOperation
+from ops.printer import MockPrinter
 from tests.ops.test_base import OperationTestBase
 from anki_types import Collection, Model, Field
 
@@ -36,8 +37,11 @@ class TestListFieldsOperation(OperationTestBase):
         Args:
             mock_collection: Pytest fixture providing a mock collection
         """
+        # Create mock printer to capture output
+        printer = MockPrinter()
+        
         # Create and validate operation
-        op = ListFieldsOperation(model_name="Basic")
+        op = ListFieldsOperation(printer=printer, model_name="Basic")
         op.validate(mock_collection)
         
         # Execute operation
@@ -51,6 +55,34 @@ class TestListFieldsOperation(OperationTestBase):
         assert len(fields) > 0
         assert all(isinstance(f, dict) for f in fields)
         assert all("name" in f and "type" in f for f in fields)
+        
+        # Verify printed output
+        assert len(printer.results) == 1
+        printed = printer.results[0]
+        assert "fields" in printed
+        assert printed["fields"] == fields
+        assert not printer.errors
+
+    def test_execution_error_printing(self, mock_collection):
+        """Test error printing during execution.
+        
+        Args:
+            mock_collection: Pytest fixture providing a mock collection
+        """
+        # Create mock printer to capture output
+        printer = MockPrinter()
+        
+        # Create operation with invalid model
+        op = ListFieldsOperation(printer=printer, model_name="NonExistent")
+        
+        # Execute operation (should fail validation)
+        with pytest.raises(ValueError, match="Model not found"):
+            op.validate(mock_collection)
+            op.execute()
+        
+        # Verify error was printed
+        assert len(printer.errors) == 0  # No errors printed because exception was raised
+        assert not printer.results  # No results printed
 
 @pytest.fixture
 def mock_collection() -> Collection:

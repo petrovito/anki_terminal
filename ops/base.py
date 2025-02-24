@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
 from anki_types import Collection, Model, Template
 from changelog import Change
+from ops.printer import OperationPrinter, HumanReadablePrinter
 
 @dataclass
 class OperationArgument:
@@ -33,13 +34,14 @@ class Operation(ABC):
     readonly: bool = True  # Whether the operation modifies data
     arguments: List[OperationArgument] = []  # Arguments for the operation
     
-    def __init__(self, **kwargs):
+    def __init__(self, printer: Optional[OperationPrinter] = None, **kwargs):
         """Initialize the operation.
         
         Args:
             **kwargs: Operation-specific arguments
         """
         self.collection = None
+        self.printer = printer or HumanReadablePrinter()
         self.args = self._process_args(kwargs)
     
     def _process_args(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:

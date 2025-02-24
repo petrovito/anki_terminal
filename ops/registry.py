@@ -60,8 +60,7 @@ class OperationRegistry:
             name: {
                 "description": op.description,
                 "readonly": op.readonly,
-                "required_args": list(op.required_args),
-                "optional_args": op.optional_args
+                "arguments": op.arguments
             }
             for name, op in self._operations.items()
         } 
