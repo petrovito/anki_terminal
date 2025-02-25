@@ -43,7 +43,7 @@ CREATE TABLE notes (
     mod   integer not null,    /* last modified timestamp */
     usn   integer not null,    /* update sequence number */
     tags  text not null,       /* space-separated tags */
-    flds  text not null,       /* tab-separated fields */
+    flds  text not null,       /* fields separated by \x1f character */
     sfld  integer not null,    /* sort field */
     csum  integer not null,    /* checksum for duplicate check */
     flags integer not null,    /* flags */

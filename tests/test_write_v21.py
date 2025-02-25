@@ -3,7 +3,7 @@ import tempfile
 from pathlib import Path
 from anki_context import AnkiContext
 from ops.write.rename_field import RenameFieldOperation
-from ops.read.list_fields import ListFieldsOperation
+from ops.read.list_operation import ListOperation
 
 def test_write_operation_persists():
     """Test that write operations are correctly persisted to disk.
@@ -22,7 +22,7 @@ def test_write_operation_persists():
         # First context: Perform the write operation
         with AnkiContext("test_data/jap21.apkg", output_path=output_path, read_only=False) as context:
             # Get original fields for verification
-            list_op = ListFieldsOperation(model_name="subs2srs")
+            list_op = ListOperation(path="/models/subs2srs/fields")
             results = context.run(list_op)
             assert results[0].success
             original_fields = {f["name"] for f in results[0].data["fields"]}
@@ -42,7 +42,7 @@ def test_write_operation_persists():
         
         # Second context: Verify the changes persisted
         with AnkiContext(output_path, read_only=True) as verify_context:
-            list_op = ListFieldsOperation(model_name="subs2srs")
+            list_op = ListOperation(path="/models/subs2srs/fields")
             results = verify_context.run(list_op)
             assert results[0].success
             

@@ -58,8 +58,27 @@ class CollectionFactoryBase:
         """Create Note objects from raw data."""
         notes = {}
         for row in notes_data:
-            data = json.loads(row.get('data', '{}'))
-            tags = row['tags'].split()
+            data = json.loads(row.get('data', '{}') or '{}')
+            tags = row['tags'].split() if row['tags'] else []
+            
+            # Get the model to find field names
+            model_id = row['mid']
+            model = self._models_json.get(str(model_id), {})
+            field_names = [f['name'] for f in model.get('flds', [])]
+            
+            # Parse fields and map to field names
+            field_values = self._parse_fields(row['flds'])
+            fields = {}
+            if field_names:
+                fields = {
+                    field_names[idx]: value 
+                    for idx, value in field_values.items()
+                    if idx < len(field_names)
+                }
+            else:
+                # Fallback if model not found
+                fields = field_values
+            
             notes[row['id']] = Note(
                 id=row['id'],
                 guid=row['guid'],
@@ -67,7 +86,7 @@ class CollectionFactoryBase:
                 modification_time=datetime.fromtimestamp(row['mod'] / 1000),  # Convert from milliseconds
                 usn=row['usn'],
                 tags=tags,
-                fields=self._parse_fields(row['flds']),
+                fields=fields,
                 sort_field=row['sfld'],
                 checksum=row['csum'],
                 flags=row.get('flags', 0),
@@ -99,53 +118,28 @@ class CollectionV2Factory(CollectionFactoryBase):
         decks_json = json.loads(col_data.get('decks', '{}'))
         dconf_json = json.loads(col_data.get('dconf', '{}'))
         
+        # Store models_json for use in _create_notes
+        self._models_json = models_json
+        
         # Create components
         cards = self._create_cards(table_data['cards'])
-        notes = {}
-        for row in table_data['notes']:
-            # Handle empty data string
-            data = json.loads(row.get('data', '{}') or '{}')
-            model = models_json.get(str(row['mid']), {})
-            field_names = [f['name'] for f in model.get('flds', [])]
-            field_values = self._parse_fields(row['flds'])
-            # Map numeric field indices to names
-            fields = {
-                field_names[idx]: value 
-                for idx, value in field_values.items()
-                if idx < len(field_names)
-            }
-            notes[row['id']] = Note(
-                id=row['id'],
-                guid=row['guid'],
-                model_id=row['mid'],
-                modification_time=datetime.fromtimestamp(row['mod'] / 1000),  # Convert from milliseconds
-                usn=row['usn'],
-                tags=row['tags'].split() if row['tags'] else [],
-                fields=fields,
-                sort_field=row['sfld'],
-                checksum=row['csum'],
-                flags=row['flags'],
-                data=data
-            )
-
+        notes = self._create_notes(table_data['notes'])
+        
         # Create models, decks, and deck configs
         models = self._create_models_v2(models_json)
         decks = self._create_decks_v2(decks_json)
         deck_configs = self._create_deck_configs_v2(dconf_json)
         tags = self._create_tags_v2(notes)
         
-        # Update note fields with model field names
-        self._update_note_fields(notes, models)
-        
         return Collection(
             id=col_data['id'],
-            creation_time=datetime.fromtimestamp(col_data['crt']),  # crt is in seconds
-            modification_time=datetime.fromtimestamp(col_data['mod'] / 1000),  # Convert from milliseconds
-            schema_modification=col_data['scm'],  # Already in seconds
+            creation_time=datetime.fromtimestamp(col_data['crt']),
+            modification_time=datetime.fromtimestamp(col_data['mod'] / 1000),
+            schema_modification=col_data['scm'],
             version=col_data['ver'],
             dirty=bool(col_data['dty']),
             usn=col_data['usn'],
-            last_sync=datetime.fromtimestamp(col_data['ls']),  # ls is in seconds
+            last_sync=col_data['ls'],
             cards=cards,
             notes=notes,
             decks=decks,
@@ -273,14 +267,6 @@ class CollectionV2Factory(CollectionFactoryBase):
             )
         return configs
     
-
-    def _update_note_fields(self, notes: Dict[int, Note], models: Dict[int, Model]):
-        """Update note fields with proper field names from models."""
-        for note in notes.values():
-            model = models[note.model_id]
-            field_names = [f.name for f in model.fields]
-            field_values = list(note.fields.values())
-            note.fields = dict(zip(field_names, field_values))
 
     def _create_tags_v2(self, notes: Dict[int, Note]) -> List[str]:
         """Create list of unique tags from notes."""
@@ -479,10 +465,10 @@ class CollectionV21Factory(CollectionFactoryBase):
         """Create list of unique tags from tags data."""
         return sorted(list(tags_json.keys()))
     
-    def _parse_fields(self, fields_str: str) -> Dict[str, str]:
+    def _parse_fields(self, fields_str: str) -> Dict[int, str]:
         """Parse fields string into dictionary.
         
-        In Anki 21, fields are tab-separated rather than using \x1f as in Anki 2.
+        In Anki 21, fields are separated by \x1f just like in Anki 2.
         """
-        return dict(enumerate(fields_str.split('\t')))
+        return dict(enumerate(fields_str.split('\x1f')))
     

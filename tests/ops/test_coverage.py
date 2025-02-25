@@ -27,7 +27,10 @@ def get_all_operations() -> Dict[str, Type[Operation]]:
             for name, obj in inspect.getmembers(module):
                 if (inspect.isclass(obj) and 
                     issubclass(obj, Operation) and 
-                    obj != Operation):
+                    obj != Operation and
+                    obj.__module__ != 'ops.read.base_read' and
+                    obj.__name__ != 'ReadOperation' and
+                    obj.__name__ != 'PathOperation'):
                     operations[obj.name] = obj
         except Exception as e:
             print(f"Warning: Could not load operations from {module_name}: {e}")

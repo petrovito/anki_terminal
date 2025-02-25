@@ -1,16 +1,12 @@
 # Differences Between Anki 2 and Anki 21
 
 ## Field Separators
-- Anki 2: Uses 0x1f character as field separator in `notes.flds`
-- Anki 21: Uses tab character as field separator in `notes.flds`
+- Both Anki 2 and Anki 21 use the 0x1f character (unit separator) as field separator in `notes.flds`
 
 Example:
 ```sql
--- Anki 2
+-- Both Anki 2 and Anki 21
 INSERT INTO notes (flds) VALUES ('Front Field\x1fBack Field\x1fExtra Field');
-
--- Anki 21
-INSERT INTO notes (flds) VALUES ('Front Field\tBack Field\tExtra Field');
 ```
 
 ## Configuration Fields

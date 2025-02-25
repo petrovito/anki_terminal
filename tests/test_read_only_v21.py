@@ -3,7 +3,7 @@ import tempfile
 import zipfile
 from pathlib import Path
 from anki_context import AnkiContext
-from ops.read.list_fields import ListFieldsOperation
+from ops.read.list_operation import ListOperation
 from ops.write.rename_field import RenameFieldOperation
 
 def test_read_only_extracts_only_db():
@@ -29,7 +29,7 @@ def test_read_only_operations_work():
     """Test that read operations work correctly in read-only mode."""
     with AnkiContext("test_data/jap21.apkg", read_only=True) as context:
         # Test list fields operation
-        op = ListFieldsOperation(model_name="subs2srs")
+        op = ListOperation(path="/models/subs2srs/fields")
         results = context.run(op)
         assert results[0].success
 

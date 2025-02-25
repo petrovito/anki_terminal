@@ -1,7 +1,9 @@
 from typing import Dict, Type
 
 from ops.base import Operation
-from ops.read.list_fields import ListFieldsOperation
+from ops.read.list_operation import ListOperation
+from ops.read.count_operation import CountOperation
+from ops.read.get_operation import GetOperation
 from ops.write.rename_field import RenameFieldOperation
 
 class OperationRegistry:
@@ -14,7 +16,9 @@ class OperationRegistry:
     def _register_defaults(self):
         """Register default operations."""
         # Read operations
-        self.register(ListFieldsOperation)
+        self.register(ListOperation)
+        self.register(CountOperation)
+        self.register(GetOperation)
         
         # Write operations
         self.register(RenameFieldOperation)
