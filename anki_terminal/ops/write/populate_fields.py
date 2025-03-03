@@ -1,7 +1,8 @@
 from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
 from anki_terminal.changelog import Change, ChangeType
 import importlib
-from typing import List
+import json
+from typing import List, Dict, Any
 from anki_terminal.anki_types import Note
 from anki_terminal.populators.base import FieldPopulator
 
@@ -24,7 +25,7 @@ class PopulateFieldsOperation(Operation):
         ),
         OperationArgument(
             name="populator_config",
-            description="Path to the JSON configuration file for the populator",
+            description="Path to the JSON configuration file for the populator or a JSON string",
             required=True
         ),
         OperationArgument(
@@ -35,6 +36,51 @@ class PopulateFieldsOperation(Operation):
         )
     ]
     
+    def _load_populator_config(self) -> Dict[str, Any]:
+        """Load the populator configuration from a file or JSON string.
+        
+        Returns:
+            Dictionary containing the populator configuration
+            
+        Raises:
+            ValueError: If the configuration cannot be loaded
+        """
+        config_path_or_json = self.args["populator_config"]
+        
+        # Try to parse as JSON string first
+        try:
+            return json.loads(config_path_or_json)
+        except json.JSONDecodeError:
+            # Not a valid JSON string, try as file path
+            try:
+                with open(config_path_or_json) as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, FileNotFoundError) as e:
+                raise ValueError(f"Invalid populator configuration: {str(e)}")
+    
+    def _get_populator(self) -> FieldPopulator:
+        """Get an instance of the populator class.
+        
+        Returns:
+            Initialized populator instance
+            
+        Raises:
+            ValueError: If the populator class cannot be loaded
+        """
+        try:
+            module_path, class_name = self.args["populator_class"].rsplit('.', 1)
+            module = importlib.import_module(module_path)
+            populator_cls = getattr(module, class_name)
+            
+            if not issubclass(populator_cls, FieldPopulator):
+                raise ValueError(f"Class {self.args['populator_class']} is not a subclass of FieldPopulator")
+            
+            config = self._load_populator_config()
+            return populator_cls(config)
+            
+        except (ImportError, AttributeError) as e:
+            raise ValueError(f"Could not load populator class {self.args['populator_class']}: {str(e)}")
+    
     def _validate_impl(self) -> None:
         """Validate that the operation can be executed.
         
@@ -44,27 +90,9 @@ class PopulateFieldsOperation(Operation):
         # Check if model exists
         model = self._get_model(self.args["model_name"])
         
-        # Import and instantiate the populator class
-        try:
-            module_path, class_name = self.args["populator_class"].rsplit('.', 1)
-            module = importlib.import_module(module_path)
-            populator_cls = getattr(module, class_name)
-            
-            if not issubclass(populator_cls, FieldPopulator):
-                raise ValueError(f"Class {self.args['populator_class']} is not a subclass of FieldPopulator")
-                
-            populator = populator_cls(self.args["populator_config"])
-            
-        except (ImportError, AttributeError) as e:
-            raise ValueError(f"Could not load populator class {self.args['populator_class']}: {str(e)}")
-
-        # Get field names from model
-        field_names = [f.name for f in model.fields]
-
-        # Verify target fields exist in model
-        invalid_fields = [f for f in populator.target_fields if f not in field_names]
-        if invalid_fields:
-            raise ValueError(f"Target fields not found in model: {invalid_fields}")
+        # Get populator and validate it
+        populator = self._get_populator()
+        populator.validate(model)
 
         # Get all notes for this model
         model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]
@@ -84,12 +112,7 @@ class PopulateFieldsOperation(Operation):
             OperationResult indicating success/failure and containing changes
         """
         model = self._get_model(self.args["model_name"])
-        
-        # Import and instantiate the populator class
-        module_path, class_name = self.args["populator_class"].rsplit('.', 1)
-        module = importlib.import_module(module_path)
-        populator_cls = getattr(module, class_name)
-        populator = populator_cls(self.args["populator_config"])
+        populator = self._get_populator()
         
         # Get all notes for this model
         model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]

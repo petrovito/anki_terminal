@@ -1,45 +1,52 @@
-from typing import Dict, List
+from typing import Dict, List, Any
 import json
 import os
 from openai import OpenAI
-from anki_terminal.anki_types import Note
-from .base import FieldPopulator
+from anki_terminal.anki_types import Note, Model
+from .base import FieldPopulator, PopulatorConfigArgument
 
 class JapLlmPopulator(FieldPopulator):
     """A field populator that uses OpenAI's API to analyze Japanese sentences."""
     
-    def __init__(self, config_path: str):
-        """Initialize the populator from a config file.
-        
-        The config file should be a JSON file with the following structure:
-        {
-            "source_field": "Japanese",
-            "translation_field": "Translation",
-            "breakdown_field": "Breakdown",
-            "nuance_field": "Nuance",
-            "api_key": "your-api-key-here"  # Optional, can also use OPENAI_API_KEY env var
-        }
-        """
-        try:
-            with open(config_path) as f:
-                config = json.load(f)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid populator configuration: {str(e)}")
+    name = "jap-llm"
+    description = "Analyze Japanese sentences using OpenAI's API"
+    config_args = [
+        PopulatorConfigArgument(
+            name="source_field",
+            description="Field containing Japanese text to analyze",
+            required=True
+        ),
+        PopulatorConfigArgument(
+            name="translation_field",
+            description="Field to store the English translation",
+            required=True
+        ),
+        PopulatorConfigArgument(
+            name="breakdown_field",
+            description="Field to store the word breakdown",
+            required=True
+        ),
+        PopulatorConfigArgument(
+            name="nuance_field",
+            description="Field to store the nuance explanation",
+            required=True
+        ),
+        PopulatorConfigArgument(
+            name="api_key",
+            description="OpenAI API key (can also use OPENAI_API_KEY env var)",
+            required=False,
+            default=None
+        )
+    ]
+    
+    def __init__(self, config: Dict[str, Any]):
+        """Initialize the populator with a configuration."""
+        super().__init__(config)
         
         os.environ['OPENAI_LOG'] = 'debug'
-            
-        required_fields = ["source_field", "translation_field", "breakdown_field", "nuance_field"]
-        missing_fields = [f for f in required_fields if f not in config]
-        if missing_fields:
-            raise ValueError(f"Config missing required fields: {missing_fields}")
-            
-        self.source_field = config["source_field"]
-        self.translation_field = config["translation_field"]
-        self.breakdown_field = config["breakdown_field"]
-        self.nuance_field = config["nuance_field"]
         
         # Initialize OpenAI client
-        api_key = config.get("api_key") or os.getenv("OPENAI_API_KEY")
+        api_key = self.config.get("api_key") or os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OpenAI API key must be provided in config or OPENAI_API_KEY environment variable")
         self.client = OpenAI(api_key=api_key)
@@ -52,7 +59,24 @@ class JapLlmPopulator(FieldPopulator):
     @property
     def target_fields(self) -> List[str]:
         """Get list of fields that will be modified by this populator."""
-        return [self.translation_field, self.breakdown_field, self.nuance_field]
+        return [
+            self.config["translation_field"], 
+            self.config["breakdown_field"], 
+            self.config["nuance_field"]
+        ]
+    
+    def _validate_impl(self, model: Model) -> None:
+        """Validate that the source field exists in the model.
+        
+        Args:
+            model: The model to validate against
+            
+        Raises:
+            ValueError: If the source field doesn't exist in the model
+        """
+        field_names = [f.name for f in model.fields]
+        if self.config["source_field"] not in field_names:
+            raise ValueError(f"Source field '{self.config['source_field']}' not found in model")
     
     def _analyze_sentences(self, sentences: List[str]) -> List[Dict]:
         """Send sentences to OpenAI API for analysis.
@@ -149,13 +173,28 @@ Example output:
         except (json.JSONDecodeError, KeyError, IndexError) as e:
             raise ValueError(f"Failed to parse API response: {str(e)}")
     
-    def populate_fields(self, note: Note) -> Dict[str, str]:
-        """Populate fields for a single note."""
-        if self.source_field not in note.fields:
-            raise ValueError(f"Source field '{self.source_field}' not found in note")
+    def _populate_fields_impl(self, note: Note) -> Dict[str, str]:
+        """Analyze a Japanese sentence and populate fields.
+        
+        Args:
+            note: The note to populate fields for
+            
+        Returns:
+            A dictionary mapping field names to their new values
+            
+        Raises:
+            ValueError: If the source field is not found or empty
+        """
+        source_field = self.config["source_field"]
+        translation_field = self.config["translation_field"]
+        breakdown_field = self.config["breakdown_field"]
+        nuance_field = self.config["nuance_field"]
+        
+        if source_field not in note.fields:
+            raise ValueError(f"Source field '{source_field}' not found in note")
             
         # Get Japanese text
-        japanese_text = note.fields[self.source_field].strip()
+        japanese_text = note.fields[source_field].strip()
         if not japanese_text:
             raise ValueError("Source field is empty")
             
@@ -166,27 +205,36 @@ Example output:
         breakdown = "\n".join(f"• {word['jap']}: {word['eng']}" for word in analysis["words"])
         
         return {
-            self.translation_field: analysis["translation"],
-            self.breakdown_field: breakdown,
-            self.nuance_field: analysis["nuance"]
+            translation_field: analysis["translation"],
+            breakdown_field: breakdown,
+            nuance_field: analysis["nuance"]
         }
 
-    def populate_batch(self, notes: List[Note]) -> Dict[int, Dict[str, str]]:
-        """Populate fields for a batch of notes.
+    def _populate_batch_impl(self, notes: List[Note]) -> Dict[int, Dict[str, str]]:
+        """Analyze multiple Japanese sentences and populate fields.
         
-        This is more efficient than processing one note at a time because we:
-        1. Send multiple sentences to the API in a single request
-        2. Process valid notes in bulk
-        3. Skip invalid notes without stopping the batch
+        Args:
+            notes: List of notes to populate fields for
+            
+        Returns:
+            Dictionary mapping note IDs to their field updates
+            
+        Raises:
+            ValueError: If the API request fails
         """
         updates = {}
         valid_notes = []
         sentences = []
         
+        source_field = self.config["source_field"]
+        translation_field = self.config["translation_field"]
+        breakdown_field = self.config["breakdown_field"]
+        nuance_field = self.config["nuance_field"]
+        
         # Filter valid notes and collect sentences
         for note in notes:
-            if self.source_field in note.fields:
-                japanese_text = note.fields[self.source_field].strip()
+            if source_field in note.fields:
+                japanese_text = note.fields[source_field].strip()
                 if japanese_text:
                     valid_notes.append(note)
                     sentences.append(japanese_text)
@@ -201,9 +249,9 @@ Example output:
         for note, analysis in zip(valid_notes, analyses):
             breakdown = "\n".join(f"• {word['jap']}: {word['eng']}" for word in analysis["words"])
             updates[note.id] = {
-                self.translation_field: analysis["translation"],
-                self.breakdown_field: breakdown,
-                self.nuance_field: analysis["nuance"]
+                translation_field: analysis["translation"],
+                breakdown_field: breakdown,
+                nuance_field: analysis["nuance"]
             }
         
         return updates 

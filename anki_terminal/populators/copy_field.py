@@ -1,38 +1,59 @@
 from typing import Dict, List
-import json
-from anki_terminal.anki_types import Note
-from .base import FieldPopulator
+from anki_terminal.anki_types import Note, Model
+from .base import FieldPopulator, PopulatorConfigArgument
 
 class CopyFieldPopulator(FieldPopulator):
     """A field populator that copies values from one field to another."""
     
-    def __init__(self, config_path: str):
-        """Initialize the populator from a config file.
-        
-        The config file should be a JSON file with the following structure:
-        {
-            "source_field": "field1",
-            "target_field": "field2"
-        }
-        """
-        try:
-            with open(config_path) as f:
-                config = json.load(f)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid populator configuration: {str(e)}")
-            
-        if "source_field" not in config or "target_field" not in config:
-            raise ValueError("Config must specify 'source_field' and 'target_field'")
-            
-        self.source_field = config["source_field"]
-        self.target_field = config["target_field"]
+    name = "copy-field"
+    description = "Copy values from one field to another"
+    config_args = [
+        PopulatorConfigArgument(
+            name="source_field",
+            description="Field to copy values from",
+            required=True
+        ),
+        PopulatorConfigArgument(
+            name="target_field",
+            description="Field to copy values to",
+            required=True
+        )
+    ]
     
     @property
     def target_fields(self) -> List[str]:
         """Get list of fields that will be modified by this populator."""
-        return [self.target_field]
+        return [self.config["target_field"]]
     
-    def populate_fields(self, note: Note) -> Dict[str, str]:
-        if self.source_field not in note.fields:
-            raise ValueError(f"Source field '{self.source_field}' not found in note")
-        return {self.target_field: note.fields[self.source_field]} 
+    def _validate_impl(self, model: Model) -> None:
+        """Validate that the source field exists in the model.
+        
+        Args:
+            model: The model to validate against
+            
+        Raises:
+            ValueError: If the source field doesn't exist in the model
+        """
+        field_names = [f.name for f in model.fields]
+        if self.config["source_field"] not in field_names:
+            raise ValueError(f"Source field '{self.config['source_field']}' not found in model")
+    
+    def _populate_fields_impl(self, note: Note) -> Dict[str, str]:
+        """Copy the source field value to the target field.
+        
+        Args:
+            note: The note to populate fields for
+            
+        Returns:
+            A dictionary mapping the target field to its new value
+            
+        Raises:
+            ValueError: If the source field is not found in the note
+        """
+        source_field = self.config["source_field"]
+        target_field = self.config["target_field"]
+        
+        if source_field not in note.fields:
+            raise ValueError(f"Source field '{source_field}' not found in note")
+        
+        return {target_field: note.fields[source_field]} 
