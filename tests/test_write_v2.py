@@ -4,8 +4,9 @@ from pathlib import Path
 from anki_context import AnkiContext
 from ops.write.rename_field import RenameFieldOperation
 from ops.read.list_operation import ListOperation
+from tests.fixtures.test_data_fixtures import apkg_v2_path
 
-def test_write_operation_persists():
+def test_write_operation_persists(apkg_v2_path):
     """Test that write operations are correctly persisted to disk.
     
     This test:
@@ -20,7 +21,7 @@ def test_write_operation_persists():
         output_path = tmp_dir / "modified.apkg"
         
         # First context: Perform the write operation
-        with AnkiContext("test_data/jap.apkg", output_path=output_path, read_only=False) as context:
+        with AnkiContext(apkg_v2_path, output_path=output_path, read_only=False) as context:
             # Get original fields for verification
             list_op = ListOperation(path="/models/Basic Card/fields")
             results = context.run(list_op)
