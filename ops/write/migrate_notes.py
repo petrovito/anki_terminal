@@ -104,16 +104,21 @@ class MigrateNotesOperation(Operation):
             note.modification_time = datetime.now()
             note.usn = -1  # -1 indicates needs sync
         
-        # Create change record
-        change = Change(
-            type=ChangeType.NOTE_FIELDS_UPDATED,
-            data={
-                'notes': [note.to_dict() for note in notes_to_migrate]
-            }
-        )
+        # Create change records - one for each migrated note
+        changes = []
+        for note in notes_to_migrate:
+            changes.append(Change(
+                type=ChangeType.NOTE_MIGRATED,  # Use NOTE_MIGRATED instead of NOTE_FIELDS_UPDATED
+                data={
+                    'note_id': note.id,
+                    'source_model_id': source_model.id,
+                    'target_model_id': target_model.id,
+                    'fields': note.fields
+                }
+            ))
         
         return OperationResult(
             success=True,
             message=f"Migrated {len(notes_to_migrate)} notes from '{self.args['model_name']}' to '{self.args['target_model_name']}'",
-            changes=[change]
+            changes=changes
         ) 
