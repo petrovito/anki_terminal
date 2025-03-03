@@ -9,8 +9,7 @@ from anki_types import Collection
 from collection_factories import CollectionV2Factory, CollectionV21Factory
 from changelog import ChangeLog
 from db_operations import (
-    DBOperation, DBOperationType,
-    AnkiV2OperationGenerator, AnkiV21OperationGenerator
+    DBOperation, DBOperationType, DBOperationGenerator
 )
 
 logger = logging.getLogger('anki_inspector')
@@ -42,11 +41,8 @@ class DatabaseManager:
         self._conn: sqlite3.Connection = None
         self._collection: Collection = None
         
-        # Create appropriate operation generator
-        self.op_generator = (
-            AnkiV21OperationGenerator() if anki_version == 21 
-            else AnkiV2OperationGenerator()
-        )
+        # Use the consolidated operation generator
+        self.op_generator = DBOperationGenerator()
         
     def __enter__(self):
         """Setup database connection and validate version.

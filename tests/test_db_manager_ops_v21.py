@@ -129,7 +129,7 @@ class TestDatabaseManagerOperationsV21:
             cursor = db._conn.cursor()
             cursor.execute(
                 "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data) "
-                "VALUES (1, 'test', 1, 0, -1, '', 'old front\told back', 'old front', 0, 0, '')"
+                "VALUES (1, 'test', 1, 0, -1, '', 'old front\x1fold back', 'old front', 0, 0, '')"
             )
             
             # Create changelog with note update
@@ -154,7 +154,7 @@ class TestDatabaseManagerOperationsV21:
             # Verify changes in database
             cursor.execute("SELECT flds FROM notes WHERE id = 1")
             fields = cursor.fetchone()[0]
-            assert fields == "new front\tnew back"  # v21 uses tab separator
+            assert fields == "new front\x1fnew back"  # Using \x1f separator
 
     def test_note_migration_v21(self, temp_db_v21, sample_model):
         """Test note migration operation in v21 database."""
@@ -163,7 +163,7 @@ class TestDatabaseManagerOperationsV21:
             cursor = db._conn.cursor()
             cursor.execute(
                 "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data) "
-                "VALUES (1, 'test', 1, 0, -1, '', 'old front\told back', 'old front', 0, 0, '')"
+                "VALUES (1, 'test', 1, 0, -1, '', 'old front\x1fold back', 'old front', 0, 0, '')"
             )
             
             # Create target model
@@ -207,4 +207,4 @@ class TestDatabaseManagerOperationsV21:
             cursor.execute("SELECT mid, flds FROM notes WHERE id = 1")
             row = cursor.fetchone()
             assert row[0] == 2  # Should be migrated to target model
-            assert row[1] == "old front\told back\t"  # v21 format with empty Notes field 
+            assert row[1] == "old front\x1fold back\x1f"  # Using \x1f separator for empty Notes field 

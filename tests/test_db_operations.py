@@ -3,7 +3,7 @@ from datetime import datetime
 
 from db_operations import (
     DBOperation, DBOperationType,
-    AnkiV2OperationGenerator
+    DBOperationGenerator
 )
 from changelog import Change, ChangeType
 from anki_types import Model, Field
@@ -70,8 +70,8 @@ def note_migration_change() -> Change:
         }
     )
 
-class TestDBOperationV2:
-    """Tests for the DBOperation class with v2 format."""
+class TestDBOperation:
+    """Tests for the DBOperation class."""
     
     def test_operation_creation(self):
         """Test creating a DB operation."""
@@ -88,11 +88,11 @@ class TestDBOperationV2:
         assert op.values == {'models': '{}'}
         assert op.metadata == {'field_separator': '\u001f'}
 
-class TestAnkiV2OperationGenerator:
-    """Tests for the AnkiV2OperationGenerator class."""
+class TestAnkiOperationGenerator:
+    """Tests for the AnkiOperationGenerator class."""
     
     def setup_method(self):
-        self.generator = AnkiV2OperationGenerator()
+        self.generator = DBOperationGenerator()
 
     def test_model_update(self, model_change):
         """Test generating operations for model updates."""
