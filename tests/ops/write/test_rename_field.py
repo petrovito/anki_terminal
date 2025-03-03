@@ -1,10 +1,10 @@
 import pytest
 from typing import Dict, Any
 
-from ops.write.rename_field import RenameFieldOperation
+from anki_terminal.ops.write.rename_field import RenameFieldOperation
 from tests.ops.test_base import OperationTestBase
 from tests.ops.base_write_test import BaseWriteTest
-from anki_types import Collection, Model, Field, Note
+from anki_terminal.anki_types import Collection, Model, Field, Note
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
 
 class TestRenameFieldOperation(OperationTestBase):

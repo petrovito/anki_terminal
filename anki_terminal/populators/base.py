@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
-from anki_types import Note
+from anki_terminal.anki_types import Note
 
 class FieldPopulator(ABC):
     """Abstract base class for field population strategies.

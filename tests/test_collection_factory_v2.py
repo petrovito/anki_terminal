@@ -2,8 +2,8 @@ import pytest
 import json
 from datetime import datetime
 from typing import Dict, Any
-from anki_types import Collection, Card, Note, Model, Deck, DeckConfig
-from collection_factories import CollectionV2Factory
+from anki_terminal.anki_types import Collection, Card, Note, Model, Deck, DeckConfig
+from anki_terminal.collection_factories import CollectionV2Factory
 
 @pytest.fixture
 def v2_table_data() -> Dict[str, Any]:

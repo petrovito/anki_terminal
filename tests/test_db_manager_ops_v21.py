@@ -4,9 +4,9 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-from database_manager import DatabaseManager
-from changelog import ChangeLog
-from anki_types import Collection, Model, Field, Note
+from anki_terminal.database_manager import DatabaseManager
+from anki_terminal.changelog import ChangeLog
+from anki_terminal.anki_types import Collection, Model, Field, Note
 
 @pytest.fixture
 def temp_db_v21():

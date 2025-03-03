@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
-from anki_types import Collection, Model, Template
-from changelog import Change
-from ops.printer import OperationPrinter, HumanReadablePrinter
+from anki_terminal.anki_types import Collection, Model, Template
+from anki_terminal.changelog import Change
+from anki_terminal.ops.printer import OperationPrinter, HumanReadablePrinter
 
 @dataclass
 class OperationArgument:

@@ -3,9 +3,9 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional, Tuple, Type, Union
 
-from anki_context import AnkiContext
-from ops.base import Operation, OperationResult
-from anki_types import Collection
+from anki_terminal.anki_context import AnkiContext
+from anki_terminal.ops.base import Operation, OperationResult
+from anki_terminal.anki_types import Collection
 
 
 class BaseWriteTest:

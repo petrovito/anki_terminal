@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
-from changelog import Change, ChangeType
+from anki_terminal.changelog import Change, ChangeType
 
 class DBOperationType(Enum):
     """Types of database operations."""

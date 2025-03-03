@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 
-from database_manager import DatabaseManager
-from anki_types import Collection, Card, Note, Model, Deck, DeckConfig
+from anki_terminal.database_manager import DatabaseManager
+from anki_terminal.anki_types import Collection, Card, Note, Model, Deck, DeckConfig
 
 @pytest.fixture
 def temp_db_v21():

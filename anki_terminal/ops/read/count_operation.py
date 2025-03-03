@@ -1,7 +1,7 @@
 from typing import Dict, Optional
 
-from ops.base import OperationResult
-from ops.read.path_operation import PathOperation
+from anki_terminal.ops.base import OperationResult
+from anki_terminal.ops.read.path_operation import PathOperation
 
 class CountOperation(PathOperation):
     """Operation to count Anki objects at the specified path."""

@@ -4,12 +4,12 @@ import json
 import tempfile
 from typing import Dict, Any
 
-from ops.write.populate_fields import PopulateFieldsOperation
+from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
 from tests.ops.test_base import OperationTestBase
 from tests.ops.base_write_test import BaseWriteTest
-from anki_types import Collection, Model, Field, Note
+from anki_terminal.anki_types import Collection, Model, Field, Note
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
-from populators.base import FieldPopulator
+from anki_terminal.populators.base import FieldPopulator
 
 # Create a simple test populator for unit tests
 class TestFieldPopulator(FieldPopulator):

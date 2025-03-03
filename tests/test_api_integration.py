@@ -3,8 +3,8 @@ import os
 import json
 from pathlib import Path
 from dotenv import load_dotenv
-from anki_types import Note
-from populators.jap_llm import JapLlmPopulator
+from anki_terminal.anki_types import Note
+from anki_terminal.populators.jap_llm import JapLlmPopulator
 
 # Load environment variables from .env file
 load_dotenv()

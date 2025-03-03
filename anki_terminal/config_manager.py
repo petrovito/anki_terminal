@@ -4,7 +4,7 @@ import logging
 import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from template_manager import TemplateManager
+from anki_terminal.template_manager import TemplateManager
 
 logger = logging.getLogger('anki_inspector')
 

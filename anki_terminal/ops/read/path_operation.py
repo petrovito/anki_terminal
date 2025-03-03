@@ -1,8 +1,8 @@
 from typing import Dict, List, Optional, Any, Union
 
-from ops.base import Operation, OperationResult, OperationArgument
-from ops.read.base_read import ReadOperation
-from ops.anki_path import AnkiPath
+from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
+from anki_terminal.ops.read.base_read import ReadOperation
+from anki_terminal.ops.anki_path import AnkiPath
 
 class PathOperation(ReadOperation):
     """Base class for operations that work with AnkiPath."""

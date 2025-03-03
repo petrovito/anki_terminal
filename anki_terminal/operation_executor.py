@@ -1,8 +1,8 @@
 import logging
 from typing import Optional, List
-from anki_types import Collection
-from changelog import ChangeLog
-from ops.base import Operation, OperationResult
+from anki_terminal.anki_types import Collection
+from anki_terminal.changelog import ChangeLog
+from anki_terminal.ops.base import Operation, OperationResult
 
 logger = logging.getLogger('anki_inspector')
 

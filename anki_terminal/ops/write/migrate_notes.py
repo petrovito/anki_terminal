@@ -1,6 +1,6 @@
-from ops.base import Operation, OperationResult, OperationArgument
-from anki_types import Note
-from changelog import Change, ChangeType
+from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
+from anki_terminal.anki_types import Note
+from anki_terminal.changelog import Change, ChangeType
 from datetime import datetime
 from typing import Dict, List
 

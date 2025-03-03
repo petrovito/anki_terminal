@@ -1,5 +1,5 @@
 import pytest
-from ops.write.add_model import AddModelOperation
+from anki_terminal.ops.write.add_model import AddModelOperation
 from tests.ops.test_base import OperationTestBase
 from tests.ops.base_write_test import BaseWriteTest
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path

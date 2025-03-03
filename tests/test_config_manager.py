@@ -1,7 +1,7 @@
 import pytest
 import json
 from pathlib import Path
-from config_manager import ConfigManager
+from anki_terminal.config_manager import ConfigManager
 
 @pytest.fixture
 def config_manager(test_configs_dir, test_templates_dir):

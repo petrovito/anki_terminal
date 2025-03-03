@@ -4,11 +4,11 @@ import logging
 from pathlib import Path
 from typing import Optional, List
 
-from apkg_manager import ApkgManager
-from database_manager import DatabaseManager
-from changelog import ChangeLog
-from operation_executor import OperationExecutor
-from ops.base import Operation, OperationResult
+from anki_terminal.apkg_manager import ApkgManager
+from anki_terminal.database_manager import DatabaseManager
+from anki_terminal.changelog import ChangeLog
+from anki_terminal.operation_executor import OperationExecutor
+from anki_terminal.ops.base import Operation, OperationResult
 
 logger = logging.getLogger('anki_inspector')
 

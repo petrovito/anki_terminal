@@ -1,6 +1,6 @@
 from typing import Dict, List
 import json
-from anki_types import Note
+from anki_terminal.anki_types import Note
 from .base import FieldPopulator
 
 class CopyFieldPopulator(FieldPopulator):

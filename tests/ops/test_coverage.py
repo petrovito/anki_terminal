@@ -4,7 +4,7 @@ import importlib
 import inspect
 from typing import Type, Dict, Set
 
-from ops.base import Operation
+from anki_terminal.ops.base import Operation
 from tests.ops.test_base import OperationTestBase
 
 def get_all_operations() -> Dict[str, Type[Operation]]:

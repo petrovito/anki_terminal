@@ -1,6 +1,6 @@
-from ops.base import Operation, OperationResult, OperationArgument
-from anki_types import Model, Field, Template
-from changelog import Change, ChangeType
+from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
+from anki_terminal.anki_types import Model, Field, Template
+from anki_terminal.changelog import Change, ChangeType
 from datetime import datetime
 
 class AddModelOperation(Operation):

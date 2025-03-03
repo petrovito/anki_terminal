@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 from enum import Enum, auto
-from anki_types import Model, Note
+from anki_terminal.anki_types import Model, Note
 
 logger = logging.getLogger('anki_inspector')
 

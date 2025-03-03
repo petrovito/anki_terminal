@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from typing import Dict, List, Set, Any
 
-from anki_types import (
+from anki_terminal.anki_types import (
     Collection, Card, Note, Model, Deck, DeckConfig, 
     Field, Template
 )

@@ -5,10 +5,10 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, List, Any
 
-from anki_types import Collection
-from collection_factories import CollectionV2Factory, CollectionV21Factory
-from changelog import ChangeLog
-from db_operations import (
+from anki_terminal.anki_types import Collection
+from anki_terminal.collection_factories import CollectionV2Factory, CollectionV21Factory
+from anki_terminal.changelog import ChangeLog
+from anki_terminal.db_operations import (
     DBOperation, DBOperationType, DBOperationGenerator
 )
 

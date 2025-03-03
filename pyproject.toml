@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anki_terminal"
+version = "0.1.0"
+description = "A terminal-based tool for working with Anki collections"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "petrovito", email = "pjotr.tech@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.18.0",
+]
+
+[project.scripts]
+anki-terminal = "anki_terminal.main:main"
+
+[tool.setuptools]
+packages = ["anki_terminal"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+markers = [
+    "api: mark test as requiring API access",
+] 

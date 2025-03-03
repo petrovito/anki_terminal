@@ -8,8 +8,8 @@ import json
 import pytest
 from pathlib import Path
 
-from collection_factories import CollectionV2Factory, CollectionV21Factory
-from anki_types import Collection
+from anki_terminal.collection_factories import CollectionV2Factory, CollectionV21Factory
+from anki_terminal.anki_types import Collection
 
 # Base path to test data directory
 TEST_DATA_DIR = Path("test_data")
@@ -121,7 +121,7 @@ def anki_context_v2(apkg_v2_path, tmp_path):
     Returns:
         AnkiContext: AnkiContext for Anki v2
     """
-    from anki_context import AnkiContext
+    from anki_terminal.anki_context import AnkiContext
     output_path = tmp_path / "output_v2.apkg"
     with AnkiContext(apkg_v2_path, output_path=output_path) as context:
         yield context
@@ -139,7 +139,7 @@ def anki_context_v21(apkg_v21_path, tmp_path):
     Returns:
         AnkiContext: AnkiContext for Anki v21
     """
-    from anki_context import AnkiContext
+    from anki_terminal.anki_context import AnkiContext
     output_path = tmp_path / "output_v21.apkg"
     with AnkiContext(apkg_v21_path, output_path=output_path) as context:
         yield context 

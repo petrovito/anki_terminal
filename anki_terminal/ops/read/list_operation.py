@@ -1,8 +1,8 @@
 from typing import Dict, List, Optional, Any
 
-from ops.base import OperationResult, OperationArgument
-from ops.read.path_operation import PathOperation
-from ops.anki_path import AnkiPath
+from anki_terminal.ops.base import OperationResult, OperationArgument
+from anki_terminal.ops.read.path_operation import PathOperation
+from anki_terminal.ops.anki_path import AnkiPath
 
 class ListOperation(PathOperation):
     """Operation to list Anki objects at the specified path."""

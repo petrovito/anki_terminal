@@ -2,8 +2,8 @@
 
 import sys
 import logging
-from arg_parser import parse_args
-from anki_context import AnkiContext
+from anki_terminal.arg_parser import parse_args
+from anki_terminal.anki_context import AnkiContext
 
 logger = logging.getLogger(__name__)
 

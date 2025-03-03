@@ -1,9 +1,9 @@
 import pytest
 import tempfile
 from pathlib import Path
-from anki_context import AnkiContext
-from ops.write.rename_field import RenameFieldOperation
-from ops.read.list_operation import ListOperation
+from anki_terminal.anki_context import AnkiContext
+from anki_terminal.ops.write.rename_field import RenameFieldOperation
+from anki_terminal.ops.read.list_operation import ListOperation
 from tests.fixtures.test_data_fixtures import apkg_v21_path
 
 def test_write_operation_persists(apkg_v21_path):

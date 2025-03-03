@@ -3,8 +3,8 @@ from typing import Type
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from ops.base import Operation
-from anki_types import Collection, Model, Field, Note, Deck
+from anki_terminal.ops.base import Operation
+from anki_terminal.anki_types import Collection, Model, Field, Note, Deck
 
 class OperationTestBase(ABC):
     """Base class for operation unit tests."""

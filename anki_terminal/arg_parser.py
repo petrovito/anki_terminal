@@ -1,9 +1,9 @@
 import argparse
 from pathlib import Path
 from typing import Tuple
-from ops.registry import OperationRegistry
-from ops.base import Operation
-from ops.printer import JsonPrinter, HumanReadablePrinter, OperationPrinter
+from anki_terminal.ops.registry import OperationRegistry
+from anki_terminal.ops.base import Operation
+from anki_terminal.ops.printer import JsonPrinter, HumanReadablePrinter, OperationPrinter
 
 
 

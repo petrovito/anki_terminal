@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from script_manager import ScriptManager
+from anki_terminal.script_manager import ScriptManager
 
 def test_list_builtin_scripts():
     """Test listing built-in scripts."""

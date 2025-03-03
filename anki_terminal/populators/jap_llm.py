@@ -2,7 +2,7 @@ from typing import Dict, List
 import json
 import os
 from openai import OpenAI
-from anki_types import Note
+from anki_terminal.anki_types import Note
 from .base import FieldPopulator
 
 class JapLlmPopulator(FieldPopulator):

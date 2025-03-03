@@ -2,9 +2,9 @@ import pytest
 import tempfile
 import zipfile
 from pathlib import Path
-from anki_context import AnkiContext
-from ops.read.list_operation import ListOperation
-from ops.write.rename_field import RenameFieldOperation
+from anki_terminal.anki_context import AnkiContext
+from anki_terminal.ops.read.list_operation import ListOperation
+from anki_terminal.ops.write.rename_field import RenameFieldOperation
 from tests.fixtures.test_data_fixtures import apkg_v2_path
 
 def test_read_only_extracts_only_db(apkg_v2_path):
