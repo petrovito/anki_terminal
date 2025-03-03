@@ -7,8 +7,8 @@ from anki_terminal.config_manager import ConfigManager
 def config_manager(test_configs_dir, test_templates_dir):
     """Get a config manager instance configured for testing."""
     return ConfigManager(
-        builtin_configs_dir=test_configs_dir / "builtin",
-        builtin_templates_dir=test_templates_dir / "builtin"
+        builtin_configs_dir=test_configs_dir / "builtin" / "configs",
+        builtin_templates_dir=test_templates_dir / "builtin" / "templates"
     )
 
 def test_list_builtin_configs(config_manager):

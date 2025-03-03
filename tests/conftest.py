@@ -41,12 +41,12 @@ def test_root_dir() -> Path:
 @pytest.fixture
 def test_configs_dir(test_root_dir: Path) -> Path:
     """Get the directory containing test config files."""
-    return test_root_dir / "configs"
+    return test_root_dir
 
 @pytest.fixture
 def test_templates_dir(test_root_dir: Path) -> Path:
     """Get the directory containing test template files."""
-    return test_root_dir / "templates"
+    return test_root_dir
 
 @pytest.fixture
 def test_scripts_dir(test_root_dir: Path) -> Path:

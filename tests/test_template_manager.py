@@ -5,7 +5,7 @@ from anki_terminal.template_manager import TemplateManager
 @pytest.fixture
 def template_manager(test_templates_dir):
     """Get a template manager instance configured for testing."""
-    return TemplateManager(test_templates_dir / "builtin")
+    return TemplateManager(test_templates_dir / "builtin" / "templates")
 
 def test_get_builtin_template_path(template_manager):
     """Test getting path to built-in template."""
