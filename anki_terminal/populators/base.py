@@ -38,16 +38,35 @@ class FieldPopulator(ABC):
     description: ClassVar[str] = ""
     config_args: ClassVar[List[PopulatorConfigArgument]] = []
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config):
         """Initialize the populator with a configuration.
         
         Args:
-            config: Dictionary containing configuration values
+            config: Dictionary containing configuration values or a JSON string or a file path
             
         Raises:
             ValueError: If required configuration values are missing
         """
-        self.config = config
+        # Handle different types of config input
+        if isinstance(config, str):
+            # Check if it's a file path
+            if config.endswith('.json'):
+                import os
+                if os.path.exists(config):
+                    import json
+                    with open(config, 'r') as f:
+                        self.config = json.load(f)
+                else:
+                    # Assume it's a JSON string
+                    import json
+                    self.config = json.loads(config)
+            else:
+                # Assume it's a JSON string
+                import json
+                self.config = json.loads(config)
+        else:
+            # Assume it's a dictionary
+            self.config = config
         
         # Apply defaults for missing optional arguments
         for arg in self.config_args:

@@ -21,6 +21,11 @@ class CopyFieldPopulator(FieldPopulator):
     ]
     
     @property
+    def supports_batching(self) -> bool:
+        """Whether this populator supports batch operations."""
+        return self.config.get("supports_batch", False)
+    
+    @property
     def target_fields(self) -> List[str]:
         """Get list of fields that will be modified by this populator."""
         return [self.config["target_field"]]
@@ -56,4 +61,22 @@ class CopyFieldPopulator(FieldPopulator):
         if source_field not in note.fields:
             raise ValueError(f"Source field '{source_field}' not found in note")
         
-        return {target_field: note.fields[source_field]} 
+        return {target_field: note.fields[source_field]}
+    
+    def _populate_batch_impl(self, notes: List[Note]) -> Dict[int, Dict[str, str]]:
+        """Copy the source field value to the target field for multiple notes.
+        
+        Args:
+            notes: The notes to populate fields for
+            
+        Returns:
+            A dictionary mapping note IDs to their field updates
+        """
+        result = {}
+        for note in notes:
+            try:
+                result[note.id] = self._populate_fields_impl(note)
+            except ValueError:
+                # Skip notes with missing source fields
+                pass
+        return result 
