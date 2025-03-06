@@ -44,6 +44,25 @@ class Operation(ABC):
         self.printer = printer or HumanReadablePrinter()
         self.args = self._process_args(kwargs)
     
+    @classmethod
+    def setup_subparser(cls, subparser):
+        """Set up the subparser for this operation.
+        
+        This method can be overridden by subclasses to customize the subparser.
+        By default, it adds arguments based on the operation's arguments list.
+        
+        Args:
+            subparser: The subparser to set up
+        """
+        # Add arguments from operation
+        for arg in cls.arguments:
+            subparser.add_argument(
+                f"--{arg.name.replace('_', '-')}",
+                required=arg.required,
+                default=arg.default,
+                help=arg.description + (" (required)" if arg.required else f" (default: {arg.default})")
+            )
+    
     def _process_args(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """Process and validate input arguments.
         

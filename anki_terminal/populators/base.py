@@ -38,6 +38,15 @@ class FieldPopulator(ABC):
     description: ClassVar[str] = ""
     config_args: ClassVar[List[PopulatorConfigArgument]] = []
     
+    @classmethod
+    def get_config_arguments(cls) -> List[PopulatorConfigArgument]:
+        """Get the configuration arguments for this populator.
+        
+        Returns:
+            List of configuration arguments
+        """
+        return cls.config_args.copy()
+    
     def __init__(self, config):
         """Initialize the populator with a configuration.
         

@@ -2,9 +2,10 @@ from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
 from anki_terminal.changelog import Change, ChangeType
 import importlib
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Type
 from anki_terminal.anki_types import Note
 from anki_terminal.populators.base import FieldPopulator
+from anki_terminal.populators.populator_registry import PopulatorRegistry
 
 class PopulateFieldsOperation(Operation):
     """Operation to populate fields in notes using a field populator."""
@@ -12,29 +13,46 @@ class PopulateFieldsOperation(Operation):
     name = "populate-fields"
     description = "Populate fields in notes using a field populator"
     readonly = False
-    arguments = [
-        OperationArgument(
-            name="model_name",
-            description="Name of the model to populate fields in",
-            required=True
-        ),
-        OperationArgument(
-            name="populator_class",
-            description="Full path to the populator class (e.g. 'populators.copy_field.CopyFieldPopulator')",
-            required=True
-        ),
-        OperationArgument(
-            name="populator_config",
-            description="Path to the JSON configuration file for the populator or a JSON string",
-            required=True
-        ),
-        OperationArgument(
-            name="batch_size",
-            description="Size of batches to process notes in. Default is 1 (no batching).",
-            required=False,
-            default=1
+    
+    @classmethod
+    def setup_subparser(cls, subparser):
+        """Set up the subparser for this operation with sub-subparsers for populators."""
+        # Add common arguments
+        subparser.add_argument(
+            "--model",
+            required=True,
+            help="Name of the model to populate fields in"
         )
-    ]
+        subparser.add_argument(
+            "--batch-size",
+            type=int,
+            default=1,
+            help="Size of batches to process notes in. Default is 1 (no batching)."
+        )
+        
+        # Create sub-subparsers for each populator
+        populator_subparsers = subparser.add_subparsers(
+            dest="populator",
+            help="Field populator to use"
+        )
+        
+        # Add a subparser for each registered populator
+        registry = PopulatorRegistry()
+        for populator_name, populator_class in registry.get_all_populators().items():
+            populator_parser = populator_subparsers.add_parser(
+                populator_name,
+                help=populator_class.description
+            )
+            
+            # Add populator-specific arguments
+            for arg in populator_class.get_config_arguments():
+                populator_parser.add_argument(
+                    f"--{arg.name.replace('_', '-')}",
+                    required=arg.required,
+                    default=arg.default,
+                    help=arg.description + (" (required)" if arg.required else f" (default: {arg.default})")
+                )
+
     
     def _load_populator_config(self) -> Dict[str, Any]:
         """Load the populator configuration from a file or JSON string.

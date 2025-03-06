@@ -14,8 +14,13 @@ logger = logging.getLogger(__name__)
 
 def main():
     try:
-        # Parse arguments into apkg_file, output_path, and operation
-        apkg_file, output_path, operation = parse_args()
+        # Parse arguments into operation, output file, and printer
+        operation, apkg_file, output_path = parse_args()
+        
+        # Check if APKG file is provided for operations that need it
+        if not hasattr(operation, 'args') or 'apkg_file' not in operation.args:
+            logger.error("Error: --apkg argument is required for this operation")
+            sys.exit(1)
         
         # Open the Anki context and run the operation
         with AnkiContext(apkg_file, output_path, read_only=operation.readonly) as context:

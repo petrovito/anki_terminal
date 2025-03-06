@@ -49,6 +49,14 @@ class PopulatorRegistry:
         
         return self._populators[name]
     
+    def get_all_populators(self) -> Dict[str, Type[FieldPopulator]]:
+        """Get all registered field populators.
+        
+        Returns:
+            Dictionary mapping populator names to their classes
+        """
+        return self._populators.copy()
+    
     def list_populators(self) -> Dict[str, Dict[str, any]]:
         """List all registered field populators.
         
@@ -58,7 +66,7 @@ class PopulatorRegistry:
         return {
             name: {
                 "description": populator.description,
-                "config_args": [arg.to_dict() for arg in populator.config_args]
+                "config_arguments": populator.get_config_arguments()
             }
             for name, populator in self._populators.items()
         } 
