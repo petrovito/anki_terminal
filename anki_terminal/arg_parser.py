@@ -37,7 +37,8 @@ def create_parser() -> argparse.ArgumentParser:
     """
     # Create main parser
     parser = argparse.ArgumentParser(
-        description="Anki collection inspector and modifier"
+        description="Anki collection inspector and modifier",
+        prog="anki-terminal"
     )
     
     # Add common arguments

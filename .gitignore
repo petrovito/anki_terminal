@@ -4,3 +4,4 @@ __pycache__/
 .env
 venv/
 .idea/
+anki_terminal.egg-info/

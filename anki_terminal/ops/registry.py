@@ -1,10 +1,10 @@
 from typing import Dict, Type
 
-from ops.base import Operation
-from ops.read.list_operation import ListOperation
-from ops.read.count_operation import CountOperation
-from ops.read.get_operation import GetOperation
-from ops.write.rename_field import RenameFieldOperation
+from anki_terminal.ops.base import Operation
+from anki_terminal.ops.read.list_operation import ListOperation
+from anki_terminal.ops.read.count_operation import CountOperation
+from anki_terminal.ops.read.get_operation import GetOperation
+from anki_terminal.ops.write.rename_field import RenameFieldOperation
 
 class OperationRegistry:
     """Registry of all available operations."""
