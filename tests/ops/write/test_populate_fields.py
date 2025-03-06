@@ -1,16 +1,20 @@
-import pytest
-import os
 import json
+import os
 import tempfile
-from typing import Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List
 
+import pytest
+
+from anki_terminal.anki_types import (Collection, Deck, Field, Model, Note,
+                                      Template)
 from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
-from tests.ops.test_base import OperationTestBase
-from tests.ops.base_write_test import BaseWriteTest
-from anki_terminal.anki_types import Collection, Model, Field, Note, Template, Deck
+from anki_terminal.populators.populator_base import (FieldPopulator,
+                                                     PopulatorConfigArgument)
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
-from anki_terminal.populators.base import FieldPopulator, PopulatorConfigArgument
+from tests.ops.base_write_test import BaseWriteTest
+from tests.ops.test_base import OperationTestBase
+
 
 # Create a simple test populator for unit tests
 class MockFieldPopulator(FieldPopulator):
@@ -256,7 +260,7 @@ class TestPopulateFieldsIntegration(BaseWriteTest):
         # This is a unit test, not an integration test
         # Create a mock collection
         from datetime import datetime
-        
+
         # Create a model
         model = Model(
             id=1,

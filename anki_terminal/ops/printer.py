@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, TextIO
 import json
 import sys
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional, TextIO
+
 
 class OperationPrinter(ABC):
     """Abstract base class for operation output printers."""

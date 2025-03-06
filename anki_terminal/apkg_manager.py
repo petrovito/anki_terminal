@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import logging
+import shutil
 import tempfile
 import zipfile
-import shutil
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 logger = logging.getLogger('anki_inspector')
 

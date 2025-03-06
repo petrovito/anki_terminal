@@ -1,4 +1,5 @@
 import pytest
+
 from anki_terminal.populators.copy_field import CopyFieldPopulator
 from tests.populators.base_test import PopulatorTestBase
 

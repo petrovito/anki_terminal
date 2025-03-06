@@ -1,6 +1,9 @@
 from typing import Dict, List
-from anki_terminal.anki_types import Note, Model
-from .base import FieldPopulator, PopulatorConfigArgument
+
+from anki_terminal.anki_types import Model, Note
+
+from .populator_base import FieldPopulator, PopulatorConfigArgument
+
 
 class CopyFieldPopulator(FieldPopulator):
     """A field populator that copies values from one field to another."""

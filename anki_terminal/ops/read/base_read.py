@@ -1,7 +1,9 @@
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
-from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
 from anki_terminal.anki_types import Collection, Model, Template
+from anki_terminal.ops.op_base import (Operation, OperationArgument,
+                                       OperationResult)
+
 
 class ReadOperation(Operation):
     """Base class for all read operations."""

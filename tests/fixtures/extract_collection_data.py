@@ -7,10 +7,10 @@ raw table data and save it to JSON files for use in tests.
 """
 
 import json
-import sys
-from pathlib import Path
-import tempfile
 import shutil
+import sys
+import tempfile
+from pathlib import Path
 
 # Add the project root to the Python path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

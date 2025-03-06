@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Any
 from datetime import datetime
 from enum import IntEnum
+from typing import Any, Dict, List, Optional
+
 
 @dataclass
 class Template:

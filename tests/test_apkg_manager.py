@@ -1,7 +1,10 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from anki_terminal.apkg_manager import ApkgManager
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
+
 
 def test_version_selection_with_test_files(apkg_v2_path, apkg_v21_path):
     """Test version selection using actual test data files."""

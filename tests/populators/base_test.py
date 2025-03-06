@@ -1,10 +1,11 @@
-import pytest
 import json
 import tempfile
 from typing import Dict, List, Type
 
-from anki_terminal.populators.base import FieldPopulator
-from anki_terminal.anki_types import Model, Field, Note, Template
+import pytest
+
+from anki_terminal.anki_types import Field, Model, Note, Template
+from anki_terminal.populators.populator_base import FieldPopulator
 
 
 class PopulatorTestBase:

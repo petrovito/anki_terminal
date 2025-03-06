@@ -1,4 +1,5 @@
 import pytest
+
 from anki_terminal.populators.concat_fields import ConcatFieldsPopulator
 from tests.populators.base_test import PopulatorTestBase
 

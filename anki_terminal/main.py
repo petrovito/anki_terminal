@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import sys
 import logging
-from anki_terminal.arg_parser import parse_args
+import sys
+
 from anki_terminal.anki_context import AnkiContext
+from anki_terminal.arg_parser import parse_args
 
 # Configure logging
 logging.basicConfig(

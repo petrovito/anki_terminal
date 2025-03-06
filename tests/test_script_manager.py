@@ -1,6 +1,9 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from anki_terminal.script_manager import ScriptManager
+
 
 @pytest.fixture
 def script_manager(test_root_dir):

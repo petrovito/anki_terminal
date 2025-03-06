@@ -1,12 +1,14 @@
-import logging
-import json
 import importlib
-from typing import Optional, Dict
-from anki_types import Collection, Model, Template, Field
-from changelog import ChangeLog, Change, ChangeType
+import json
+import logging
 import time
 from datetime import datetime
-from populators.base import FieldPopulator
+from typing import Dict, Optional
+
+from anki_types import Collection, Field, Model, Template
+from changelog import Change, ChangeLog, ChangeType
+
+from anki_terminal.populators.populator_base import FieldPopulator
 
 logger = logging.getLogger('anki_inspector')
 

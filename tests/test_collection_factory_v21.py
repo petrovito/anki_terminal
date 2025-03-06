@@ -1,9 +1,13 @@
-import pytest
 import json
 from datetime import datetime
-from typing import Dict, Any
-from anki_terminal.anki_types import Collection, Card, Note, Model, Deck, DeckConfig
+from typing import Any, Dict
+
+import pytest
+
+from anki_terminal.anki_types import (Card, Collection, Deck, DeckConfig,
+                                      Model, Note)
 from anki_terminal.collection_factories import CollectionV21Factory
+
 
 @pytest.fixture
 def v21_table_data() -> Dict[str, Any]:

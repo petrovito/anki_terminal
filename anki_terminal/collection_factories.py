@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 from datetime import datetime
-from typing import Dict, List, Set, Any
+from typing import Any, Dict, List, Set
 
-from anki_terminal.anki_types import (
-    Collection, Card, Note, Model, Deck, DeckConfig, 
-    Field, Template
-)
+from anki_terminal.anki_types import (Card, Collection, Deck, DeckConfig,
+                                      Field, Model, Note, Template)
 
 logger = logging.getLogger('anki_inspector')
 

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, TypedDict, ClassVar
-from anki_terminal.anki_types import Note, Model
+from typing import Any, ClassVar, Dict, List, Optional, TypedDict
+
+from anki_terminal.anki_types import Model, Note
+
 
 class PopulatorConfigArgument:
     """Definition of a configuration argument for a field populator."""

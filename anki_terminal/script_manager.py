@@ -3,7 +3,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Optional, List, Dict, Iterator
+from typing import Dict, Iterator, List, Optional
 
 logger = logging.getLogger('anki_inspector')
 

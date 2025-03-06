@@ -1,10 +1,13 @@
-import pytest
 from datetime import datetime
+
+import pytest
+
+from anki_terminal.anki_types import Collection, Field, Model, Note
 from anki_terminal.ops.write.migrate_notes import MigrateNotesOperation
-from tests.ops.test_base import OperationTestBase
-from tests.ops.base_write_test import BaseWriteTest
-from anki_terminal.anki_types import Collection, Model, Field, Note
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
+from tests.ops.base_write_test import BaseWriteTest
+from tests.ops.test_base import OperationTestBase
+
 
 class TestMigrateNotesOperation(OperationTestBase):
     """Unit tests for MigrateNotesOperation."""

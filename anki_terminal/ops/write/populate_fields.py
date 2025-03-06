@@ -1,11 +1,14 @@
-from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
-from anki_terminal.changelog import Change, ChangeType
 import importlib
 import json
-from typing import List, Dict, Any, Type
+from typing import Any, Dict, List, Type
+
 from anki_terminal.anki_types import Note
-from anki_terminal.populators.base import FieldPopulator
+from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.ops.op_base import (Operation, OperationArgument,
+                                       OperationResult)
+from anki_terminal.populators.populator_base import FieldPopulator
 from anki_terminal.populators.populator_registry import PopulatorRegistry
+
 
 class PopulateFieldsOperation(Operation):
     """Operation to populate fields in notes using a field populator."""

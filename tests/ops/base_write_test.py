@@ -1,11 +1,12 @@
-import pytest
 import tempfile
 from pathlib import Path
 from typing import List, Optional, Tuple, Type, Union
 
+import pytest
+
 from anki_terminal.anki_context import AnkiContext
-from anki_terminal.ops.base import Operation, OperationResult
 from anki_terminal.anki_types import Collection
+from anki_terminal.ops.op_base import Operation, OperationResult
 
 
 class BaseWriteTest:

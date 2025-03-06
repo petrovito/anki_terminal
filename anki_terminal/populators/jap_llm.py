@@ -1,9 +1,13 @@
-from typing import Dict, List, Any
 import json
 import os
+from typing import Any, Dict, List
+
 from openai import OpenAI
-from anki_terminal.anki_types import Note, Model
-from .base import FieldPopulator, PopulatorConfigArgument
+
+from anki_terminal.anki_types import Model, Note
+
+from .populator_base import FieldPopulator, PopulatorConfigArgument
+
 
 class JapLlmPopulator(FieldPopulator):
     """A field populator that uses OpenAI's API to analyze Japanese sentences."""

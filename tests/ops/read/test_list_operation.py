@@ -1,8 +1,10 @@
 from typing import Type
-from anki_terminal.ops.base import Operation
-from anki_terminal.ops.read.list_operation import ListOperation
+
 from anki_terminal.ops.anki_path import AnkiPath
+from anki_terminal.ops.op_base import Operation
+from anki_terminal.ops.read.list_operation import ListOperation
 from tests.ops.test_base import OperationTestBase
+
 
 class TestListOperation(OperationTestBase):
     """Tests for the ListOperation."""

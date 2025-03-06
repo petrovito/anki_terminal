@@ -1,12 +1,14 @@
-import pytest
 import sqlite3
 import tempfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from anki_terminal.database_manager import DatabaseManager
+import pytest
+
+from anki_terminal.anki_types import Collection, Field, Model, Note
 from anki_terminal.changelog import ChangeLog
-from anki_terminal.anki_types import Collection, Model, Field, Note
+from anki_terminal.database_manager import DatabaseManager
+
 
 @pytest.fixture
 def temp_db_v21():

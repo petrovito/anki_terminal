@@ -1,12 +1,12 @@
-import pytest
 from datetime import datetime
 
-from anki_terminal.db_operations import (
-    DBOperation, DBOperationType,
-    DBOperationGenerator
-)
+import pytest
+
+from anki_terminal.anki_types import Field, Model
 from anki_terminal.changelog import Change, ChangeType
-from anki_terminal.anki_types import Model, Field
+from anki_terminal.db_operations import (DBOperation, DBOperationGenerator,
+                                         DBOperationType)
+
 
 @pytest.fixture
 def sample_model() -> Model:

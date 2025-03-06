@@ -1,6 +1,9 @@
-import pytest
 from pathlib import Path
+
+import pytest
+
 from anki_terminal.template_manager import TemplateManager
+
 
 @pytest.fixture
 def template_manager(test_templates_dir):

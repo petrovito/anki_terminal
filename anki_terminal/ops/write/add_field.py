@@ -1,6 +1,8 @@
-from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
 from anki_terminal.anki_types import Field
 from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.ops.op_base import (Operation, OperationArgument,
+                                       OperationResult)
+
 
 class AddFieldOperation(Operation):
     """Operation to add a new field to an existing model."""

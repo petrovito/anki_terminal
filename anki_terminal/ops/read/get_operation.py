@@ -1,7 +1,8 @@
 from typing import Dict, Optional
 
-from anki_terminal.ops.base import OperationResult
+from anki_terminal.ops.op_base import OperationResult
 from anki_terminal.ops.read.path_operation import PathOperation
+
 
 class GetOperation(PathOperation):
     """Operation to get specific Anki objects or their properties."""

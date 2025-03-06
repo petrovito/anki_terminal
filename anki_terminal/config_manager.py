@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from anki_terminal.template_manager import TemplateManager
 
 logger = logging.getLogger('anki_inspector')

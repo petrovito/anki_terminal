@@ -1,9 +1,10 @@
 from typing import Dict, Type
 
-from anki_terminal.populators.base import FieldPopulator
-from anki_terminal.populators.copy_field import CopyFieldPopulator
 from anki_terminal.populators.concat_fields import ConcatFieldsPopulator
+from anki_terminal.populators.copy_field import CopyFieldPopulator
 from anki_terminal.populators.jap_llm import JapLlmPopulator
+from anki_terminal.populators.populator_base import FieldPopulator
+
 
 class PopulatorRegistry:
     """Registry of all available field populators."""

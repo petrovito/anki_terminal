@@ -1,10 +1,12 @@
-import pytest
-from typing import Type
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Type
 
-from anki_terminal.ops.base import Operation
-from anki_terminal.anki_types import Collection, Model, Field, Note, Deck
+import pytest
+
+from anki_terminal.anki_types import Collection, Deck, Field, Model, Note
+from anki_terminal.ops.op_base import Operation
+
 
 class OperationTestBase(ABC):
     """Base class for operation unit tests."""

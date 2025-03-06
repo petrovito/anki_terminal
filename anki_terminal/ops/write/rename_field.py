@@ -1,5 +1,7 @@
-from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
 from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.ops.op_base import (Operation, OperationArgument,
+                                       OperationResult)
+
 
 class RenameFieldOperation(Operation):
     """Operation to rename a field in a model."""

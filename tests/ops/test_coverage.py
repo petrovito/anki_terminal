@@ -1,11 +1,13 @@
-import pytest
-from pathlib import Path
 import importlib
 import inspect
-from typing import Type, Dict, Set
+from pathlib import Path
+from typing import Dict, Set, Type
 
-from anki_terminal.ops.base import Operation
+import pytest
+
+from anki_terminal.ops.op_base import Operation
 from tests.ops.test_base import OperationTestBase
+
 
 def get_all_operations() -> Dict[str, Type[Operation]]:
     """Find all operation classes in the ops directory."""

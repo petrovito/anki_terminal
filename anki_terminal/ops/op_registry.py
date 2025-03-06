@@ -1,14 +1,15 @@
 from typing import Dict, Type
 
-from anki_terminal.ops.base import Operation
-from anki_terminal.ops.read.list_operation import ListOperation
+from anki_terminal.ops.op_base import Operation
 from anki_terminal.ops.read.count_operation import CountOperation
 from anki_terminal.ops.read.get_operation import GetOperation
-from anki_terminal.ops.write.rename_field import RenameFieldOperation
-from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
-from anki_terminal.ops.write.migrate_notes import MigrateNotesOperation
-from anki_terminal.ops.write.add_model import AddModelOperation
+from anki_terminal.ops.read.list_operation import ListOperation
 from anki_terminal.ops.write.add_field import AddFieldOperation
+from anki_terminal.ops.write.add_model import AddModelOperation
+from anki_terminal.ops.write.migrate_notes import MigrateNotesOperation
+from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
+from anki_terminal.ops.write.rename_field import RenameFieldOperation
+
 
 class OperationRegistry:
     """Registry of all available operations."""

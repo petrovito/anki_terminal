@@ -1,11 +1,12 @@
 import argparse
 from pathlib import Path
-from typing import Tuple, Optional, Type
-from anki_terminal.ops.op_registry import OperationRegistry
-from anki_terminal.ops.base import Operation
-from anki_terminal.ops.printer import JsonPrinter, HumanReadablePrinter, OperationPrinter
-from anki_terminal.populators.populator_registry import PopulatorRegistry
+from typing import Optional, Tuple, Type
 
+from anki_terminal.ops.op_base import Operation
+from anki_terminal.ops.op_registry import OperationRegistry
+from anki_terminal.ops.printer import (HumanReadablePrinter, JsonPrinter,
+                                       OperationPrinter)
+from anki_terminal.populators.populator_registry import PopulatorRegistry
 
 
 def create_operation_subparser(subparsers: argparse._SubParsersAction, op_name: str, op_class: Type[Operation]) -> None:

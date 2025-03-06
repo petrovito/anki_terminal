@@ -1,8 +1,10 @@
 from typing import Type
-from anki_terminal.ops.base import Operation
-from anki_terminal.ops.read.count_operation import CountOperation
+
 from anki_terminal.ops.anki_path import AnkiPath
+from anki_terminal.ops.op_base import Operation
+from anki_terminal.ops.read.count_operation import CountOperation
 from tests.ops.test_base import OperationTestBase
+
 
 class TestCountOperation(OperationTestBase):
     """Tests for the CountOperation."""

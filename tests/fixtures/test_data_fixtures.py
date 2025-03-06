@@ -5,11 +5,13 @@ This module provides fixtures for integration testing with real Anki data.
 """
 
 import json
-import pytest
 from pathlib import Path
 
-from anki_terminal.collection_factories import CollectionV2Factory, CollectionV21Factory
+import pytest
+
 from anki_terminal.anki_types import Collection
+from anki_terminal.collection_factories import (CollectionV2Factory,
+                                                CollectionV21Factory)
 
 # Base path to test data directory
 TEST_DATA_DIR = Path("test_data")

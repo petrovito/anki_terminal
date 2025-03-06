@@ -1,5 +1,6 @@
-from typing import List, Optional, Tuple, Union
 import re
+from typing import List, Optional, Tuple, Union
+
 
 class AnkiPath:
     """Represents a path to an Anki object.

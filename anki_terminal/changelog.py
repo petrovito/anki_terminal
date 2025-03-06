@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-import logging
 import json
+import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
 from enum import Enum, auto
+from typing import Any, Dict, List, Optional
+
 from anki_terminal.anki_types import Model, Note
 
 logger = logging.getLogger('anki_inspector')

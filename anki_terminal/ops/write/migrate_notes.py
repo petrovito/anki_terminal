@@ -1,8 +1,11 @@
-from anki_terminal.ops.base import Operation, OperationResult, OperationArgument
-from anki_terminal.anki_types import Note
-from anki_terminal.changelog import Change, ChangeType
 from datetime import datetime
 from typing import Dict, List
+
+from anki_terminal.anki_types import Note
+from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.ops.op_base import (Operation, OperationArgument,
+                                       OperationResult)
+
 
 class MigrateNotesOperation(Operation):
     """Operation to migrate notes from one model to another."""
