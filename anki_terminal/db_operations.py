@@ -45,6 +45,8 @@ class DBOperationGenerator:
             return self._generate_note_update(change)
         elif change.type == ChangeType.NOTE_MIGRATED:
             return self._generate_note_migration(change)
+        elif change.type == ChangeType.NOTE_TAGS_UPDATED:
+            return self._generate_note_tags_update(change)
         else:
             raise ValueError(f"Unsupported change type: {change.type}")
 
@@ -80,5 +82,18 @@ class DBOperationGenerator:
                 'mid': change.data['target_model_id'],
                 'flds': fields_str
             },
+            metadata={'field_separator': self.FIELD_SEPARATOR}
+        )]
+
+    def _generate_note_tags_update(self, change: Change) -> List[DBOperation]:
+        """Generate operations for note tags update."""
+        note_id = change.data['note_id']
+        tags = change.data['tags']
+        tags_str = ' '.join(tags)
+        return [DBOperation(
+            type=DBOperationType.UPDATE_NOTE,
+            table='notes',
+            where={'id': note_id},
+            values={'tags': tags_str},
             metadata={'field_separator': self.FIELD_SEPARATOR}
         )] 

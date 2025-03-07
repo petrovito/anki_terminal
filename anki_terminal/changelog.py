@@ -15,6 +15,7 @@ class ChangeType(Enum):
     MODEL_UPDATED = auto()  # Model structure changed (fields, templates, etc)
     NOTE_FIELDS_UPDATED = auto()  # Note field values changed
     NOTE_MIGRATED = auto()  # Note moved to different model
+    NOTE_TAGS_UPDATED = auto()  # Note tags changed
 
 @dataclass
 class Change:
