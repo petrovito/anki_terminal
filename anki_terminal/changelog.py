@@ -16,6 +16,8 @@ class ChangeType(Enum):
     NOTE_FIELDS_UPDATED = auto()  # Note field values changed
     NOTE_MIGRATED = auto()  # Note moved to different model
     NOTE_TAGS_UPDATED = auto()  # Note tags changed
+    CARD_MOVED = auto()  # Card moved to different deck
+    DECK_CREATED = auto()  # New deck created
 
 @dataclass
 class Change:

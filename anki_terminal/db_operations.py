@@ -11,6 +11,7 @@ class DBOperationType(Enum):
     UPDATE_MODEL = auto()
     UPDATE_NOTE = auto()
     UPDATE_NOTE_MODEL = auto()
+    UPDATE_DECKS = auto()
 
 @dataclass
 class DBOperation:
@@ -47,6 +48,10 @@ class DBOperationGenerator:
             return self._generate_note_migration(change)
         elif change.type == ChangeType.NOTE_TAGS_UPDATED:
             return self._generate_note_tags_update(change)
+        elif change.type == ChangeType.CARD_MOVED:
+            return self._generate_card_move(change)
+        elif change.type == ChangeType.DECK_CREATED:
+            return self._generate_deck_created(change)
         else:
             raise ValueError(f"Unsupported change type: {change.type}")
 
@@ -95,5 +100,27 @@ class DBOperationGenerator:
             table='notes',
             where={'id': note_id},
             values={'tags': tags_str},
+            metadata={'field_separator': self.FIELD_SEPARATOR}
+        )]
+    
+    def _generate_card_move(self, change: Change) -> List[DBOperation]:
+        """Generate operations for card move."""
+        card_id = change.data['card_id']
+        target_deck_id = change.data['target_deck_id']
+        return [DBOperation(
+            type=DBOperationType.UPDATE_NOTE,
+            table='cards',
+            where={'id': card_id},
+            values={'did': target_deck_id},
+            metadata={'field_separator': self.FIELD_SEPARATOR}
+        )]
+    
+    def _generate_deck_created(self, change: Change) -> List[DBOperation]:
+        """Generate operations for deck creation."""
+        return [DBOperation(
+            type=DBOperationType.UPDATE_DECKS,
+            table='col',
+            where={'id': 1},  # col table always has id=1
+            values={'decks': json.dumps(change.data['decks'])},
             metadata={'field_separator': self.FIELD_SEPARATOR}
         )] 
