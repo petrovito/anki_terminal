@@ -1,0 +1,8 @@
+{
+    "model": "Basic",
+    "batch_size": 10,
+    "populator": "copy-field",
+    "source_field": "Front",
+    "target_field": "Back",
+    "description": "Example configuration for populate-fields operation using copy-field populator"
+} 

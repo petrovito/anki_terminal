@@ -1,0 +1,10 @@
+{
+    "model_name": "Basic with Template",
+    "fields": ["Front", "Back", "Notes"],
+    "template_name": "Basic Card",
+    "question_format": "file://builtin/templates/basic_card_front.html",
+    "answer_format": "file://builtin/templates/basic_card_back.html",
+    "css": "file://builtin/templates/basic_card.css",
+    "deck_name": "Default",
+    "description": "Example configuration for add-model operation using file:// prefixes for templates"
+} 

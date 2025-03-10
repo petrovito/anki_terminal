@@ -19,8 +19,8 @@ def main():
         operation, apkg_file, output_path = parse_args()
         
         # Check if APKG file is provided for operations that need it
-        if not hasattr(operation, 'args') or 'apkg_file' not in operation.args:
-            logger.error("Error: --apkg argument is required for this operation")
+        if not operation.readonly and (not apkg_file):
+            logger.error("Error: --output argument is required for write operations")
             sys.exit(1)
         
         # Open the Anki context and run the operation

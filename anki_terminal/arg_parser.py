@@ -2,6 +2,7 @@ import argparse
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
+from anki_terminal.operation_factory import OperationFactory
 from anki_terminal.ops.op_base import Operation
 from anki_terminal.ops.op_registry import OperationRegistry
 from anki_terminal.ops.printer import (HumanReadablePrinter, JsonPrinter,
@@ -22,8 +23,16 @@ def create_operation_subparser(subparsers: argparse._SubParsersAction, op_name: 
         help=op_class.description
     )
     
+    # Add config file option
+    subparser.add_argument(
+        "--config-file",
+        help="Path to a configuration file (JSON)",
+        dest="config_file"
+    )
+    
     # Let the operation set up its own subparser
     op_class.setup_subparser(subparser)
+
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser with all operations.
@@ -60,6 +69,13 @@ def create_parser() -> argparse.ArgumentParser:
         "--pretty",
         action="store_true",
         help="Pretty print JSON output"
+    )
+    
+    # Add config file option
+    parser.add_argument(
+        "--config-file",
+        help="Path to a configuration file (JSON)",
+        dest="config_file"
     )
     
     # Create subparsers for operations
@@ -99,15 +115,8 @@ def parse_args() -> Tuple[Operation, Optional[Path], Optional[Path]]:
     parser = create_parser()
     args = parser.parse_args()
     
-    # Create printer
-    if args.format == "json":
-        printer = JsonPrinter(pretty=args.pretty)
-    else:
-        printer = HumanReadablePrinter()
-    
-    # Get operation class and create instance
-    registry = OperationRegistry()
-    op_class = registry.get(args.operation)
-    operation = op_class(printer=printer, **vars(args))
+    # Create operation using factory
+    factory = OperationFactory()
+    operation = factory.create_operation_from_args(vars(args))
     
     return operation, args.apkg_file, args.output_file 
