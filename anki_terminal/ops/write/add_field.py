@@ -63,28 +63,15 @@ class AddFieldOperation(Operation):
                 note.fields[field_name] = ""
         
         # Create change record
-        change = Change(
-            type=ChangeType.MODEL_UPDATED,
-            data={
-                'models': {
-                    str(model_id): model.to_dict()
-                    for model_id, model in self.collection.models.items()
-                }
-            }
-        )
+        change = Change.model_updated({
+            model_id: model for model_id, model in self.collection.models.items()
+        })
         
         # Create individual note changes for each affected note
         note_changes = []
         for note in self.collection.notes.values():
             if note.model_id == model.id:
-                note_changes.append(Change(
-                    type=ChangeType.NOTE_FIELDS_UPDATED,
-                    data={
-                        'note_id': note.id,
-                        'model_id': model.id,
-                        'fields': note.fields
-                    }
-                ))
+                note_changes.append(Change.note_fields_updated(note, model.id))
         
         return OperationResult(
             success=True,

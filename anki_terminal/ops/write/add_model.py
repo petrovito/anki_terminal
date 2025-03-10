@@ -118,15 +118,9 @@ class AddModelOperation(Operation):
         self.collection.models[model_id] = model
         
         # Create change record
-        change = Change(
-            type=ChangeType.MODEL_UPDATED,
-            data={
-                'models': {
-                    str(model_id): model.to_dict()
-                    for model_id, model in self.collection.models.items()
-                }
-            }
-        )
+        change = Change.model_updated({
+            model_id: model for model_id, model in self.collection.models.items()
+        })
         
         return OperationResult(
             success=True,

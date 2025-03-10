@@ -20,13 +20,12 @@ class DBOperation:
     table: str
     where: Dict[str, Any]  # Conditions
     values: Dict[str, Any]  # New values
-    metadata: Optional[Dict[str, Any]] = None  # Version-specific metadata
 
 class DBOperationGenerator:
-    """Base class for generating database operations from changes."""
+    """Class for generating database operations from changes."""
     
-    # The field separator is the same for both Anki v2 and v21
-    FIELD_SEPARATOR = '\x1f'
+    # Anki uses the unit separator character (ASCII 31) to separate fields
+    FIELD_SEPARATOR = '\u001f'
     
     def generate_operations(self, change: Change) -> List[DBOperation]:
         """Generate database operations from a change.
@@ -61,8 +60,7 @@ class DBOperationGenerator:
             type=DBOperationType.UPDATE_MODEL,
             table='col',
             where={'id': 1},  # col table always has id=1
-            values={'models': json.dumps(change.data['models'])},
-            metadata={'field_separator': self.FIELD_SEPARATOR}
+            values={'models': json.dumps(change.data['models'])}
         )]
 
     def _generate_note_update(self, change: Change) -> List[DBOperation]:
@@ -72,8 +70,7 @@ class DBOperationGenerator:
             type=DBOperationType.UPDATE_NOTE,
             table='notes',
             where={'id': change.data['note_id']},
-            values={'flds': fields_str},
-            metadata={'field_separator': self.FIELD_SEPARATOR}
+            values={'flds': fields_str}
         )]
 
     def _generate_note_migration(self, change: Change) -> List[DBOperation]:
@@ -86,8 +83,7 @@ class DBOperationGenerator:
             values={
                 'mid': change.data['target_model_id'],
                 'flds': fields_str
-            },
-            metadata={'field_separator': self.FIELD_SEPARATOR}
+            }
         )]
 
     def _generate_note_tags_update(self, change: Change) -> List[DBOperation]:
@@ -99,8 +95,7 @@ class DBOperationGenerator:
             type=DBOperationType.UPDATE_NOTE,
             table='notes',
             where={'id': note_id},
-            values={'tags': tags_str},
-            metadata={'field_separator': self.FIELD_SEPARATOR}
+            values={'tags': tags_str}
         )]
     
     def _generate_card_move(self, change: Change) -> List[DBOperation]:
@@ -111,8 +106,7 @@ class DBOperationGenerator:
             type=DBOperationType.UPDATE_NOTE,
             table='cards',
             where={'id': card_id},
-            values={'did': target_deck_id},
-            metadata={'field_separator': self.FIELD_SEPARATOR}
+            values={'did': target_deck_id}
         )]
     
     def _generate_deck_created(self, change: Change) -> List[DBOperation]:
@@ -121,6 +115,5 @@ class DBOperationGenerator:
             type=DBOperationType.UPDATE_DECKS,
             table='col',
             where={'id': 1},  # col table always has id=1
-            values={'decks': json.dumps(change.data['decks'])},
-            metadata={'field_separator': self.FIELD_SEPARATOR}
+            values={'decks': json.dumps(change.data['decks'])}
         )] 

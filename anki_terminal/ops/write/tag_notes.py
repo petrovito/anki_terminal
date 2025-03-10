@@ -114,14 +114,7 @@ class TagNotesOperation(Operation):
                 # Add tag if not already present
                 if tag not in note.tags:
                     note.tags.append(tag)
-                    changes.append(Change(
-                        type=ChangeType.NOTE_TAGS_UPDATED,
-                        data={
-                            'note_id': note.id,
-                            'model_id': model.id,
-                            'tags': note.tags
-                        }
-                    ))
+                    changes.append(Change.note_tags_updated(note, model.id))
                     updated_count += 1
                 else:
                     skipped_count += 1

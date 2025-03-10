@@ -267,13 +267,8 @@ class DivideIntoDecksByTagsOperation(Operation):
                 card.deck_id = target_deck.id
                 
                 # Record the change
-                self.changes.append(Change(
-                    type=ChangeType.CARD_MOVED,
-                    data={
-                        'card_id': card.id,
-                        'source_deck_id': source_deck.id,
-                        'target_deck_id': target_deck.id
-                    }
+                self.changes.append(Change.card_moved(
+                    card.id, source_deck.id, target_deck.id
                 ))
                 
                 moved_count += 1

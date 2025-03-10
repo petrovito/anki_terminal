@@ -110,14 +110,8 @@ class MigrateNotesOperation(Operation):
         # Create change records - one for each migrated note
         changes = []
         for note in notes_to_migrate:
-            changes.append(Change(
-                type=ChangeType.NOTE_MIGRATED,  # Use NOTE_MIGRATED instead of NOTE_FIELDS_UPDATED
-                data={
-                    'note_id': note.id,
-                    'source_model_id': source_model.id,
-                    'target_model_id': target_model.id,
-                    'fields': note.fields
-                }
+            changes.append(Change.note_migrated(
+                note, source_model.id, target_model.id
             ))
         
         return OperationResult(

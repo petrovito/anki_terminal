@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.anki_types import Collection, Field, Model, Note
-from anki_terminal.changelog import ChangeLog
+from anki_terminal.anki_types import Collection, Field, Model, Note, Template
+from anki_terminal.changelog import Change, ChangeLog
 from anki_terminal.database_manager import DatabaseManager
 
 
@@ -110,7 +110,8 @@ class TestDatabaseManagerOperationsV2:
         with DatabaseManager(temp_db_v2, anki_version=2) as db:
             # Create changelog with model update
             changelog = ChangeLog()
-            changelog.add_model_change({1: sample_model})
+            change = Change.model_updated({1: sample_model})
+            changelog.add_change(change)
             
             # Apply changes
             db.apply_changes(changelog)
@@ -148,7 +149,8 @@ class TestDatabaseManagerOperationsV2:
                 checksum=0,
                 flags=0
             )
-            changelog.add_note_fields_change(note, sample_model)
+            change = Change.note_fields_updated(note, sample_model.id)
+            changelog.add_change(change)
             
             # Apply changes
             db.apply_changes(changelog)
@@ -200,7 +202,8 @@ class TestDatabaseManagerOperationsV2:
                 checksum=0,
                 flags=0
             )
-            changelog.add_note_migration_change(sample_model, target_model, note)
+            change = Change.note_migrated(note, sample_model.id, target_model.id)
+            changelog.add_change(change)
             
             # Apply changes
             db.apply_changes(changelog)
