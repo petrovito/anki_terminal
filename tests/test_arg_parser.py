@@ -7,6 +7,7 @@ import pytest
 from anki_terminal.arg_parser import (create_operation_subparser, create_parser,
                                       get_printer, parse_args)
 from anki_terminal.ops.op_base import Operation, OperationArgument
+from anki_terminal.ops.operation_factory import OperationFactory
 
 
 class MockOperation(Operation):

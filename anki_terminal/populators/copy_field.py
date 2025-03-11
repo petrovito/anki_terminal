@@ -26,7 +26,7 @@ class CopyFieldPopulator(FieldPopulator):
     @property
     def supports_batching(self) -> bool:
         """Whether this populator supports batch operations."""
-        return self.config.get("supports_batch", False)
+        return True
     
     @property
     def target_fields(self) -> List[str]:

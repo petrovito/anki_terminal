@@ -6,9 +6,11 @@ from anki_terminal.ops.read.get_operation import GetOperation
 from anki_terminal.ops.read.list_operation import ListOperation
 from anki_terminal.ops.write.add_field import AddFieldOperation
 from anki_terminal.ops.write.add_model import AddModelOperation
+from anki_terminal.ops.write.divide_decks import DivideIntoDecksByTagsOperation
 from anki_terminal.ops.write.migrate_notes import MigrateNotesOperation
 from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
 from anki_terminal.ops.write.rename_field import RenameFieldOperation
+from anki_terminal.ops.write.tag_notes import TagNotesOperation
 
 
 class OperationRegistry:
@@ -31,6 +33,8 @@ class OperationRegistry:
         self.register(MigrateNotesOperation)
         self.register(AddModelOperation)
         self.register(AddFieldOperation)
+        self.register(TagNotesOperation)
+        self.register(DivideIntoDecksByTagsOperation)
     
     def register(self, operation_class: Type[Operation]):
         """Register a new operation.

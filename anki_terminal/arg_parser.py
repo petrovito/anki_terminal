@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
-from anki_terminal.operation_factory import OperationFactory
+from anki_terminal.ops.operation_factory import OperationFactory
 from anki_terminal.ops.op_base import Operation
 from anki_terminal.ops.op_registry import OperationRegistry
 from anki_terminal.ops.printer import (HumanReadablePrinter, JsonPrinter,

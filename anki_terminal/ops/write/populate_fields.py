@@ -1,14 +1,15 @@
-import importlib
-import json
+import logging
 from typing import Any, Dict, List, Type
 
 from anki_terminal.anki_types import Note
-from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.changelog import Change
 from anki_terminal.ops.op_base import (Operation, OperationArgument,
                                        OperationResult)
 from anki_terminal.populators.populator_base import FieldPopulator
+from anki_terminal.populators.populator_factory import PopulatorFactory
 from anki_terminal.populators.populator_registry import PopulatorRegistry
 
+logger = logging.getLogger('anki_inspector')
 
 class PopulateFieldsOperation(Operation):
     """Operation to populate fields in notes using a field populator."""
@@ -16,6 +17,9 @@ class PopulateFieldsOperation(Operation):
     name = "populate-fields"
     description = "Populate fields in notes using a field populator"
     readonly = False
+    
+    # Class-level factory instance
+    factory = PopulatorFactory()
     
     @classmethod
     def setup_subparser(cls, subparser):
@@ -31,6 +35,11 @@ class PopulateFieldsOperation(Operation):
             type=int,
             default=1,
             help="Size of batches to process notes in. Default is 1 (no batching)."
+        )
+        subparser.add_argument(
+            "--populator-config-file",
+            help="Path to a configuration file for the populator",
+            dest="populator_config_file"
         )
         
         # Create sub-subparsers for each populator
@@ -55,52 +64,15 @@ class PopulateFieldsOperation(Operation):
                     default=arg.default,
                     help=arg.description + (" (required)" if arg.required else f" (default: {arg.default})")
                 )
-
     
-    def _load_populator_config(self) -> Dict[str, Any]:
-        """Load the populator configuration from a file or JSON string.
+    def __init__(self, **kwargs):
+        """Initialize the operation.
         
-        Returns:
-            Dictionary containing the populator configuration
-            
-        Raises:
-            ValueError: If the configuration cannot be loaded
+        Args:
+            **kwargs: Operation arguments
         """
-        config_path_or_json = self.args["populator_config"]
-        
-        # Try to parse as JSON string first
-        try:
-            return json.loads(config_path_or_json)
-        except json.JSONDecodeError:
-            # Not a valid JSON string, try as file path
-            try:
-                with open(config_path_or_json) as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, FileNotFoundError) as e:
-                raise ValueError(f"Invalid populator configuration: {str(e)}")
-    
-    def _get_populator(self) -> FieldPopulator:
-        """Get an instance of the populator class.
-        
-        Returns:
-            Initialized populator instance
-            
-        Raises:
-            ValueError: If the populator class cannot be loaded
-        """
-        try:
-            module_path, class_name = self.args["populator_class"].rsplit('.', 1)
-            module = importlib.import_module(module_path)
-            populator_cls = getattr(module, class_name)
-            
-            if not issubclass(populator_cls, FieldPopulator):
-                raise ValueError(f"Class {self.args['populator_class']} is not a subclass of FieldPopulator")
-            
-            config = self._load_populator_config()
-            return populator_cls(config)
-            
-        except (ImportError, AttributeError) as e:
-            raise ValueError(f"Could not load populator class {self.args['populator_class']}: {str(e)}")
+        super().__init__(**kwargs)
+        self._populator = None
     
     def _validate_impl(self) -> None:
         """Validate that the operation can be executed.
@@ -111,9 +83,11 @@ class PopulateFieldsOperation(Operation):
         # Check if model exists
         model = self._get_model(self.args["model_name"])
         
-        # Get populator and validate it
-        populator = self._get_populator()
-        populator.validate(model)
+        # Create the populator and store it for later use
+        self._populator = self.factory.create_populator_from_args(self.args)
+        
+        # Validate the populator
+        self._populator.validate(model)
 
         # Get all notes for this model
         model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]
@@ -123,8 +97,8 @@ class PopulateFieldsOperation(Operation):
         # Check if batching is requested and supported
         batch_size = self.args["batch_size"]
         if batch_size is not None and batch_size > 1:
-            if not populator.supports_batching:
-                raise ValueError(f"Populator {self.args['populator_class']} does not support batch operations")
+            if not self._populator.supports_batching:
+                raise ValueError(f"Populator {self._populator.__class__.__name__} does not support batch operations")
     
     def _execute_impl(self) -> OperationResult:
         """Execute the operation.
@@ -133,7 +107,10 @@ class PopulateFieldsOperation(Operation):
             OperationResult indicating success/failure and containing changes
         """
         model = self._get_model(self.args["model_name"])
-        populator = self._get_populator()
+        
+        # Use the populator created during validation
+        if not self._populator:
+            raise ValueError("Populator not initialized. Call validate() first.")
         
         # Get all notes for this model
         model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]
@@ -145,46 +122,46 @@ class PopulateFieldsOperation(Operation):
         
         # Check if batching is requested and supported
         batch_size = self.args["batch_size"]
-        if batch_size is not None and batch_size > 1 and populator.supports_batching:
+        if batch_size is not None and batch_size > 1 and self._populator.supports_batching:
             # Process notes in batches
             for i in range(0, len(model_notes), batch_size):
-                batch = model_notes[i:i + batch_size]
+                batch = model_notes[i:i+batch_size]
                 try:
-                    updates = populator.populate_batch(batch)
+                    # Populate fields for this batch
+                    batch_results = self._populator.populate_batch(batch)
                     
-                    # Apply updates and add to changelog
-                    for note_id, field_updates in updates.items():
+                    # Update notes and record changes
+                    for note_id, field_updates in batch_results.items():
                         note = next(n for n in batch if n.id == note_id)
-                        note.fields.update(field_updates)
-                        changes.append(Change(
-                            type=ChangeType.NOTE_FIELDS_UPDATED,
-                            data={
-                                'note_id': note.id,
-                                'model_id': model.id,
-                                'fields': note.fields
-                            }
-                        ))
-                    
-                    updated_count += len(updates)
-                    skipped_count += len(batch) - len(updates)
-                except ValueError as e:
+                        
+                        # Update note fields
+                        for field_name, field_value in field_updates.items():
+                            note.fields[field_name] = field_value
+                        
+                        # Record change
+                        changes.append(Change.note_fields_updated(note, model.id))
+                        updated_count += 1
+                        
+                except Exception as e:
+                    logger.error(f"Error processing batch: {str(e)}")
                     skipped_count += len(batch)
         else:
-            # Process notes one at a time
+            # Process notes individually
             for note in model_notes:
                 try:
-                    updates = populator.populate_fields(note)
-                    note.fields.update(updates)
-                    changes.append(Change(
-                        type=ChangeType.NOTE_FIELDS_UPDATED,
-                        data={
-                            'note_id': note.id,
-                            'model_id': model.id,
-                            'fields': note.fields
-                        }
-                    ))
+                    # Populate fields for this note
+                    field_updates = self._populator.populate_fields(note)
+                    
+                    # Update note fields
+                    for field_name, field_value in field_updates.items():
+                        note.fields[field_name] = field_value
+                    
+                    # Record change
+                    changes.append(Change.note_fields_updated(note, model.id))
                     updated_count += 1
-                except ValueError as e:
+                    
+                except Exception as e:
+                    logger.error(f"Error processing note {note.id}: {str(e)}")
                     skipped_count += 1
         
         return OperationResult(

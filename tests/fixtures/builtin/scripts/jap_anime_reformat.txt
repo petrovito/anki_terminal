@@ -1,8 +1,0 @@
-# Japanese Anime Card Reformatting Script
-# This script creates a Japanese Anime Card model and adds necessary fields
-
-# Create the model
-add-model --model ${model_name:Japanese Anime Card} --field Japanese --field English --field Context --field Audio --field Image
-
-# Set up the card templates
-set-template --model ${model_name:Japanese Anime Card} --template ${template_name:Japanese Card} --question-format jap_anime_question --answer-format jap_anime_answer --css jap_anime_style 
