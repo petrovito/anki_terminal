@@ -2,6 +2,7 @@ from typing import Dict, Type
 
 from anki_terminal.populators.concat_fields import ConcatFieldsPopulator
 from anki_terminal.populators.copy_field import CopyFieldPopulator
+from anki_terminal.populators.furigana_populator import FuriganaPopulator
 from anki_terminal.populators.jap_llm import JapLlmPopulator
 from anki_terminal.populators.populator_base import FieldPopulator
 
@@ -18,6 +19,7 @@ class PopulatorRegistry:
         self.register(CopyFieldPopulator)
         self.register(ConcatFieldsPopulator)
         self.register(JapLlmPopulator)
+        self.register(FuriganaPopulator)
     
     def register(self, populator_class: Type[FieldPopulator]):
         """Register a new field populator.

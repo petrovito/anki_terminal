@@ -1,0 +1,8 @@
+{
+    "model": "Japanese",
+    "batch_size": 10,
+    "populator": "furigana",
+    "source_field": "Japanese",
+    "target_field": "Reading",
+    "description": "Example configuration for furigana populator that adds furigana readings to Japanese text"
+} 
