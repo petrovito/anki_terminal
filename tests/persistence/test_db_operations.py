@@ -2,9 +2,9 @@ from datetime import datetime
 
 import pytest
 
-from anki_terminal.anki_types import Field, Model
-from anki_terminal.changelog import Change, ChangeType
-from anki_terminal.db_operations import (DBOperation, DBOperationGenerator,
+from anki_terminal.commons.anki_types import Field, Model
+from anki_terminal.commons.changelog import Change, ChangeType
+from anki_terminal.persistence.db_operations import (DBOperation, DBOperationGenerator,
                                          DBOperationType)
 
 

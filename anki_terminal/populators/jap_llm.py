@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 from openai import OpenAI
 
-from anki_terminal.anki_types import Model, Note
+from anki_terminal.commons.anki_types import Model, Note
 
 from .populator_base import FieldPopulator, PopulatorConfigArgument
 

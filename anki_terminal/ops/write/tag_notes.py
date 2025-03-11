@@ -1,8 +1,8 @@
 import re
 from typing import Any, Dict, List, Optional
 
-from anki_terminal.anki_types import Note
-from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.commons.anki_types import Note
+from anki_terminal.commons.changelog import Change, ChangeType
 from anki_terminal.ops.op_base import Operation, OperationArgument, OperationResult
 
 

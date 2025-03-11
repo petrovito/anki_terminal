@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from pykakasi import kakasi
 
-from anki_terminal.anki_types import Model, Note
+from anki_terminal.commons.anki_types import Model, Note
 
 from .populator_base import FieldPopulator, PopulatorConfigArgument
 

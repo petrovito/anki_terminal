@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 import pytest
 
-from anki_terminal.anki_types import (Collection, Deck, Field, Model, Note,
+from anki_terminal.commons.anki_types import (Collection, Deck, Field, Model, Note,
                                       Template)
 from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
 from anki_terminal.populators.copy_field import CopyFieldPopulator

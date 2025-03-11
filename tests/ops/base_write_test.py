@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Type, Union
 import pytest
 
 from anki_terminal.anki_context import AnkiContext
-from anki_terminal.anki_types import Collection
+from anki_terminal.commons.anki_types import Collection
 from anki_terminal.ops.op_base import Operation, OperationResult
 
 

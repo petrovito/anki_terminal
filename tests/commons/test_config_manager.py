@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.config_manager import ConfigManager
+from anki_terminal.commons.config_manager import ConfigManager
 
 
 @pytest.fixture

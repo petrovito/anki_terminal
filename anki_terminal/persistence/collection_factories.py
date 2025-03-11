@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Set
 
-from anki_terminal.anki_types import (Card, Collection, Deck, DeckConfig,
+from anki_terminal.commons.anki_types import (Card, Collection, Deck, DeckConfig,
                                       Field, Model, Note, Template)
 
 logger = logging.getLogger('anki_inspector')

@@ -4,9 +4,9 @@ from typing import Any, Dict
 
 import pytest
 
-from anki_terminal.anki_types import (Card, Collection, Deck, DeckConfig,
+from anki_terminal.commons.anki_types import (Card, Collection, Deck, DeckConfig,
                                       Model, Note)
-from anki_terminal.collection_factories import CollectionV2Factory
+from anki_terminal.persistence.collection_factories import CollectionV2Factory
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from anki_terminal.template_manager import TemplateManager
+from anki_terminal.commons.template_manager import TemplateManager
 
 logger = logging.getLogger('anki_inspector')
 

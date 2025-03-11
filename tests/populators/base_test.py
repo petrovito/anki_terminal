@@ -4,7 +4,7 @@ from typing import Dict, List, Type
 
 import pytest
 
-from anki_terminal.anki_types import Field, Model, Note, Template
+from anki_terminal.commons.anki_types import Field, Model, Note, Template
 from anki_terminal.populators.populator_base import FieldPopulator
 
 

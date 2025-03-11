@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar, Dict, List, Optional, TypedDict
 
-from anki_terminal.anki_types import Model, Note
+from anki_terminal.commons.anki_types import Model, Note
 
 
 class PopulatorConfigArgument:

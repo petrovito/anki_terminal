@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from anki_terminal.anki_types import Field, Model, Note
+from anki_terminal.commons.anki_types import Field, Model, Note
 from anki_terminal.populators.furigana_populator import FuriganaPopulator
 
 

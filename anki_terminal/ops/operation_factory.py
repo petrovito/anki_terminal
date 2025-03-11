@@ -5,12 +5,12 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Type
 
-from anki_terminal.config_manager import ConfigManager
+from anki_terminal.commons.config_manager import ConfigManager
 from anki_terminal.ops.op_base import Operation
 from anki_terminal.ops.op_registry import OperationRegistry
 from anki_terminal.ops.printer import (HumanReadablePrinter, JsonPrinter,
                                        OperationPrinter)
-from anki_terminal.template_manager import TemplateManager
+from anki_terminal.commons.template_manager import TemplateManager
 
 logger = logging.getLogger('anki_inspector')
 

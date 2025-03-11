@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import pytest
 
-from anki_terminal.anki_types import Collection, Field, Model, Note
+from anki_terminal.commons.anki_types import Collection, Field, Model, Note
 from anki_terminal.ops.write.rename_field import RenameFieldOperation
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
 from tests.ops.base_write_test import BaseWriteTest

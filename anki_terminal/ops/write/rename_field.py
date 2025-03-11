@@ -1,4 +1,4 @@
-from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.commons.changelog import Change, ChangeType
 from anki_terminal.ops.op_base import (Operation, OperationArgument,
                                        OperationResult)
 

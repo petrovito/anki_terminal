@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
 
-from anki_terminal.anki_types import Model, Note
+from anki_terminal.commons.anki_types import Model, Note
 
 logger = logging.getLogger('anki_inspector')
 

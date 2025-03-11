@@ -5,15 +5,15 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.anki_types import Collection, Field, Model, Note, Template
-from anki_terminal.changelog import Change, ChangeLog
-from anki_terminal.database_manager import DatabaseManager
+from anki_terminal.commons.anki_types import Collection, Field, Model, Note, Template
+from anki_terminal.commons.changelog import Change, ChangeLog
+from anki_terminal.persistence.database_manager import DatabaseManager
 
 
 @pytest.fixture
-def temp_db_v21():
-    """Create a temporary v21 database for testing."""
-    with tempfile.NamedTemporaryFile(suffix='.anki21', delete=False) as f:
+def temp_db_v2():
+    """Create a temporary v2 database for testing."""
+    with tempfile.NamedTemporaryFile(suffix='.anki2', delete=False) as f:
         db_path = Path(f.name)
     
     # Create test database schema
@@ -102,12 +102,12 @@ def sample_model() -> Model:
         version=1
     )
 
-class TestDatabaseManagerOperationsV21:
-    """Integration tests for DatabaseManager v21 operations."""
+class TestDatabaseManagerOperationsV2:
+    """Integration tests for DatabaseManager v2 operations."""
     
-    def test_model_update_v21(self, temp_db_v21, sample_model):
-        """Test model update operation in v21 database."""
-        with DatabaseManager(temp_db_v21, anki_version=21) as db:
+    def test_model_update_v2(self, temp_db_v2, sample_model):
+        """Test model update operation in v2 database."""
+        with DatabaseManager(temp_db_v2, anki_version=2) as db:
             # Create changelog with model update
             changelog = ChangeLog()
             change = Change.model_updated({1: sample_model})
@@ -123,16 +123,16 @@ class TestDatabaseManagerOperationsV21:
             assert '"name": "Basic"' in models_json
             assert '"Front"' in models_json
             assert '"Back"' in models_json
-            assert '\t' not in models_json  # Should use JSON, not field separator
+            assert '\u001f' not in models_json  # Should use JSON, not field separator
 
-    def test_note_update_v21(self, temp_db_v21, sample_model):
-        """Test note field update operation in v21 database."""
-        with DatabaseManager(temp_db_v21, anki_version=21) as db:
+    def test_note_update_v2(self, temp_db_v2, sample_model):
+        """Test note field update operation in v2 database."""
+        with DatabaseManager(temp_db_v2, anki_version=2) as db:
             # Insert test note
             cursor = db._conn.cursor()
             cursor.execute(
                 "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data) "
-                "VALUES (1, 'test', 1, 0, -1, '', 'old front\x1fold back', 'old front', 0, 0, '')"
+                "VALUES (1, 'test', 1, 0, -1, '', 'old front\u001fold back', 'old front', 0, 0, '')"
             )
             
             # Create changelog with note update
@@ -158,16 +158,16 @@ class TestDatabaseManagerOperationsV21:
             # Verify changes in database
             cursor.execute("SELECT flds FROM notes WHERE id = 1")
             fields = cursor.fetchone()[0]
-            assert fields == "new front\x1fnew back"  # Using \x1f separator
+            assert fields == "new front\u001fnew back"  # v2 uses \u001f separator
 
-    def test_note_migration_v21(self, temp_db_v21, sample_model):
-        """Test note migration operation in v21 database."""
-        with DatabaseManager(temp_db_v21, anki_version=21) as db:
+    def test_note_migration_v2(self, temp_db_v2, sample_model):
+        """Test note migration operation in v2 database."""
+        with DatabaseManager(temp_db_v2, anki_version=2) as db:
             # Insert test note
             cursor = db._conn.cursor()
             cursor.execute(
                 "INSERT INTO notes (id, guid, mid, mod, usn, tags, flds, sfld, csum, flags, data) "
-                "VALUES (1, 'test', 1, 0, -1, '', 'old front\x1fold back', 'old front', 0, 0, '')"
+                "VALUES (1, 'test', 1, 0, -1, '', 'old front\u001fold back', 'old front', 0, 0, '')"
             )
             
             # Create target model
@@ -212,4 +212,4 @@ class TestDatabaseManagerOperationsV21:
             cursor.execute("SELECT mid, flds FROM notes WHERE id = 1")
             row = cursor.fetchone()
             assert row[0] == 2  # Should be migrated to target model
-            assert row[1] == "old front\x1fold back\x1f"  # Using \x1f separator for empty Notes field 
+            assert row[1] == "old front\u001fold back\u001f"  # v2 format with empty Notes field 

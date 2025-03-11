@@ -4,11 +4,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from anki_terminal.config_manager import ConfigManager
+from anki_terminal.commons.config_manager import ConfigManager
 from anki_terminal.ops.operation_factory import OperationFactory
 from anki_terminal.ops.op_base import Operation, OperationArgument, OperationResult
 from anki_terminal.ops.op_registry import OperationRegistry
-from anki_terminal.template_manager import TemplateManager
+from anki_terminal.commons.template_manager import TemplateManager
 
 
 class MockOperation(Operation):

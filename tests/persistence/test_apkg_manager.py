@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.apkg_manager import ApkgManager
+from anki_terminal.persistence.apkg_manager import ApkgManager
 from tests.fixtures.test_data_fixtures import apkg_v2_path, apkg_v21_path
 
 

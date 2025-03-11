@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Type
 
-from anki_terminal.config_manager import ConfigManager
+from anki_terminal.commons.config_manager import ConfigManager
 from anki_terminal.populators.populator_base import FieldPopulator
 from anki_terminal.populators.populator_registry import PopulatorRegistry
 

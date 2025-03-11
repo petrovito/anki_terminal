@@ -9,9 +9,9 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.anki_types import Collection
-from anki_terminal.collection_factories import (CollectionV2Factory,
-                                                CollectionV21Factory)
+from anki_terminal.commons.anki_types import Collection
+from anki_terminal.persistence.collection_factories import (CollectionV2Factory,
+                                                            CollectionV21Factory)
 
 # Base path to test data directory
 TEST_DATA_DIR = Path("test_data")

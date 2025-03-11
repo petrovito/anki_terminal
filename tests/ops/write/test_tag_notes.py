@@ -1,6 +1,6 @@
 import pytest
 
-from anki_terminal.anki_types import Collection, Deck, Field, Model, Note, Template
+from anki_terminal.commons.anki_types import Collection, Deck, Field, Model, Note, Template
 from anki_terminal.ops.write.tag_notes import TagNotesOperation
 from tests.fixtures.test_data_fixtures import apkg_v21_path
 from tests.ops.base_write_test import BaseWriteTest

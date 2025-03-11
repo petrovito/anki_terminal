@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.anki_types import (Card, Collection, Deck, DeckConfig,
+from anki_terminal.commons.anki_types import (Card, Collection, Deck, DeckConfig,
                                       Model, Note)
-from anki_terminal.database_manager import DatabaseManager
+from anki_terminal.persistence.database_manager import DatabaseManager
 
 
 @pytest.fixture

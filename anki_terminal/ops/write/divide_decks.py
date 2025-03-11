@@ -2,8 +2,8 @@ import re
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
-from anki_terminal.anki_types import Card, Deck, Note
-from anki_terminal.changelog import Change, ChangeType
+from anki_terminal.commons.anki_types import Card, Deck, Note
+from anki_terminal.commons.changelog import Change, ChangeType
 from anki_terminal.ops.op_base import Operation, OperationArgument, OperationResult
 
 

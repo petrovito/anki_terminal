@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from anki_terminal.template_manager import TemplateManager
+from anki_terminal.commons.template_manager import TemplateManager
 
 
 @pytest.fixture

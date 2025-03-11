@@ -4,9 +4,9 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
-from anki_terminal.apkg_manager import ApkgManager
-from anki_terminal.changelog import ChangeLog
-from anki_terminal.database_manager import DatabaseManager
+from anki_terminal.persistence.apkg_manager import ApkgManager
+from anki_terminal.commons.changelog import ChangeLog
+from anki_terminal.persistence.database_manager import DatabaseManager
 from anki_terminal.operation_executor import OperationExecutor
 from anki_terminal.ops.op_base import Operation, OperationResult
 
