@@ -81,7 +81,7 @@ class PopulateFieldsOperation(Operation):
             ValueError: If arguments are invalid
         """
         # Check if model exists
-        model = self._get_model(self.args["model_name"])
+        model = self._get_model(self.args["model"])
         
         # Create the populator and store it for later use
         self._populator = self.factory.create_populator_from_args(self.args)
@@ -92,7 +92,7 @@ class PopulateFieldsOperation(Operation):
         # Get all notes for this model
         model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]
         if not model_notes:
-            raise ValueError(f"No notes found for model: {self.args['model_name']}")
+            raise ValueError(f"No notes found for model: {self.args['model']}")
 
         # Check if batching is requested and supported
         batch_size = self.args["batch_size"]
@@ -106,7 +106,7 @@ class PopulateFieldsOperation(Operation):
         Returns:
             OperationResult indicating success/failure and containing changes
         """
-        model = self._get_model(self.args["model_name"])
+        model = self._get_model(self.args["model"])
         
         # Use the populator created during validation
         if not self._populator:

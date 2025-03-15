@@ -5,6 +5,7 @@ from anki_terminal.populators.copy_field import CopyFieldPopulator
 from anki_terminal.populators.furigana_populator import FuriganaPopulator
 from anki_terminal.populators.jap_llm import JapLlmPopulator
 from anki_terminal.populators.populator_base import FieldPopulator
+from anki_terminal.populators.remove_brackets import RemoveBracketsPopulator
 
 
 class PopulatorRegistry:
@@ -20,6 +21,7 @@ class PopulatorRegistry:
         self.register(ConcatFieldsPopulator)
         self.register(JapLlmPopulator)
         self.register(FuriganaPopulator)
+        self.register(RemoveBracketsPopulator)
     
     def register(self, populator_class: Type[FieldPopulator]):
         """Register a new field populator.

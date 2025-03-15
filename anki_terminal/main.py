@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import traceback
 import logging
 import sys
 
@@ -29,9 +30,11 @@ def main():
                     
     except ValueError as e:
         logger.error(str(e))
+        logger.debug(traceback.format_exc())
         sys.exit(1)
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
+        logger.debug(traceback.format_exc())
         sys.exit(1)
 
 if __name__ == '__main__':

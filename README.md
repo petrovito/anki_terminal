@@ -160,6 +160,16 @@ anki-terminal populate-fields <populator_name> --model ModelName --populator-con
     }
     ```
 
+- **Remove Brackets Populator**: Removes text in round brackets (parentheses) from fields, useful for cleaning up Japanese anime subtitles.
+  - **Example Config**:
+    ```json
+    {
+      "source_field": "Expression",
+      "target_field": "CleanExpression"
+    }
+    ```
+    If `target_field` is not specified, it will update the source field directly.
+
 To use a populator, specify it in the command line along with the configuration file:
 
 ```bash
