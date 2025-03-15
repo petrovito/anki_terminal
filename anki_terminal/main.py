@@ -6,9 +6,9 @@ import sys
 from anki_terminal.anki_context import AnkiContext
 from anki_terminal.arg_parser import parse_args
 
-# Configure logging
+# Configure logging with ERROR as default level
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)

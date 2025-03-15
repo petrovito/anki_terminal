@@ -1,4 +1,5 @@
 import argparse
+import logging
 from pathlib import Path
 from typing import Optional, Tuple, Type
 
@@ -47,6 +48,12 @@ def create_parser() -> argparse.ArgumentParser:
     )
     
     # Add common arguments
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging (INFO level)",
+        dest="verbose"
+    )
     parser.add_argument(
         "--apkg",
         type=Path,
@@ -114,6 +121,10 @@ def parse_args() -> Tuple[Operation, Optional[Path], Optional[Path]]:
     """
     parser = create_parser()
     args = parser.parse_args()
+    
+    # Set logging level based on verbose flag
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
     
     # Create operation using factory
     factory = OperationFactory()
