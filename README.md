@@ -56,6 +56,12 @@ The command-line interface provides several options for interacting with Anki pa
     anki-terminal count --path /path/to/anki/objects
     ```
 
+- **Birds-Eye View Operation**: Provides an overview of the Anki collection, showing models with note counts, decks with card counts, and example notes.
+  - **Example Usage**:
+    ```bash
+    anki-terminal birds-eye-view --example-count 5 --show-empty-models --show-empty-decks
+    ```
+
 #### The `--path` Argument
 
 The `--path` argument is used to specify the location of Anki objects within your collection. It supports various paths, allowing you to target specific models, fields, templates, cards, or notes. Here are some examples of valid paths:

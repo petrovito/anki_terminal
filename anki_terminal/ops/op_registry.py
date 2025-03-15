@@ -1,6 +1,7 @@
 from typing import Dict, Type
 
 from anki_terminal.ops.op_base import Operation
+from anki_terminal.ops.read.birds_eye_view_operation import BirdsEyeViewOperation
 from anki_terminal.ops.read.count_operation import CountOperation
 from anki_terminal.ops.read.get_operation import GetOperation
 from anki_terminal.ops.read.list_operation import ListOperation
@@ -26,6 +27,7 @@ class OperationRegistry:
         self.register(ListOperation)
         self.register(CountOperation)
         self.register(GetOperation)
+        self.register(BirdsEyeViewOperation)
         
         # Write operations
         self.register(RenameFieldOperation)
@@ -36,36 +38,47 @@ class OperationRegistry:
         self.register(TagNotesOperation)
         self.register(DivideIntoDecksByTagsOperation)
     
-    def register(self, operation_class: Type[Operation]):
-        """Register a new operation.
+    def register(self, operation_class: Type[Operation]) -> None:
+        """Register an operation.
         
         Args:
-            operation_class: The operation class to register
+            operation_class: Operation class to register
             
         Raises:
             ValueError: If operation name is already registered
         """
+        if not operation_class.name:
+            raise ValueError("Operation must have a name")
+            
         if operation_class.name in self._operations:
-            raise ValueError(f"Operation already registered: {operation_class.name}")
-        
+            raise ValueError(f"Operation '{operation_class.name}' already registered")
+            
         self._operations[operation_class.name] = operation_class
     
     def get(self, name: str) -> Type[Operation]:
-        """Get an operation class by name.
+        """Get an operation by name.
         
         Args:
             name: Name of the operation
             
         Returns:
-            The operation class
+            Operation class
             
         Raises:
-            KeyError: If operation not found
+            KeyError: If operation is not registered
         """
         if name not in self._operations:
-            raise KeyError(f"Operation not found: {name}")
-        
+            raise KeyError(f"Operation '{name}' not registered")
+            
         return self._operations[name]
+    
+    def get_all(self) -> Dict[str, Type[Operation]]:
+        """Get all registered operations.
+        
+        Returns:
+            Dictionary of operation names to operation classes
+        """
+        return self._operations.copy()
     
     def list_operations(self) -> Dict[str, Dict[str, any]]:
         """List all registered operations.
