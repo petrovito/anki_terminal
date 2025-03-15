@@ -18,6 +18,8 @@ class ChangeType(Enum):
     NOTE_TAGS_UPDATED = auto()  # Note tags changed
     CARD_MOVED = auto()  # Card moved to different deck
     DECK_CREATED = auto()  # New deck created
+    NOTE_DELETED = auto()  # Note deleted
+    CARD_DELETED = auto()  # Card deleted
 
 @dataclass
 class Change:
@@ -88,12 +90,12 @@ class Change:
         )
     
     @staticmethod
-    def note_tags_updated(note: Note, model_id: int) -> 'Change':
+    def note_tags_updated(note: Note, model_id: Optional[int] = None) -> 'Change':
         """Create a change record for note tags updates.
         
         Args:
             note: The note with updated tags
-            model_id: ID of the note's model
+            model_id: ID of the note's model (optional)
             
         Returns:
             Change object representing the note tags update
@@ -102,7 +104,7 @@ class Change:
             type=ChangeType.NOTE_TAGS_UPDATED,
             data={
                 'note_id': note.id,
-                'model_id': model_id,
+                'model_id': model_id if model_id is not None else note.model_id,
                 'tags': note.tags
             }
         )
@@ -144,6 +146,42 @@ class Change:
                 'decks': decks
             }
         )
+    
+    @staticmethod
+    def note_deleted(note_id: int) -> 'Change':
+        """Create a change record for note deletion.
+        
+        Args:
+            note_id: ID of the note being deleted
+            
+        Returns:
+            Change object representing the note deletion
+        """
+        return Change(
+            type=ChangeType.NOTE_DELETED,
+            data={
+                'note_id': note_id
+            }
+        )
+    
+    @staticmethod
+    def card_deleted(card_id: int) -> 'Change':
+        """Create a change record for card deletion.
+        
+        Args:
+            card_id: ID of the card being deleted
+            
+        Returns:
+            Change object representing the card deletion
+        """
+        return Change(
+            type=ChangeType.CARD_DELETED,
+            data={
+                'card_id': card_id
+            }
+        )
+    
+
 
 class ChangeLog:
     """Tracks changes made to the collection."""

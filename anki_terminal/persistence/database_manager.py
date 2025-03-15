@@ -107,16 +107,25 @@ class DatabaseManager:
         """
         cursor = self._conn.cursor()
         
-        # Build SET clause and parameters for UPDATE
-        set_clause = ', '.join(f"{k} = ?" for k in op.values.keys())
-        where_clause = ' AND '.join(f"{k} = ?" for k in op.where.keys())
-        
-        # Build parameters list
-        params = list(op.values.values()) + list(op.where.values())
-        
-        # Execute the UPDATE statement
-        sql = f"UPDATE {op.table} SET {set_clause} WHERE {where_clause}"
-        cursor.execute(sql, params)
+        if op.operation_type == "DELETE":
+            # Build WHERE clause and parameters for DELETE
+            where_clause = ' AND '.join(f"{k} = ?" for k in op.where.keys())
+            params = list(op.where.values())
+            
+            # Execute the DELETE statement
+            sql = f"DELETE FROM {op.table} WHERE {where_clause}"
+            cursor.execute(sql, params)
+        else:  # Default is UPDATE
+            # Build SET clause and parameters for UPDATE
+            set_clause = ', '.join(f"{k} = ?" for k in op.values.keys())
+            where_clause = ' AND '.join(f"{k} = ?" for k in op.where.keys())
+            
+            # Build parameters list
+            params = list(op.values.values()) + list(op.where.values())
+            
+            # Execute the UPDATE statement
+            sql = f"UPDATE {op.table} SET {set_clause} WHERE {where_clause}"
+            cursor.execute(sql, params)
 
     def _read_table_data(self) -> Dict[str, Any]:
         """Read table data from database.

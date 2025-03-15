@@ -10,7 +10,8 @@ class DBOperation:
     """Represents a single database operation."""
     table: str
     where: Dict[str, Any]  # Conditions
-    values: Dict[str, Any]  # New values
+    values: Dict[str, Any] = None  # New values for UPDATE operations
+    operation_type: str = "UPDATE"  # Type of operation: "UPDATE" or "DELETE"
 
 class DBOperationGenerator:
     """Class for generating database operations from changes."""
@@ -42,6 +43,10 @@ class DBOperationGenerator:
             return self._generate_card_move(change)
         elif change.type == ChangeType.DECK_CREATED:
             return self._generate_deck_created(change)
+        elif change.type == ChangeType.NOTE_DELETED:
+            return self._generate_note_deletion(change)
+        elif change.type == ChangeType.CARD_DELETED:
+            return self._generate_card_deletion(change)
         else:
             raise ValueError(f"Unsupported change type: {change.type}")
 
@@ -101,4 +106,23 @@ class DBOperationGenerator:
             table='col',
             where={'id': 1},  # col table always has id=1
             values={'decks': json.dumps(change.data['decks'])}
-        )] 
+        )]
+    
+    def _generate_note_deletion(self, change: Change) -> List[DBOperation]:
+        """Generate operations for note deletion."""
+        note_id = change.data['note_id']
+        return [DBOperation(
+            table='notes',
+            where={'id': note_id},
+            operation_type="DELETE"
+        )]
+    
+    def _generate_card_deletion(self, change: Change) -> List[DBOperation]:
+        """Generate operations for card deletion."""
+        card_id = change.data['card_id']
+        return [DBOperation(
+            table='cards',
+            where={'id': card_id},
+            operation_type="DELETE"
+        )]
+    

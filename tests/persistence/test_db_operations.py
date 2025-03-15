@@ -2,7 +2,7 @@ from datetime import datetime
 
 import pytest
 
-from anki_terminal.commons.anki_types import Field, Model
+from anki_terminal.commons.anki_types import Field, Model, Note
 from anki_terminal.commons.changelog import Change, ChangeType
 from anki_terminal.persistence.db_operations import DBOperation, DBOperationGenerator
 
@@ -69,6 +69,26 @@ def note_migration_change() -> Change:
         }
     )
 
+@pytest.fixture
+def note_deletion_change() -> Change:
+    """Fixture providing a note deletion change."""
+    return Change(
+        type=ChangeType.NOTE_DELETED,
+        data={
+            'note_id': 1
+        }
+    )
+
+@pytest.fixture
+def card_deletion_change() -> Change:
+    """Fixture providing a card deletion change."""
+    return Change(
+        type=ChangeType.CARD_DELETED,
+        data={
+            'card_id': 1
+        }
+    )
+
 class TestDBOperation:
     """Tests for the DBOperation class."""
     
@@ -82,6 +102,18 @@ class TestDBOperation:
         assert op.table == 'col'
         assert op.where == {'id': 1}
         assert op.values == {'models': '{}'}
+        assert op.operation_type == "UPDATE"  # Default operation type
+        
+        # Test creating a DELETE operation
+        op = DBOperation(
+            table='notes',
+            where={'id': 1},
+            operation_type="DELETE"
+        )
+        assert op.table == 'notes'
+        assert op.where == {'id': 1}
+        assert op.values is None
+        assert op.operation_type == "DELETE"
 
 class TestAnkiOperationGenerator:
     """Tests for the AnkiOperationGenerator class."""
@@ -116,4 +148,24 @@ class TestAnkiOperationGenerator:
         assert op.where == {'guid': 'test-guid'}
         assert 'mid' in op.values
         assert 'flds' in op.values
+    
+    def test_note_deletion(self, note_deletion_change):
+        """Test generating operations for note deletion."""
+        operations = self.generator.generate_operations(note_deletion_change)
+        assert len(operations) == 1
+        op = operations[0]
+        assert op.table == 'notes'
+        assert op.where == {'id': 1}
+        assert op.values is None
+        assert op.operation_type == "DELETE"
+    
+    def test_card_deletion(self, card_deletion_change):
+        """Test generating operations for card deletion."""
+        operations = self.generator.generate_operations(card_deletion_change)
+        assert len(operations) == 1
+        op = operations[0]
+        assert op.table == 'cards'
+        assert op.where == {'id': 1}
+        assert op.values is None
+        assert op.operation_type == "DELETE"
 
