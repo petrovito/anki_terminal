@@ -80,7 +80,7 @@ class Change:
         return Change(
             type=ChangeType.NOTE_MIGRATED,
             data={
-                'note_id': note.id,
+                'note_guid': note.guid,
                 'source_model_id': source_model_id,
                 'target_model_id': target_model_id,
                 'fields': note.fields

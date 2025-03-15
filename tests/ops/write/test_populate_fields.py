@@ -47,7 +47,7 @@ class TestPopulateFieldsOperation(OperationTestBase):
         """
         # Test with valid arguments
         valid_args = {
-            "model_name": "Basic",
+            "model": "Basic",
             "populator": "copy-field",
             "populator_config_file": config_file,
             "batch_size": 10
@@ -57,7 +57,7 @@ class TestPopulateFieldsOperation(OperationTestBase):
         
         # Test with non-existent model
         op = PopulateFieldsOperation(
-            **{**valid_args, "model_name": "NonExistent"}
+            **{**valid_args, "model": "NonExistent"}
         )
         with pytest.raises(ValueError, match="Model not found"):
             op.validate(mock_collection)
@@ -68,6 +68,12 @@ class TestPopulateFieldsOperation(OperationTestBase):
         )
         with pytest.raises(ValueError, match="Populator not found"):
             op.validate(mock_collection)
+        
+        # Test with no model specified (should auto-detect)
+        args_without_model = {k: v for k, v in valid_args.items() if k != "model"}
+        op = PopulateFieldsOperation(**args_without_model)
+        op.validate(mock_collection)
+        assert op.args["model"] == "Basic"  # Should have detected the Basic model
     
     def test_execution(self, mock_collection, config_file):
         """Test operation execution.
@@ -78,7 +84,7 @@ class TestPopulateFieldsOperation(OperationTestBase):
         """
         # Create and validate operation
         valid_args = {
-            "model_name": "Basic",
+            "model": "Basic",
             "populator": "copy-field",
             "populator_config_file": config_file,
             "batch_size": 10
@@ -132,9 +138,9 @@ class TestPopulateFieldsIntegration(BaseWriteTest):
         assert self.model_id is not None, f"Model {self.model_name} not found"
     
     def get_operation(self):
-        """Return the populate fields operation."""
+        """Get the operation to test."""
         return PopulateFieldsOperation(
-            model_name=self.model_name,
+            model=self.model_name,
             populator="copy-field",
             populator_config_file=self.config_file,
             batch_size=10
@@ -241,7 +247,7 @@ class TestPopulateFieldsIntegration(BaseWriteTest):
         # For this test, we'll directly provide the config in the constructor
         # instead of using a JSON string, since we're not testing file loading
         op = PopulateFieldsOperation(
-            model_name="subs2srs",
+            model="subs2srs",
             populator="copy-field",
             source_field="Expression",
             target_field="MorphMan_FocusMorph",

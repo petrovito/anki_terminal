@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set
+import logging
 
 from anki_terminal.commons.anki_types import Collection, Model, Template
 from anki_terminal.commons.changelog import Change
@@ -96,35 +97,54 @@ class Operation(ABC):
         return args
 
     def _get_model(self, model_name: Optional[str] = None) -> Model:
-        """Get a model by name or return the only model if there's just one.
+        """Get a model by name or return the only model if there is just one.
         
         Args:
-            model_name: Name of the model to get, or None to get default
+            model_name: The name of the model to get, or None to get the only model
             
         Returns:
-            The requested Model
+            The model
             
         Raises:
-            ValueError: If model not found or ambiguous model reference
-            RuntimeError: If collection not set
+            ValueError: If the model is not found or if there are multiple models
+                and no name is specified
         """
-        if not self.collection:
-            raise RuntimeError("Collection not set")
-
+        logger = logging.getLogger('anki_terminal')
+        
         if model_name:
-            # Find model by name
+            # Find the model by name
             for model in self.collection.models.values():
                 if model.name == model_name:
                     return model
             raise ValueError(f"Model not found: {model_name}")
         
-        # No model specified
-        if len(self.collection.models) == 1:
-            return next(iter(self.collection.models.values()))
+        # If no model name is specified, try to find a model with notes
+        models_with_notes = {}
+        for model in self.collection.models.values():
+            # Count notes for this model
+            note_count = sum(1 for note in self.collection.notes.values() 
+                            if note.model_id == model.id)
+            if note_count > 0:
+                models_with_notes[model.name] = model
         
-        model_names = [model.name for model in self.collection.models.values()]
+        # If there's only one model with notes, return it
+        if len(models_with_notes) == 1:
+            model = list(models_with_notes.values())[0]
+            logger.info(f"Using model: {model.name} (only model with notes)")
+            return model
+        
+        # If there are no models with notes, check if there's only one model total
+        if len(models_with_notes) == 0:
+            if len(self.collection.models) == 1:
+                model = list(self.collection.models.values())[0]
+                logger.info(f"Using model: {model.name} (only model available)")
+                return model
+            raise ValueError("No models with notes found")
+        
+        # If there are multiple models with notes, raise an error
         raise ValueError(
-            f"Multiple models found, please specify one: {', '.join(model_names)}"
+            f"Multiple models with notes found: {', '.join(models_with_notes.keys())}. "
+            "Please specify a model name."
         )
 
     def _get_template(self, model_name: Optional[str] = None, template_name: Optional[str] = None) -> Template:

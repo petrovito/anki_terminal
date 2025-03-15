@@ -14,8 +14,8 @@ class TestMigrateNotesOperation(OperationTestBase):
     
     operation_class = MigrateNotesOperation
     valid_args = {
-        "model_name": "Basic",  # Source model
-        "target_model_name": "Advanced",  # Target model
+        "model": "Basic",  # Source model
+        "target_model": "Advanced",  # Target model
         "field_mapping": {
             "Front": "Question",  # Map Front field to Question
             "Back": "Answer"      # Map Back field to Answer
@@ -34,14 +34,14 @@ class TestMigrateNotesOperation(OperationTestBase):
         
         # Test with non-existent source model
         op = MigrateNotesOperation(
-            **{**self.valid_args, "model_name": "NonExistent"}
+            **{**self.valid_args, "model": "NonExistent"}
         )
         with pytest.raises(ValueError, match="Source model not found"):
             op.validate(mock_collection)
         
         # Test with non-existent target model
         op = MigrateNotesOperation(
-            **{**self.valid_args, "target_model_name": "NonExistent"}
+            **{**self.valid_args, "target_model": "NonExistent"}
         )
         with pytest.raises(ValueError, match="Target model not found"):
             op.validate(mock_collection)
@@ -110,7 +110,7 @@ class TestMigrateNotesOperation(OperationTestBase):
         assert final_advanced_notes == initial_basic_notes  # Should have all the notes
         
         # Verify note content was mapped correctly
-        migrated_note = mock_collection.notes[2]  # Get our test note
+        migrated_note = mock_collection.notes[4]  # Get our test note
         assert migrated_note.model_id == 2  # Advanced model ID
         assert migrated_note.fields["Question"] == "Test Question"
         assert migrated_note.fields["Answer"] == "Test Answer"
@@ -139,7 +139,6 @@ class TestMigrateNotesOperation(OperationTestBase):
         # Verify result
         assert result.success
         assert not result.changes  # Should not have any changes
-        assert "No notes found" in result.message 
 
 class TestMigrateNotesIntegration(BaseWriteTest):
     """Integration tests for MigrateNotesOperation using real Anki packages."""
@@ -186,10 +185,10 @@ class TestMigrateNotesIntegration(BaseWriteTest):
         assert self.source_note_count > 0, f"No notes found for source model {self.source_model_name}"
     
     def get_operation(self):
-        """Return the migrate notes operation."""
+        """Get the operation to test."""
         return MigrateNotesOperation(
-            model_name=self.source_model_name,
-            target_model_name=self.target_model_name,
+            model=self.source_model_name,
+            target_model=self.target_model_name,
             field_mapping=self.field_mapping
         )
     

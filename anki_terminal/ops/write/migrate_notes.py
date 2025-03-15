@@ -15,12 +15,12 @@ class MigrateNotesOperation(Operation):
     readonly = False
     arguments = [
         OperationArgument(
-            name="model_name",
+            name="model",
             description="Name of the source model",
             required=True
         ),
         OperationArgument(
-            name="target_model_name",
+            name="target_model",
             description="Name of the target model",
             required=True
         ),
@@ -40,33 +40,33 @@ class MigrateNotesOperation(Operation):
         # Check if source model exists
         source_model = None
         for model in self.collection.models.values():
-            if model.name == self.args["model_name"]:
+            if model.name == self.args["model"]:
                 source_model = model
                 break
         if not source_model:
-            raise ValueError(f"Source model not found: {self.args['model_name']}")
+            raise ValueError(f"Source model not found: {self.args['model']}")
         
         # Check if target model exists
         target_model = None
         for model in self.collection.models.values():
-            if model.name == self.args["target_model_name"]:
+            if model.name == self.args["target_model"]:
                 target_model = model
                 break
         if not target_model:
-            raise ValueError(f"Target model not found: {self.args['target_model_name']}")
+            raise ValueError(f"Target model not found: {self.args['target_model']}")
         
-        # Validate field mapping
+        # Check if field mapping is a dictionary
         if not isinstance(self.args["field_mapping"], dict):
             raise ValueError("Field mapping must be a dictionary")
         
-        # Check source fields exist in source model
-        source_field_names = {field.name for field in source_model.fields}
+        # Check if source fields exist in source model
+        source_field_names = [f.name for f in source_model.fields]
         for source_field in self.args["field_mapping"].keys():
             if source_field not in source_field_names:
                 raise ValueError(f"Source field not found in source model: {source_field}")
         
-        # Check target fields exist in target model
-        target_field_names = {field.name for field in target_model.fields}
+        # Check if target fields exist in target model
+        target_field_names = [f.name for f in target_model.fields]
         for target_field in self.args["field_mapping"].values():
             if target_field not in target_field_names:
                 raise ValueError(f"Target field not found in target model: {target_field}")
@@ -78,44 +78,65 @@ class MigrateNotesOperation(Operation):
             OperationResult indicating success/failure and containing changes
         """
         # Get source and target models
-        source_model = next(m for m in self.collection.models.values() if m.name == self.args["model_name"])
-        target_model = next(m for m in self.collection.models.values() if m.name == self.args["target_model_name"])
+        source_model = None
+        target_model = None
+        for model in self.collection.models.values():
+            if model.name == self.args["model"]:
+                source_model = model
+            elif model.name == self.args["target_model"]:
+                target_model = model
         
-        # Get notes to migrate
-        notes_to_migrate = [
-            note for note in self.collection.notes.values()
-            if note.model_id == source_model.id
-        ]
+        # Get notes for source model
+        source_notes = []
+        for note in self.collection.notes.values():
+            if note.model_id == source_model.id:
+                source_notes.append(note)
         
-        if not notes_to_migrate:
-            return OperationResult(
-                success=True,
-                message=f"No notes found for model '{self.args['model_name']}'",
-                changes=[]
+        # Create new notes for target model
+        new_notes = []
+        note_changes = []
+        for source_note in source_notes:
+            # Create new note
+            new_note_id = max(self.collection.notes.keys(), default=0) + 1
+            new_note = Note(
+                id=new_note_id,
+                guid=source_note.guid,
+                model_id=target_model.id,
+                modification_time=datetime.now(),
+                usn=-1,  # Needs sync
+                tags=source_note.tags.copy(),
+                fields={},
+                sort_field=0,  # Will be updated when fields are populated
+                checksum=0,  # Will be updated when fields are populated
+                flags=0,
+                data={}
             )
-        
-        # Update each note
-        for note in notes_to_migrate:
-            # Map fields according to field_mapping
-            new_fields = {field.name: "" for field in target_model.fields}  # Initialize all fields empty
-            for source_field, target_field in self.args["field_mapping"].items():
-                new_fields[target_field] = note.fields[source_field]
             
-            # Update note
-            note.model_id = target_model.id
-            note.fields = new_fields
-            note.modification_time = datetime.now()
-            note.usn = -1  # -1 indicates needs sync
-        
-        # Create change records - one for each migrated note
-        changes = []
-        for note in notes_to_migrate:
-            changes.append(Change.note_migrated(
-                note, source_model.id, target_model.id
-            ))
+            # Copy fields according to mapping
+            field_mapping = self.args["field_mapping"]
+            for source_field, target_field in field_mapping.items():
+                if source_field in source_note.fields:
+                    new_note.fields[target_field] = source_note.fields[source_field]
+            for target_field in target_model.fields:
+                if target_field.name not in field_mapping.values():
+                    new_note.fields[target_field.name] = ""
+            
+            # Add new note to collection
+            self.collection.notes[new_note_id] = new_note
+            new_notes.append(new_note)
+
+            # Remove source note from collection
+            del self.collection.notes[source_note.id]
+            
+            # Create change record for new note
+            note_changes.append(Change.note_migrated(new_note, source_model.id, target_model.id))
+            
+            
+            # Create change record for deleted note
+            note_changes.append(Change.note_migrated(source_note, source_model.id, target_model.id))
         
         return OperationResult(
             success=True,
-            message=f"Migrated {len(notes_to_migrate)} notes from '{self.args['model_name']}' to '{self.args['target_model_name']}'",
-            changes=changes
+            message=f"Migrated {len(source_notes)} notes from '{source_model.name}' to '{target_model.name}'",
+            changes=note_changes
         ) 

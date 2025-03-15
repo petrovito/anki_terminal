@@ -60,7 +60,7 @@ def note_migration_change() -> Change:
     return Change(
         type=ChangeType.NOTE_MIGRATED,
         data={
-            'note_id': 1,
+            'note_guid': '1234567890',
             'source_model_id': 1,
             'target_model_id': 2,
             'fields': {
@@ -119,7 +119,7 @@ class TestAnkiOperationGenerator:
         op = operations[0]
         assert op.type == DBOperationType.UPDATE_NOTE_MODEL
         assert op.table == 'notes'
-        assert op.where == {'id': 1}
+        assert op.where == {'guid': '1234567890'}
         assert 'mid' in op.values
         assert 'flds' in op.values
 

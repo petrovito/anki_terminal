@@ -14,7 +14,7 @@ class TestAddFieldOperation(OperationTestBase):
     
     operation_class = AddFieldOperation
     valid_args = {
-        "model_name": "Basic",
+        "model": "Basic",
         "field_name": "Notes"
     }
     
@@ -30,7 +30,7 @@ class TestAddFieldOperation(OperationTestBase):
         
         # Test with duplicate field name
         op = AddFieldOperation(
-            model_name="Basic",
+            model="Basic",
             field_name="Front"  # Front already exists
         )
         with pytest.raises(ValueError, match="Field 'Front' already exists"):
@@ -38,7 +38,7 @@ class TestAddFieldOperation(OperationTestBase):
         
         # Test with non-existent model
         op = AddFieldOperation(
-            model_name="NonExistent",
+            model="NonExistent",
             field_name="Notes"
         )
         with pytest.raises(ValueError, match="Model not found"):
@@ -102,9 +102,9 @@ class TestAddFieldIntegration(BaseWriteTest):
         assert self.field_name not in field_names, f"Field {self.field_name} already exists in model"
     
     def get_operation(self):
-        """Return the add field operation."""
+        """Get the operation to test."""
         return AddFieldOperation(
-            model_name=self.model_name,
+            model=self.model_name,
             field_name=self.field_name
         )
     

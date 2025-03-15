@@ -113,7 +113,7 @@ class BaseWriteTest:
             results = self.run_operation(context)
             
             # Assert operation was successful
-            assert results[0].success, f"Operation failed: {results[0].error}"
+            assert results[0].success, f"Operation failed: {results[0].message}"
         
         # Verify the output file exists
         assert output_path.exists(), "Output file was not created"

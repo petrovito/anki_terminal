@@ -16,7 +16,7 @@ class TestRenameFieldOperation(OperationTestBase):
     valid_args = {
         "old_field_name": "Front",
         "new_field_name": "Question",
-        "model_name": "Basic"
+        "model": "Basic"
     }
     
     def test_validation(self, mock_collection):
@@ -33,7 +33,7 @@ class TestRenameFieldOperation(OperationTestBase):
         op = RenameFieldOperation(
             old_field_name="NonExistent",
             new_field_name="Question",
-            model_name="Basic"
+            model="Basic"
         )
         with pytest.raises(ValueError, match="Field 'NonExistent' not found"):
             op.validate(mock_collection)
@@ -42,7 +42,7 @@ class TestRenameFieldOperation(OperationTestBase):
         op = RenameFieldOperation(
             old_field_name="Front",
             new_field_name="Back",  # Back already exists
-            model_name="Basic"
+            model="Basic"
         )
         with pytest.raises(ValueError, match="Field 'Back' already exists"):
             op.validate(mock_collection)
@@ -51,7 +51,7 @@ class TestRenameFieldOperation(OperationTestBase):
         op = RenameFieldOperation(
             old_field_name="Front",
             new_field_name="Question",
-            model_name="NonExistent"
+            model="NonExistent"
         )
         with pytest.raises(ValueError, match="Model not found"):
             op.validate(mock_collection)
@@ -114,11 +114,11 @@ class TestRenameFieldIntegration(BaseWriteTest):
         assert self.old_field_name in field_names, f"Field {self.old_field_name} not found in model"
     
     def get_operation(self):
-        """Return the rename field operation."""
+        """Get the operation to test."""
         return RenameFieldOperation(
             old_field_name=self.old_field_name,
             new_field_name=self.new_field_name,
-            model_name=self.model_name
+            model=self.model_name
         )
     
     def verify_changes(self, context):

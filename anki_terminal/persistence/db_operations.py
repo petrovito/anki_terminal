@@ -79,7 +79,7 @@ class DBOperationGenerator:
         return [DBOperation(
             type=DBOperationType.UPDATE_NOTE_MODEL,
             table='notes',
-            where={'id': change.data['note_id']},
+            where={'guid': change.data['note_guid']},
             values={
                 'mid': change.data['target_model_id'],
                 'flds': fields_str

@@ -8,8 +8,7 @@
             "module": "pytest",
             "args": [
                 "${file}",
-                "-v",
-                "--no-cov"
+                "-v"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,
@@ -40,8 +39,7 @@
             "module": "pytest",
             "args": [
                 "${file}::${input:testFunction}",
-                "-v",
-                "--no-cov"
+                "-v"
             ],
             "console": "integratedTerminal",
             "justMyCode": false,

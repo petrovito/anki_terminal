@@ -32,6 +32,15 @@ class RemoveBracketsPopulator(FieldPopulator):
         if not self.config.get("target_field"):
             self.config["target_field"] = self.config["source_field"]
     
+    @property
+    def target_fields(self) -> List[str]:
+        """Get list of fields that will be modified by this populator.
+        
+        Returns:
+            List of field names that will be modified
+        """
+        return [self.config["target_field"]]
+    
     def _populate_fields_impl(self, note: Note) -> Dict[str, str]:
         """Implementation-specific field population logic.
         

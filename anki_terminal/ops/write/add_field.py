@@ -12,7 +12,7 @@ class AddFieldOperation(Operation):
     readonly = False
     arguments = [
         OperationArgument(
-            name="model_name",
+            name="model",
             description="Name of the model to add the field to",
             required=True
         ),
@@ -29,7 +29,7 @@ class AddFieldOperation(Operation):
         Raises:
             ValueError: If arguments are invalid
         """
-        model = self._get_model(self.args["model_name"])
+        model = self._get_model(self.args["model"])
         
         # Check if field already exists
         if any(f.name == self.args["field_name"] for f in model.fields):
@@ -41,7 +41,7 @@ class AddFieldOperation(Operation):
         Returns:
             OperationResult indicating success/failure and containing changes
         """
-        model = self._get_model(self.args["model_name"])
+        model = self._get_model(self.args["model"])
         field_name = self.args["field_name"]
         
         # Create and add new field to model

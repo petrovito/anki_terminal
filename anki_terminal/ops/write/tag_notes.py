@@ -44,7 +44,7 @@ class TagNotesOperation(Operation):
         """
         super().__init__(printer, **kwargs)
         self.args = {
-            "model_name": kwargs["model"],
+            "model": kwargs["model"],
             "source_field": kwargs["source_field"],
             "pattern": kwargs["pattern"],
             "tag_prefix": kwargs.get("tag_prefix", "")
@@ -57,7 +57,7 @@ class TagNotesOperation(Operation):
             ValueError: If validation fails
         """
         # Check if model exists
-        model = self._get_model(self.args["model_name"])
+        model = self._get_model(self.args["model"])
         
         # Validate source field exists
         field_names = [f.name for f in model.fields]
@@ -70,7 +70,7 @@ class TagNotesOperation(Operation):
             if pattern.groups == 0:
                 raise ValueError("Pattern must contain at least one capture group")
         except re.error as e:
-            raise ValueError(f"Invalid regular expression pattern: {str(e)}")
+            raise ValueError(f"Invalid regular expression pattern: {e}")
     
     def _execute_impl(self) -> OperationResult:
         """Execute the operation.
@@ -78,53 +78,59 @@ class TagNotesOperation(Operation):
         Returns:
             OperationResult indicating success/failure and containing changes
         """
-        model = self._get_model(self.args["model_name"])
-        
-        # Get all notes for this model
-        model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]
-        
-        # Compile pattern
+        model = self._get_model(self.args["model"])
+        source_field = self.args["source_field"]
         pattern = re.compile(self.args["pattern"])
+        tag_prefix = self.args["tag_prefix"]
         
-        # Track changes
+        # Find notes to tag
+        notes_to_tag = []
+        for note in self.collection.notes.values():
+            if note.model_id == model.id and source_field in note.fields:
+                notes_to_tag.append(note)
+        
+        if not notes_to_tag:
+            return OperationResult(
+                success=True,
+                message=f"No notes found for model '{model.name}' with field '{source_field}'",
+                changes=[]
+            )
+        
+        # Tag notes
         changes = []
-        updated_count = 0
-        skipped_count = 0
+        tags_added = 0
+        notes_tagged = 0
         
-        # Process each note
-        for note in model_notes:
-            try:
-                # Get source field value
-                source_value = note.fields[self.args["source_field"]]
-                if not source_value:
-                    skipped_count += 1
-                    continue
-                
-                # Extract tag using pattern
-                match = pattern.search(source_value)
-                if not match:
-                    skipped_count += 1
-                    continue
-                
-                # Get the first capture group and create tag
-                tag = match.group(1)
-                if self.args["tag_prefix"]:
-                    tag = f"{self.args['tag_prefix']}_{tag}"
-                
-                # Add tag if not already present
-                if tag not in note.tags:
-                    note.tags.append(tag)
-                    changes.append(Change.note_tags_updated(note, model.id))
-                    updated_count += 1
-                else:
-                    skipped_count += 1
-                    
-            except (KeyError, ValueError) as e:
-                skipped_count += 1
+        for note in notes_to_tag:
+            field_content = note.fields[source_field]
+            matches = pattern.findall(field_content)
+            
+            if not matches:
                 continue
+            
+            # Extract tags from matches
+            extracted_tags = []
+            for match in matches:
+                # Handle both tuple (multiple groups) and string (single group) matches
+                if isinstance(match, tuple):
+                    for group in match:
+                        if group:  # Skip empty groups
+                            extracted_tags.append(f"{tag_prefix}{group}")
+                else:
+                    extracted_tags.append(f"{tag_prefix}{match}")
+            
+            # Add tags to note
+            original_tags = set(note.tags)
+            note.tags = list(set(note.tags) | set(extracted_tags))
+            
+            # Only record a change if tags were actually added
+            if len(note.tags) > len(original_tags):
+                tags_added += len(note.tags) - len(original_tags)
+                notes_tagged += 1
+                changes.append(Change.note_tags_updated(note, model.id))
         
         return OperationResult(
             success=True,
-            message=f"Updated {updated_count} notes, skipped {skipped_count} notes",
+            message=f"Added {tags_added} tags to {notes_tagged} notes",
             changes=changes
         ) 

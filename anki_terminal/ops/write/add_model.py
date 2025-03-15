@@ -14,7 +14,7 @@ class AddModelOperation(Operation):
     readonly = False
     arguments = [
         OperationArgument(
-            name="model_name",
+            name="model",
             description="Name of the model to create",
             required=True
         ),
@@ -51,17 +51,17 @@ class AddModelOperation(Operation):
         Raises:
             ValueError: If arguments are invalid
         """
-        # Check if model name already exists
+        # Check if model already exists
         for model in self.collection.models.values():
-            if model.name == self.args["model_name"]:
-                raise ValueError(f"Model already exists: {self.args['model_name']}")
+            if model.name == self.args["model"]:
+                raise ValueError(f"Model '{self.args['model']}' already exists")
         
-        # Validate fields list
-        if not isinstance(self.args["fields"], list):
-            raise ValueError("Fields must be a list")
+        # Check if fields list is empty
         if not self.args["fields"]:
             raise ValueError("At least one field is required")
-        if len(set(self.args["fields"])) != len(self.args["fields"]):
+        
+        # Check for duplicate field names
+        if len(self.args["fields"]) != len(set(self.args["fields"])):
             raise ValueError("Field names must be unique")
     
     def _execute_impl(self) -> OperationResult:
@@ -70,18 +70,30 @@ class AddModelOperation(Operation):
         Returns:
             OperationResult indicating success/failure and containing changes
         """
-        # Generate model ID
-        model_id = max(self.collection.models.keys(), default=1000000000) + 1
+        # Create new model
+        model_id = max(self.collection.models.keys(), default=0) + 1
+        model = Model(
+            id=model_id,
+            name=self.args["model"],
+            fields=[],
+            templates=[],
+            css=self.args["css"],
+            deck_id=1,  # Default deck ID
+            modification_time=datetime.now(),
+            type=0,  # Standard model (not cloze)
+            usn=-1,  # Update sequence number
+            version=0,  # Version
+            latex_pre="\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
+            latex_post="\\end{document}",
+            latex_svg=False,
+            required=[[0, "all", [0]]],
+            tags=[]
+        )
         
-        # Get first available deck ID from collection
-        if not self.collection.decks:
-            raise RuntimeError("No decks found in collection")
-        deck_id = next(iter(self.collection.decks.keys()))
-        
-        # Create Field objects from field names
-        field_objects = [
-            Field(
-                name=name,
+        # Add fields to model
+        for i, field_name in enumerate(self.args["fields"]):
+            field = Field(
+                name=field_name,
                 ordinal=i,
                 sticky=False,
                 rtl=False,
@@ -90,40 +102,30 @@ class AddModelOperation(Operation):
                 description="",
                 plain_text=True
             )
-            for i, name in enumerate(self.args["fields"])
-        ]
+            model.fields.append(field)
         
-        # Create new model
-        model = Model(
-            id=model_id,
-            name=self.args["model_name"],
-            fields=field_objects,
-            templates=[
-                Template(
-                    name=self.args["template_name"],
-                    question_format=self.args["question_format"],
-                    answer_format=self.args["answer_format"],
-                    ordinal=0
-                )
-            ],
-            css=self.args["css"],
-            deck_id=deck_id,
-            modification_time=datetime.now(),
-            type=0,  # Standard (not cloze)
-            usn=-1,  # -1 indicates needs sync
-            version=1  # Start with version 1
+        # Add template to model
+        template = Template(
+            name=self.args["template_name"],
+            question_format=self.args["question_format"],
+            answer_format=self.args["answer_format"],
+            ordinal=0,
+            deck_override=1,  # Default deck ID
+            browser_question_format=None,
+            browser_answer_format=None,
+            browser_font=None,
+            browser_font_size=None
         )
+        model.templates.append(template)
         
         # Add model to collection
         self.collection.models[model_id] = model
         
         # Create change record
-        change = Change.model_updated({
-            model_id: model for model_id, model in self.collection.models.items()
-        })
+        change = Change.model_updated(self.collection.models)
         
         return OperationResult(
             success=True,
-            message=f"Added model '{self.args['model_name']}' with {len(field_objects)} fields",
+            message=f"Added model '{model.name}' with {len(model.fields)} fields and 1 template",
             changes=[change]
         ) 

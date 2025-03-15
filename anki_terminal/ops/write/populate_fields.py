@@ -27,8 +27,8 @@ class PopulateFieldsOperation(Operation):
         # Add common arguments
         subparser.add_argument(
             "--model",
-            required=True,
-            help="Name of the model to populate fields in"
+            required=False,
+            help="Name of the model to populate fields in (optional if there's only one model with notes)"
         )
         subparser.add_argument(
             "--batch-size",
@@ -64,6 +64,9 @@ class PopulateFieldsOperation(Operation):
                     default=arg.default,
                     help=arg.description + (" (required)" if arg.required else f" (default: {arg.default})")
                 )
+        
+        # Return the parser
+        return subparser
     
     def __init__(self, **kwargs):
         """Initialize the operation.
@@ -80,32 +83,35 @@ class PopulateFieldsOperation(Operation):
         Raises:
             ValueError: If arguments are invalid
         """
-        # Check if model exists
-        model = self._get_model(self.args["model"])
+        # Get the model (will automatically find one if not specified)
+        model_name = self.args.get("model")
+        model = self._get_model(model_name)
+        self.args["model"] = model.name
         
         # Create the populator and store it for later use
         self._populator = self.factory.create_populator_from_args(self.args)
         
         # Validate the populator
         self._populator.validate(model)
-
+        
         # Get all notes for this model
         model_notes = [note for note in self.collection.notes.values() if note.model_id == model.id]
         if not model_notes:
-            raise ValueError(f"No notes found for model: {self.args['model']}")
-
+            raise ValueError(f"No notes found for model: {model.name}")
+        
         # Check if batching is requested and supported
         batch_size = self.args["batch_size"]
         if batch_size is not None and batch_size > 1:
             if not self._populator.supports_batching:
                 raise ValueError(f"Populator {self._populator.__class__.__name__} does not support batch operations")
-    
+
     def _execute_impl(self) -> OperationResult:
         """Execute the operation.
         
         Returns:
             OperationResult indicating success/failure and containing changes
         """
+        # Get the model
         model = self._get_model(self.args["model"])
         
         # Use the populator created during validation
