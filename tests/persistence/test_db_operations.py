@@ -4,8 +4,7 @@ import pytest
 
 from anki_terminal.commons.anki_types import Field, Model
 from anki_terminal.commons.changelog import Change, ChangeType
-from anki_terminal.persistence.db_operations import (DBOperation, DBOperationGenerator,
-                                         DBOperationType)
+from anki_terminal.persistence.db_operations import DBOperation, DBOperationGenerator
 
 
 @pytest.fixture
@@ -48,8 +47,8 @@ def note_fields_change() -> Change:
             'note_id': 1,
             'model_id': 1,
             'fields': {
-                'Front': 'New Front',
-                'Back': 'New Back'
+                'Front': 'Test front',
+                'Back': 'Test back'
             }
         }
     )
@@ -60,12 +59,12 @@ def note_migration_change() -> Change:
     return Change(
         type=ChangeType.NOTE_MIGRATED,
         data={
-            'note_guid': '1234567890',
+            'note_guid': 'test-guid',
             'source_model_id': 1,
             'target_model_id': 2,
             'fields': {
-                'Question': 'Front Content',
-                'Answer': 'Back Content'
+                'Question': 'Test front',
+                'Answer': 'Test back'
             }
         }
     )
@@ -76,12 +75,10 @@ class TestDBOperation:
     def test_operation_creation(self):
         """Test creating a DB operation."""
         op = DBOperation(
-            type=DBOperationType.UPDATE_MODEL,
             table='col',
             where={'id': 1},
             values={'models': '{}'}
         )
-        assert op.type == DBOperationType.UPDATE_MODEL
         assert op.table == 'col'
         assert op.where == {'id': 1}
         assert op.values == {'models': '{}'}
@@ -97,7 +94,6 @@ class TestAnkiOperationGenerator:
         operations = self.generator.generate_operations(model_change)
         assert len(operations) == 1
         op = operations[0]
-        assert op.type == DBOperationType.UPDATE_MODEL
         assert op.table == 'col'
         assert op.where == {'id': 1}
         assert isinstance(op.values['models'], str)  # Should be JSON string
@@ -107,7 +103,6 @@ class TestAnkiOperationGenerator:
         operations = self.generator.generate_operations(note_fields_change)
         assert len(operations) == 1
         op = operations[0]
-        assert op.type == DBOperationType.UPDATE_NOTE
         assert op.table == 'notes'
         assert op.where == {'id': 1}
         assert 'flds' in op.values
@@ -117,9 +112,8 @@ class TestAnkiOperationGenerator:
         operations = self.generator.generate_operations(note_migration_change)
         assert len(operations) == 1
         op = operations[0]
-        assert op.type == DBOperationType.UPDATE_NOTE_MODEL
         assert op.table == 'notes'
-        assert op.where == {'guid': '1234567890'}
+        assert op.where == {'guid': 'test-guid'}
         assert 'mid' in op.values
         assert 'flds' in op.values
 

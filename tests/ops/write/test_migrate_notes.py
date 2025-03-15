@@ -110,7 +110,7 @@ class TestMigrateNotesOperation(OperationTestBase):
         assert final_advanced_notes == initial_basic_notes  # Should have all the notes
         
         # Verify note content was mapped correctly
-        migrated_note = mock_collection.notes[4]  # Get our test note
+        migrated_note = mock_collection.notes[2]  # Get our test note
         assert migrated_note.model_id == 2  # Advanced model ID
         assert migrated_note.fields["Question"] == "Test Question"
         assert migrated_note.fields["Answer"] == "Test Answer"

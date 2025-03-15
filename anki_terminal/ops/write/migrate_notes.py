@@ -97,7 +97,7 @@ class MigrateNotesOperation(Operation):
         note_changes = []
         for source_note in source_notes:
             # Create new note
-            new_note_id = max(self.collection.notes.keys(), default=0) + 1
+            new_note_id = source_note.id
             new_note = Note(
                 id=new_note_id,
                 guid=source_note.guid,
@@ -121,12 +121,14 @@ class MigrateNotesOperation(Operation):
                 if target_field.name not in field_mapping.values():
                     new_note.fields[target_field.name] = ""
             
+
+            # Remove source note from collection
+            del self.collection.notes[source_note.id]
+
             # Add new note to collection
             self.collection.notes[new_note_id] = new_note
             new_notes.append(new_note)
 
-            # Remove source note from collection
-            del self.collection.notes[source_note.id]
             
             # Create change record for new note
             note_changes.append(Change.note_migrated(new_note, source_model.id, target_model.id))

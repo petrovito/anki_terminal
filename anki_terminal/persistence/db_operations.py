@@ -1,22 +1,13 @@
 import json
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import Any, Dict, List, Optional
 
 from anki_terminal.commons.changelog import Change, ChangeType
 
 
-class DBOperationType(Enum):
-    """Types of database operations."""
-    UPDATE_MODEL = auto()
-    UPDATE_NOTE = auto()
-    UPDATE_NOTE_MODEL = auto()
-    UPDATE_DECKS = auto()
-
 @dataclass
 class DBOperation:
     """Represents a single database operation."""
-    type: DBOperationType
     table: str
     where: Dict[str, Any]  # Conditions
     values: Dict[str, Any]  # New values
@@ -57,7 +48,6 @@ class DBOperationGenerator:
     def _generate_model_update(self, change: Change) -> List[DBOperation]:
         """Generate operations for model updates."""
         return [DBOperation(
-            type=DBOperationType.UPDATE_MODEL,
             table='col',
             where={'id': 1},  # col table always has id=1
             values={'models': json.dumps(change.data['models'])}
@@ -67,7 +57,6 @@ class DBOperationGenerator:
         """Generate operations for note field updates."""
         fields_str = self.FIELD_SEPARATOR.join(str(v) for v in change.data['fields'].values())
         return [DBOperation(
-            type=DBOperationType.UPDATE_NOTE,
             table='notes',
             where={'id': change.data['note_id']},
             values={'flds': fields_str}
@@ -77,7 +66,6 @@ class DBOperationGenerator:
         """Generate operations for note migration."""
         fields_str = self.FIELD_SEPARATOR.join(str(v) for v in change.data['fields'].values())
         return [DBOperation(
-            type=DBOperationType.UPDATE_NOTE_MODEL,
             table='notes',
             where={'guid': change.data['note_guid']},
             values={
@@ -92,7 +80,6 @@ class DBOperationGenerator:
         tags = change.data['tags']
         tags_str = ' '.join(tags)
         return [DBOperation(
-            type=DBOperationType.UPDATE_NOTE,
             table='notes',
             where={'id': note_id},
             values={'tags': tags_str}
@@ -103,7 +90,6 @@ class DBOperationGenerator:
         card_id = change.data['card_id']
         target_deck_id = change.data['target_deck_id']
         return [DBOperation(
-            type=DBOperationType.UPDATE_NOTE,
             table='cards',
             where={'id': card_id},
             values={'did': target_deck_id}
@@ -112,7 +98,6 @@ class DBOperationGenerator:
     def _generate_deck_created(self, change: Change) -> List[DBOperation]:
         """Generate operations for deck creation."""
         return [DBOperation(
-            type=DBOperationType.UPDATE_DECKS,
             table='col',
             where={'id': 1},  # col table always has id=1
             values={'decks': json.dumps(change.data['decks'])}
