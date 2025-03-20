@@ -60,7 +60,17 @@ class OperationFactory:
                     logger.warning(f"Failed to load file for argument '{key}' from {file_path}: {str(e)}")
         return result
     
+
     def create_operation_from_args(self, args_dict: Dict[str, Any]) -> Operation:
+        # Get operation class
+        operation_name = args_dict.get('operation')
+        if not operation_name:
+            raise ValueError("Operation name is required")
+        
+        op_class = self.registry.get(operation_name)
+        return self.create_from_args(op_class, args_dict)
+
+    def create_from_args(self, op_class: Type[Operation], args_dict: Dict[str, Any]) -> Operation:
         """Create an operation instance from a dictionary of arguments.
         
         Args:
@@ -80,13 +90,6 @@ class OperationFactory:
         else:
             printer = HumanReadablePrinter()
         
-        # Get operation class
-        operation_name = args_dict.get('operation')
-        if not operation_name:
-            raise ValueError("Operation name is required")
-        
-        op_class = self.registry.get(operation_name)
-        
         # Process config file if provided
         op_args = args_dict.copy()
         config_file = op_args.get('config_file')
@@ -103,40 +106,3 @@ class OperationFactory:
         # Create operation instance
         return op_class(printer=printer, **op_args)
     
-    def create_operation(self, 
-                         operation_name: str, 
-                         config_file: Optional[str] = None,
-                         **kwargs) -> Operation:
-        """Create an operation instance directly.
-        
-        Args:
-            operation_name: Name of the operation to create
-            config_file: Optional path to a config file
-            **kwargs: Additional arguments to pass to the operation
-            
-        Returns:
-            Initialized operation instance
-            
-        Raises:
-            ValueError: If operation cannot be created
-        """
-        # Get operation class
-        op_class = self.registry.get(operation_name)
-        
-        # Process config file if provided
-        op_args = kwargs.copy()
-        if config_file:
-            config = self.config_manager.load_config(config_file)
-            # Override provided arguments with config file values
-            for key, value in config.items():
-                if key not in op_args or op_args[key] is None:
-                    op_args[key] = value
-        
-        # Process file:// prefixes in arguments
-        op_args = self._process_file_arguments(op_args)
-        
-        # Create printer (default to human readable)
-        printer = op_args.pop('printer', HumanReadablePrinter())
-        
-        # Create operation instance
-        return op_class(printer=printer, **op_args) 

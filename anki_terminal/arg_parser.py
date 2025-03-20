@@ -146,6 +146,14 @@ def parse_args() -> Tuple[MetaOpRecipe, Optional[Path], Optional[Path]]:
     # Set logging level based on verbose flag
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
+
+    if args.operation is None:
+        parser.print_help()
+        exit(1)
+    
+    if args.apkg_file is None:
+        print("Error: --apkg is required")
+        exit(1)
     
     # Create operation using factory
     metaop = metaop_manager.create_metaop(vars(args))

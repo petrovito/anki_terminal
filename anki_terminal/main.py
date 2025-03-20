@@ -17,16 +17,16 @@ logger = logging.getLogger(__name__)
 def main():
     try:
         # Parse arguments into operation, output file, and printer
-        operation, apkg_file, output_path = parse_args()
+        metaop, apkg_file, output_path = parse_args()
         
         # Check if APKG file is provided for operations that need it
-        if not operation.readonly and (not apkg_file):
+        if not metaop.readonly and (not apkg_file):
             logger.error("Error: --output argument is required for write operations")
             sys.exit(1)
         
         # Open the Anki context and run the operation
-        with AnkiContext(apkg_file, output_path, read_only=operation.readonly) as context:
-            context.run(operation)
+        with AnkiContext(apkg_file, output_path, read_only=metaop.readonly) as context:
+            context.run(metaop)
                     
     except ValueError as e:
         logger.error(str(e))

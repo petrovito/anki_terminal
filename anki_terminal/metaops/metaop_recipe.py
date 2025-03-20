@@ -50,6 +50,7 @@ class FundamentalMetaOpRecipe(MetaOpRecipe):
         ]
         self.name: str = op_type.name
         self.description: str = op_type.description
+        self.readonly: bool = op_type.readonly
 
     def is_fundamental(self) -> bool:
         return True

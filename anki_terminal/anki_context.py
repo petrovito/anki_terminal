@@ -4,11 +4,11 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
+from anki_terminal.metaops.metaop import MetaOp
 from anki_terminal.persistence.apkg_manager import ApkgManager
 from anki_terminal.commons.changelog import ChangeLog
 from anki_terminal.persistence.database_manager import DatabaseManager
-from anki_terminal.operation_executor import OperationExecutor
-from anki_terminal.ops.op_base import Operation, OperationResult
+from anki_terminal.metaops.metaop_executor import MetaOpExecutor
 
 logger = logging.getLogger('anki_inspector')
 
@@ -44,7 +44,7 @@ class AnkiContext:
             self._db_reader = DatabaseManager(self._extractor.db_path, anki_version=self._extractor.db_version).__enter__()
             self._collection = self._db_reader.read_collection()
             self._changelog = None if self._read_only else ChangeLog()
-            self._executor = OperationExecutor(self._collection, self._changelog)
+            self._executor = MetaOpExecutor(self._collection, self._changelog)
             return self
         except Exception:
             self._cleanup()
@@ -77,7 +77,7 @@ class AnkiContext:
         """Check if any write operations were performed."""
         return self._changelog is not None and self._changelog.has_changes()
 
-    def run(self, operation: Operation) -> List[OperationResult]:
+    def run(self, metaop: MetaOp) -> None:
         """Execute an operation.
         
         Args:
@@ -94,16 +94,11 @@ class AnkiContext:
             raise RuntimeError("This context has been destroyed and cannot run operations")
         
         # Check for write operations in read-only mode
-        if not operation.readonly and self._read_only:
+        if not metaop.readonly and self._read_only:
             raise RuntimeError("Cannot perform write operation in read-only mode")
         
-        # Validate operation
-        errors = self._executor.validate(operation)
-        if errors:
-            raise ValueError("\n".join(errors))
-        
         # Execute operation
-        return self._executor.execute(operation)
+        self._executor.execute(metaop)
 
     def _package(self) -> None:
         """Internal method to package the current state of the collection."""

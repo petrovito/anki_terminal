@@ -36,12 +36,10 @@ class MetaOp(ABC):
         pass
 
 
-
 class MetaOpFromRecipe(MetaOp):
     """
     A composite meta operation that is built from a recipe.
     """
-    
     
     def __init__(self, recipe: MetaOpRecipe, args: Dict[str, Any] = {}):
         self.recipe: MetaOpRecipe = recipe
@@ -66,7 +64,12 @@ class MetaOpFromRecipe(MetaOp):
     def resolve_op(self, op_factory: OperationFactory) -> Operation:
         if not self.is_fundamental():
             raise ValueError("Meta operation is composite, cannot resolve into a regular operation")
-        return op_factory.create(self.recipe.op_type, **self.args)
+        return op_factory.create_from_args(self.recipe.op_type, self.args)
+    
+    @property
+    def readonly(self) -> bool:
+        """Whether the meta operation is read-only."""
+        return self.recipe.readonly
     
     
     
