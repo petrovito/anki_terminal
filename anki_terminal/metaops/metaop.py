@@ -35,6 +35,12 @@ class MetaOp(ABC):
         """
         pass
 
+    @property
+    @abstractmethod
+    def readonly(self) -> bool:
+        """Whether the meta operation is read-only."""
+        pass
+
 
 class MetaOpFromRecipe(MetaOp):
     """
@@ -71,5 +77,24 @@ class MetaOpFromRecipe(MetaOp):
         """Whether the meta operation is read-only."""
         return self.recipe.readonly
     
+class MetaOpFromOpInstance(MetaOp):
+    """
+    A meta operation that is built from an operation instance.
+    """
     
+    def __init__(self, op: Operation):
+        self.op: Operation = op
     
+    def is_fundamental(self) -> bool:
+        return True
+    
+    def resolve(self) -> Generator['MetaOp', None, None]:
+        raise ValueError("Meta operation is fundamental, cannot resolve into a list of other meta operations")
+    
+    def resolve_op(self, op_factory: OperationFactory) -> Operation:
+        return self.op
+    
+    @property
+    def readonly(self) -> bool:
+        """Whether the meta operation is read-only."""
+        return self.op.readonly

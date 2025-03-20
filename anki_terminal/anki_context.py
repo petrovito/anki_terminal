@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from anki_terminal.metaops.metaop import MetaOp
+from anki_terminal.ops.op_base import OperationResult
 from anki_terminal.persistence.apkg_manager import ApkgManager
 from anki_terminal.commons.changelog import ChangeLog
 from anki_terminal.persistence.database_manager import DatabaseManager
@@ -77,7 +78,7 @@ class AnkiContext:
         """Check if any write operations were performed."""
         return self._changelog is not None and self._changelog.has_changes()
 
-    def run(self, metaop: MetaOp) -> None:
+    def run(self, metaop: MetaOp) -> List[OperationResult]:
         """Execute an operation.
         
         Args:
@@ -98,7 +99,7 @@ class AnkiContext:
             raise RuntimeError("Cannot perform write operation in read-only mode")
         
         # Execute operation
-        self._executor.execute(metaop)
+        return self._executor.execute(metaop)
 
     def _package(self) -> None:
         """Internal method to package the current state of the collection."""

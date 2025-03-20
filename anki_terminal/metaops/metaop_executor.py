@@ -23,10 +23,12 @@ class MetaOpExecutor:
         self.changelog = changelog
     
 
-    def execute(self, metaop: MetaOp) -> None:
+    def execute(self, metaop: MetaOp) -> List[OperationResult]:
         ops = self.resolve_ops(metaop)
+        results = []
         for op in ops:
-            self.execute_op(op)
+            results.append(self.execute_op(op))
+        return results
 
     def resolve_ops(self, metaop: MetaOp) -> List[Operation]:
         ops = []
@@ -50,7 +52,7 @@ class MetaOpExecutor:
                 self._resolve_ops_recursive(target_metaop, ops, op_factory, depth + 1, max_depth, max_ops)
         
     
-    def execute_op(self, op: Operation) -> None:
+    def execute_op(self, op: Operation) -> OperationResult:
         """Execute an operation.
         
         Args:
@@ -68,7 +70,7 @@ class MetaOpExecutor:
             raise RuntimeError(f"Validation failed:\n" + "\n".join(errors))
         
         # Execute operation
-        results = []
+        result = None
         try:
             result = op.execute()
             
@@ -81,13 +83,11 @@ class MetaOpExecutor:
             else:
                 logger.error(result.message)
             
-            results.append(result)
-            
         except Exception as e:
             logger.error(f"Operation failed: {str(e)}")
-            results.append(OperationResult(
+            result = OperationResult(
                 success=False,
                 message=f"Operation failed: {str(e)}"
-            ))
+            )
     
-        return results
+        return result

@@ -7,6 +7,7 @@ import pytest
 from anki_terminal.anki_context import AnkiContext
 from anki_terminal.commons.anki_types import Collection
 from anki_terminal.ops.op_base import Operation, OperationResult
+from anki_terminal.metaops.metaop import MetaOpFromOpInstance
 
 
 class BaseWriteTest:
@@ -79,7 +80,7 @@ class BaseWriteTest:
             List[OperationResult]: Results of the operation
         """
         operation = self.get_operation()
-        results = context.run(operation)
+        results = context.run(MetaOpFromOpInstance(operation))
         return results
     
     @pytest.mark.parametrize("version", versions_to_test)

@@ -138,7 +138,6 @@ def parse_args() -> Tuple[MetaOpRecipe, Optional[Path], Optional[Path]]:
     metaop_manager = MetaOpManager()
     for op_folder in pre_args.op_folders or []:
         metaop_manager.load_from_folder(op_folder)
-    metaop_manager.initialize()
 
     parser = create_parser(metaop_manager)
     args = parser.parse_args()

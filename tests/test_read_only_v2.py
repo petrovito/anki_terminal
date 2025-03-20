@@ -5,6 +5,8 @@ from pathlib import Path
 import pytest
 
 from anki_terminal.anki_context import AnkiContext
+from anki_terminal.metaops.metaop import MetaOpFromOpInstance
+from anki_terminal.metaops.metaop_manager import MetaOpManager
 from anki_terminal.ops.read.list_operation import ListOperation
 from anki_terminal.ops.write.rename_field import RenameFieldOperation
 from tests.fixtures.test_data_fixtures import apkg_v2_path
@@ -33,7 +35,7 @@ def test_read_only_operations_work(apkg_v2_path):
     with AnkiContext(apkg_v2_path, read_only=True) as context:
         # Test list fields operation
         op = ListOperation(path="/models/Basic Card/fields")
-        results = context.run(op)
+        results = context.run(MetaOpFromOpInstance(op))
         assert results[0].success
 
 def test_write_operation_fails_in_read_only(apkg_v2_path):

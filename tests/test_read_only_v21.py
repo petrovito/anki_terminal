@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from anki_terminal.anki_context import AnkiContext
+from anki_terminal.metaops.metaop import MetaOpFromOpInstance
 from anki_terminal.ops.read.list_operation import ListOperation
 from anki_terminal.ops.write.rename_field import RenameFieldOperation
 from tests.fixtures.test_data_fixtures import apkg_v21_path
@@ -34,7 +35,7 @@ def test_read_only_operations_work(apkg_v21_path):
     with AnkiContext(apkg_v21_path, read_only=True) as context:
         # Test list fields operation
         op = ListOperation(path="/models/subs2srs/fields")
-        results = context.run(op)
+        results = context.run(MetaOpFromOpInstance(op))
         assert results[0].success
 
 def test_write_operation_fails_in_read_only(apkg_v21_path):
@@ -48,7 +49,7 @@ def test_write_operation_fails_in_read_only(apkg_v21_path):
             )
             
             with pytest.raises(RuntimeError, match="Cannot perform write operation in read-only mode"):
-                context.run(op)
+                context.run(MetaOpFromOpInstance(op))
 
 def test_write_mode_without_output_path_fails(apkg_v21_path):
     """Test that write mode without output path fails."""

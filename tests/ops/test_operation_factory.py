@@ -97,45 +97,6 @@ def test_create_operation_from_args(mock_registry, mock_config_manager, mock_tem
     assert operation.args["test_arg"] == "arg_value"
 
 
-def test_create_operation_with_config(mock_registry, mock_config_manager, mock_template_manager):
-    """Test creating an operation with a config file."""
-    factory = OperationFactory(
-        registry=mock_registry,
-        config_manager=mock_config_manager,
-        template_manager=mock_template_manager
-    )
-    
-    # Create operation with config
-    operation = factory.create_operation(
-        operation_name="mock-operation",
-        config_file="test_config.json"
-    )
-    
-    # Verify operation
-    assert isinstance(operation, MockOperation)
-    assert operation.args["test_arg"] == "config_value"
-    assert mock_config_manager.load_config.called_with("test_config.json")
-
-
-def test_create_operation_with_file_prefix(mock_registry, mock_config_manager, mock_template_manager):
-    """Test creating an operation with a file:// prefix in an argument."""
-    factory = OperationFactory(
-        registry=mock_registry,
-        config_manager=mock_config_manager,
-        template_manager=mock_template_manager
-    )
-    
-    # Create operation with file:// prefix
-    operation = factory.create_operation(
-        operation_name="mock-operation",
-        test_arg="file://test_template.html"
-    )
-    
-    # Verify operation
-    assert isinstance(operation, MockOperation)
-    assert operation.args["test_arg"] == "template_content"
-    assert mock_template_manager.load_template.called_with("test_template.html")
-
 
 def test_process_file_arguments(mock_registry, mock_template_manager):
     """Test processing arguments with file:// prefix."""

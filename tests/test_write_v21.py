@@ -6,6 +6,7 @@ import pytest
 from anki_terminal.anki_context import AnkiContext
 from anki_terminal.ops.read.list_operation import ListOperation
 from anki_terminal.ops.write.rename_field import RenameFieldOperation
+from anki_terminal.metaops.metaop import MetaOpFromOpInstance
 from tests.fixtures.test_data_fixtures import apkg_v21_path
 
 
@@ -27,7 +28,7 @@ def test_write_operation_persists(apkg_v21_path):
         with AnkiContext(apkg_v21_path, output_path=output_path, read_only=False) as context:
             # Get original fields for verification
             list_op = ListOperation(path="/models/subs2srs/fields")
-            results = context.run(list_op)
+            results = context.run(MetaOpFromOpInstance(list_op))
             assert results[0].success
             original_fields = {f["name"] for f in results[0].data["fields"]}
             assert "Expression" in original_fields
@@ -38,7 +39,7 @@ def test_write_operation_persists(apkg_v21_path):
                 new_field_name="Sentence",
                 model_name="subs2srs"
             )
-            results = context.run(rename_op)
+            results = context.run(MetaOpFromOpInstance(rename_op))
             assert results[0].success
         
         # Verify the output file exists
@@ -47,7 +48,7 @@ def test_write_operation_persists(apkg_v21_path):
         # Second context: Verify the changes persisted
         with AnkiContext(output_path, read_only=True) as verify_context:
             list_op = ListOperation(path="/models/subs2srs/fields")
-            results = verify_context.run(list_op)
+            results = verify_context.run(MetaOpFromOpInstance(list_op))
             assert results[0].success
             
             # Verify field was renamed

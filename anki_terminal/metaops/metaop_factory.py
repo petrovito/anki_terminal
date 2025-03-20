@@ -2,6 +2,7 @@ from typing import Dict, Any, Optional
 from anki_terminal.metaops.metaop import MetaOp, MetaOpFromRecipe
 from anki_terminal.metaops.recipe_registry import RecipeRegistry
 from anki_terminal.commons.config_manager import ConfigManager
+from anki_terminal.ops.op_base import Operation
 from anki_terminal.ops.printer import OperationPrinter, HumanReadablePrinter, JsonPrinter
 
 class MetaOpFactory:
@@ -60,34 +61,12 @@ class MetaOpFactory:
         # Create meta operation instance
         return MetaOpFromRecipe(recipe=recipe, args=op_args)
     
-    def create(self, 
-               recipe_name: str, 
-               config_file: Optional[str] = None,
-               **kwargs) -> MetaOp:
-        """Create a meta operation instance directly.
+    def create_from_op(self, op: Operation) -> MetaOp:
+        """Create a meta operation instance from an operation instance.
         
         Args:
-            recipe_name: Name of the recipe to use
-            config_file: Optional path to a config file
-            **kwargs: Additional arguments to pass to the meta operation
-            
-        Returns:
-            Initialized meta operation instance
-            
-        Raises:
-            ValueError: If meta operation cannot be created
+            op: Operation instance
         """
-        # Get recipe
-        recipe = self.recipe_registry.get(recipe_name)
         
-        # Process config file if provided
-        op_args = kwargs.copy()
-        if config_file:
-            config = self.config_manager.load_config(config_file)
-            # Override provided arguments with config file values
-            for key, value in config.items():
-                if key not in op_args or op_args[key] is None:
-                    op_args[key] = value
+        return MetaOpFromRecipe(recipe=op.recipe, args=op.args)
         
-        # Create meta operation instance
-        return MetaOpFromRecipe(recipe=recipe, args=op_args) 

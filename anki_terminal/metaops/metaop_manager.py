@@ -18,7 +18,8 @@ class MetaOpManager:
                  recipe_registry: Optional[RecipeRegistry] = None,
                  metaop_factory: Optional[MetaOpFactory] = None,
                  config_manager: Optional[ConfigManager] = None,
-                 op_registry: Optional[OperationRegistry] = None):
+                 op_registry: Optional[OperationRegistry] = None,
+                 init: bool = True):
         """Initialize the meta operation manager.
         
         Args:
@@ -35,6 +36,8 @@ class MetaOpManager:
             config_manager=self.config_manager
         )
         self.op_registry = op_registry or OperationRegistry()
+        if init:
+            self.initialize()
 
 
     def initialize(self) -> None:
