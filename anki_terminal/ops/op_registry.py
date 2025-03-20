@@ -82,17 +82,10 @@ class OperationRegistry:
         """
         return self._operations.copy()
     
-    def list_operations(self) -> Dict[str, Dict[str, any]]:
+    def list_operations(self) -> Dict[str, Type[Operation]]:
         """List all registered operations.
         
         Returns:
-            Dictionary mapping operation names to their metadata
+            Dictionary mapping operation names to their operation classes
         """
-        return {
-            name: {
-                "description": op.description,
-                "readonly": op.readonly,
-                "arguments": op.arguments
-            }
-            for name, op in self._operations.items()
-        } 
+        return self._operations

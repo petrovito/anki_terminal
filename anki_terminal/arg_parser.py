@@ -1,27 +1,28 @@
 import argparse
 import logging
 from pathlib import Path
-from typing import Optional, Tuple, Type
+from typing import List, Optional, Tuple
 
-from anki_terminal.ops.operation_factory import OperationFactory
-from anki_terminal.ops.op_base import Operation
-from anki_terminal.ops.op_registry import OperationRegistry
-from anki_terminal.ops.printer import (HumanReadablePrinter, JsonPrinter,
-                                       OperationPrinter)
-from anki_terminal.populators.populator_registry import PopulatorRegistry
+from anki_terminal.metaops.metaop_recipe import MetaOpRecipe
+from anki_terminal.metaops.metaop_manager import MetaOpManager
+from anki_terminal.metaops.recipe_registry import RecipeRegistry
 
 
-def create_operation_subparser(subparsers: argparse._SubParsersAction, op_name: str, op_class: Type[Operation]) -> None:
+
+def create_meta_op_subparser(
+        subparsers: argparse._SubParsersAction,
+        meta_op_recipe: MetaOpRecipe,
+        metaop_manager: MetaOpManager
+    ) -> None:
     """Create a subparser for a specific operation.
     
     Args:
         subparsers: The subparsers action to add to
-        op_name: Name of the operation
-        op_class: The operation class
+        meta_op: The meta operation
     """
     subparser = subparsers.add_parser(
-        op_name,
-        help=op_class.description
+        meta_op_recipe.name,
+        help=meta_op_recipe.description
     )
     
     # Add config file option
@@ -32,10 +33,10 @@ def create_operation_subparser(subparsers: argparse._SubParsersAction, op_name: 
     )
     
     # Let the operation set up its own subparser
-    op_class.setup_subparser(subparser)
+    metaop_manager.setup_subparser(recipe=meta_op_recipe, subparser=subparser)
 
 
-def create_parser() -> argparse.ArgumentParser:
+def create_parser(metaop_manager: MetaOpManager) -> argparse.ArgumentParser:
     """Create the argument parser with all operations.
     
     Returns:
@@ -45,6 +46,15 @@ def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Anki collection inspector and modifier",
         prog="anki-terminal"
+    )
+
+    # Only for pre-parser, but added so it is included in help
+    parser.add_argument(
+        "--op-folder",
+        type=Path,
+        action="append",
+        help="Path to a folder containing the operations",
+        dest="op_folders"
     )
     
     # Add common arguments
@@ -92,34 +102,45 @@ def create_parser() -> argparse.ArgumentParser:
     )
     
     # Add operation subparsers
-    registry = OperationRegistry()
-    for op_name, op_info in registry.list_operations().items():
-        op_class = registry.get(op_name)
-        create_operation_subparser(subparsers, op_name, op_class)
+    for meta_op_recipe in metaop_manager.recipe_registry.get_all().values():
+        create_meta_op_subparser(subparsers, meta_op_recipe, metaop_manager)
+
+    #TODO Add custom metaop
     
     return parser
 
-def get_printer(args: argparse.Namespace) -> OperationPrinter:
-    """Get the appropriate printer based on command line arguments.
+def create_preparser() -> argparse.ArgumentParser:
+    """Create the pre-parser with all operations.
     
-    Args:
-        args: Parsed command line arguments
-        
     Returns:
-        Configured printer instance
+        Configured pre-parser
     """
-    if args.format == "json":
-        return JsonPrinter(pretty=args.pretty)
-    else:
-        return HumanReadablePrinter()
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--op-folder",
+        type=Path,
+        action="append",
+        help="Path to a folder containing the operations",
+        dest="op_folders"
+    )
+    return parser
 
-def parse_args() -> Tuple[Operation, Optional[Path], Optional[Path]]:
+
+def parse_args() -> Tuple[MetaOpRecipe, Optional[Path], Optional[Path]]:
     """Parse command line arguments.
     
     Returns:
         Tuple of (operation instance, output file path, printer)
     """
-    parser = create_parser()
+    pre_parser = create_preparser()
+    pre_args, unknown_args = pre_parser.parse_known_args()
+
+    metaop_manager = MetaOpManager()
+    for op_folder in pre_args.op_folders or []:
+        metaop_manager.load_from_folder(op_folder)
+    metaop_manager.initialize()
+
+    parser = create_parser(metaop_manager)
     args = parser.parse_args()
     
     # Set logging level based on verbose flag
@@ -127,7 +148,6 @@ def parse_args() -> Tuple[Operation, Optional[Path], Optional[Path]]:
         logging.getLogger().setLevel(logging.DEBUG)
     
     # Create operation using factory
-    factory = OperationFactory()
-    operation = factory.create_operation_from_args(vars(args))
+    metaop = metaop_manager.create_metaop(vars(args))
     
-    return operation, args.apkg_file, args.output_file 
+    return metaop, args.apkg_file, args.output_file 
