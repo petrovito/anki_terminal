@@ -54,14 +54,29 @@ class TestRemoveBracketsPopulator:
             flags=0
         )
         
+        note3 = Note(
+            id=3,
+            guid="test_guid_3",
+            model_id=1,
+            modification_time=None,
+            usn=-1,
+            tags=[],
+            fields={"Expression": "（野間直明(のまなおあき)）早く塹壕(ざんごう)へ！", "Meaning": "Test"},
+            sort_field=0,
+            checksum=0,
+            flags=0
+        )
+        
         # Test populating fields
         result1 = populator._populate_fields_impl(note1)
         result2 = populator._populate_fields_impl(note2)
-        
+        result3 = populator._populate_fields_impl(note3)
         # Verify results
         assert result1 == {"Expression": "キエ～！"}
         assert result2 == {}  # No changes for note without brackets
-    
+        assert result3 == {"Expression": "早く塹壕へ！"}
+
+        
     def test_populate_fields_update_target(self):
         """Test populating fields when updating a target field."""
         # Create populator

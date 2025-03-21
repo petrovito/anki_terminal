@@ -68,7 +68,15 @@ class RemoveBracketsPopulator(FieldPopulator):
         
         # Remove text in round brackets using regex
         # This handles both full-width (Japanese) and half-width (English) parentheses
-        processed_text = re.sub(r'[（(].*?[）)]', '', original_text)
+        # The pattern matches the innermost brackets first, then works outward
+        processed_text = original_text
+        while True:
+            # Find the innermost brackets
+            match = re.search(r'[（(][^（）()]*[）)]', processed_text)
+            if not match:
+                break
+            # Remove the matched brackets and their content
+            processed_text = processed_text[:match.start()] + processed_text[match.end():]
         
         # Skip if no changes were made
         if processed_text == original_text:
