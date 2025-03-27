@@ -12,6 +12,7 @@ from anki_terminal.ops.write.migrate_notes import MigrateNotesOperation
 from anki_terminal.ops.write.populate_fields import PopulateFieldsOperation
 from anki_terminal.ops.write.remove_empty_notes import RemoveEmptyNotesOperation
 from anki_terminal.ops.write.rename_field import RenameFieldOperation
+from anki_terminal.ops.write.rename_model import RenameModelOperation
 from anki_terminal.ops.write.tag_notes import TagNotesOperation
 
 
@@ -32,6 +33,7 @@ class OperationRegistry:
         
         # Write operations
         self.register(RenameFieldOperation)
+        self.register(RenameModelOperation)
         self.register(PopulateFieldsOperation)
         self.register(MigrateNotesOperation)
         self.register(AddModelOperation)

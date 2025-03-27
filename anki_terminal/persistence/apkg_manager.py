@@ -110,6 +110,5 @@ class ApkgManager:
                 if file_path.is_file():
                     arcname = file_path.relative_to(temp_dir_path)
                     zf.write(file_path, arcname)
-                    logger.debug(f"Added file to package: {arcname}")
 
         logger.debug("Packaging complete") 

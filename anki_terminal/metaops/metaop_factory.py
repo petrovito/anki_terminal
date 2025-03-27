@@ -61,12 +61,3 @@ class MetaOpFactory:
         # Create meta operation instance
         return MetaOpFromRecipe(recipe=recipe, args=op_args)
     
-    def create_from_op(self, op: Operation) -> MetaOp:
-        """Create a meta operation instance from an operation instance.
-        
-        Args:
-            op: Operation instance
-        """
-        
-        return MetaOpFromRecipe(recipe=op.recipe, args=op.args)
-        
